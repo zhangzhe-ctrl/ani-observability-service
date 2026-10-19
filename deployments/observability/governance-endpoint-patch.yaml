@@ -1,0 +1,9 @@
+# Strategic merge patch; preserves all other Gov containers, env and TLS mounts.
+spec:
+  template:
+    spec:
+      containers:
+        - name: server
+          env:
+            - name: ANI_OBSERVABILITY_GRPC_ADDR
+              value: ani-observability-service.ani-system.svc:19090

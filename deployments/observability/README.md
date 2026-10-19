@@ -1,6 +1,8 @@
 # Observability phase 1 deployment
 
 The live target is the 10–12 cluster, context `kubernetes-admin@ani-lab`.
+The ANI query service runs in `ani-system`; Prometheus and its existing storage,
+collection and recording rules remain in `ani-observability`.
 Its Res cluster ID is `0fcdb8b1-22bf-4528-af59-82843dc88f21`.
 This service queries `http://ani-metrics-prometheus.ani-observability.svc:9090`.
 Collection and recording rules are managed separately in [collection](collection/README.md).
@@ -38,24 +40,35 @@ Apply and inspect using the actual authorized kubeconfig:
 
 ```sh
 kubectl apply -f deployments/observability/certificates.yaml
-kubectl -n ani-observability wait --for=condition=Ready certificate/ani-observability-server-tls --timeout=60s
+kubectl -n ani-system wait --for=condition=Ready certificate/ani-observability-server-tls --timeout=60s
 kubectl -n ani-system wait --for=condition=Ready certificate/ani-observability-governance-client-tls --timeout=60s
 kubectl apply -f deployments/observability/configmap.yaml
 kubectl apply -f deployments/observability/service.yaml
 kubectl apply -f deployments/observability/deployment.yaml
-kubectl -n ani-observability rollout status deployment/ani-observability-service --timeout=60s
+kubectl -n ani-system rollout status deployment/ani-observability-service --timeout=60s
 ```
 
-Gov connects to `ani-observability-service.ani-observability.svc:19090` and
+Gov connects to `ani-observability-service.ani-system.svc:19090` and
 verifies server name `ani-observability-service`. Mount its client Secret
 `ani-system/ani-observability-governance-client-tls` read-only and set:
 
 ```text
-ANI_OBSERVABILITY_GRPC_ADDR=ani-observability-service.ani-observability.svc:19090
+ANI_OBSERVABILITY_GRPC_ADDR=ani-observability-service.ani-system.svc:19090
 ANI_OBSERVABILITY_CA_FILE=<mount>/ca.crt
 ANI_OBSERVABILITY_CLIENT_CERT_FILE=<mount>/tls.crt
 ANI_OBSERVABILITY_CLIENT_KEY_FILE=<mount>/tls.key
 ```
+
+For an existing Gov deployment with the client TLS mount already configured,
+apply only the named endpoint environment variable after the new service is Ready:
+
+```sh
+kubectl -n ani-system patch deployment ani-governance --type=strategic --patch-file deployments/observability/governance-endpoint-patch.yaml
+kubectl -n ani-system rollout status deployment/ani-governance --timeout=120s
+```
+
+The namespace migration sequence, validation and rollback are recorded in
+[the migration report](namespace-migration-20261019.md).
 
 Only `/observability.monitoring.v1.MonitoringService/QueryRange` and
 `/observability.monitoring.v1.MonitoringService/QueryLatest` accept calls.

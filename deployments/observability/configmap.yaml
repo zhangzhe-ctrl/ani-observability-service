@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ani-observability-config
-  namespace: ani-observability
+  namespace: ani-system
 data:
   config.yaml: |
     server:

@@ -1,0 +1,112 @@
+{
+  "result": "PASS",
+  "verified_at_utc": "2026-10-19T12:02:34.712264+00:00",
+  "deployments": [
+    {
+      "name": "ani-observability-service",
+      "namespace": "ani-system",
+      "uid": "e299044b-d2c8-40c7-b470-a8a2b629d46f",
+      "ready": 1,
+      "image": "172.16.101.10:5000/ani-observability-service@sha256:f64a61d6ff248f3212fc986dda5ec254d690b2d0299f94e26a3d13f9f4d9cbe1"
+    },
+    {
+      "name": "ani-governance",
+      "namespace": "ani-system",
+      "uid": "8a843c44-5a82-4e48-a92e-a3c28c665c67",
+      "ready": 1,
+      "image": "localhost/ani-governance@sha256:084014194b6dd975c6c4ab9949402e81e0ea2282bd304e7104e2264adcf7e9b5"
+    }
+  ],
+  "gov_endpoint": {
+    "namespace": "ani-system",
+    "address": "ani-observability-service.ani-system.svc:19090",
+    "only_endpoint_changed": true,
+    "image": "localhost/ani-governance@sha256:084014194b6dd975c6c4ab9949402e81e0ea2282bd304e7104e2264adcf7e9b5",
+    "ready": 1
+  },
+  "historical_series_identical_before_after": true,
+  "history": {
+    "phase": "final-history",
+    "instance": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+    "result": "PASS",
+    "same_grid_prometheus": true,
+    "metrics": [
+      {
+        "metric": "cpu.usage_cores",
+        "points": 17,
+        "valid": 17,
+        "status": "OK"
+      },
+      {
+        "metric": "memory.working_set_bytes",
+        "points": 17,
+        "valid": 17,
+        "status": "OK"
+      }
+    ]
+  },
+  "latest": {
+    "phase": "final-deleted-latest",
+    "instance": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+    "result": "PASS",
+    "same_grid_prometheus": true,
+    "metrics": [
+      {
+        "metric": "cpu.usage_cores",
+        "points": 1,
+        "valid": 0,
+        "status": "NO_DATA"
+      },
+      {
+        "metric": "memory.working_set_bytes",
+        "points": 1,
+        "valid": 0,
+        "status": "NO_DATA"
+      }
+    ]
+  },
+  "authorized_running_instances": 0,
+  "old_service_objects_remaining": [],
+  "prometheus_protection": {
+    "result": "PASS",
+    "protected_objects": [
+      "ConfigMap/ani-fluent-bit",
+      "ConfigMap/kube-root-ca.crt",
+      "ConfigMap/loki",
+      "ConfigMap/loki-runtime",
+      "ConfigMap/prometheus-ani-metrics-prometheus-rulefiles-0",
+      "PersistentVolumeClaim/alertmanager-ani-metrics-alertmanager-db-alertmanager-ani-metrics-alertmanager-0",
+      "PersistentVolumeClaim/prometheus-ani-metrics-prometheus-db-prometheus-ani-metrics-prometheus-0",
+      "PersistentVolumeClaim/storage-ani-loki-0",
+      "Pod/prometheus-ani-metrics-prometheus-0",
+      "Prometheus/ani-metrics-prometheus",
+      "PrometheusRule/ani-instance-metrics-v1",
+      "Service/alertmanager-operated",
+      "Service/ani-fluent-bit",
+      "Service/ani-loki",
+      "Service/ani-loki-headless",
+      "Service/ani-loki-memberlist",
+      "Service/ani-metrics-alertmanager",
+      "Service/ani-metrics-kube-state-metrics",
+      "Service/ani-metrics-operator",
+      "Service/ani-metrics-prometheus",
+      "Service/ani-metrics-prometheus-node-exporter",
+      "Service/prometheus-operated",
+      "StatefulSet/alertmanager-ani-metrics-alertmanager",
+      "StatefulSet/ani-loki",
+      "StatefulSet/prometheus-ani-metrics-prometheus"
+    ],
+    "specs_config_and_uids_unchanged": true,
+    "gov_client_secret_unchanged": true,
+    "sha256": "a3ec474fba27d563796c0135ca0317fe869f85168a6a04e6deb11441a291c037"
+  },
+  "command_exit_codes": {
+    "deploy": 0,
+    "switch": 0,
+    "after": 0,
+    "cleanup": 0,
+    "final": 0,
+    "verify": 0
+  },
+  "temporary_port_forwards_terminated": true
+}
