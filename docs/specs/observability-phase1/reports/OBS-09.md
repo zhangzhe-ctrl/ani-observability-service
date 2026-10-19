@@ -77,3 +77,5 @@
 - 发现一次诊断工具输出了原始数据库DSN，未入源码、镜像或提交；已停止这种输出并记录于OBS-07，不复述其值。测试原始配置仍仅保留私有引用与权限，不作为公开归档。
 
 最终文档/证据门禁日志：`logs/bootstrap/final-evidence-gates.log`（全历史secrets、SBOM/来源/许可证）、`final-clean-reproduction.log`（干净提交上两条生成链和SBOM一致性）；只归档文档/证据后复核相应门禁，不重复真实负载和已通过的业务全测。
+
+最后全历史secrets曾FAIL（5项）：四个真实幂等UUID与公开API提交SHA被generic-api-key规则误报。逐项核对规范UUID与真实API tag后，仅在 `.gitleaksignore` 登记对应提交/路径/行号的5个精确Fingerprint；没有规则或路径级allowlist。相同路径上新的惰性疑似key fixture仍被默认扫描拒绝，证据 `logs/bootstrap/final-scanner-negative.log`。初始失败及脱敏诊断 `final-gitleaks-diagnostic.log` 保留，未忽略真实凭据。

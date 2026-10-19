@@ -1,0 +1,8 @@
+# Exact reviewed false positives in frozen phase-one evidence.
+# Four canonical idempotency UUIDs and the published API source commit.
+# No rule/path allowlist; future commits remain subject to default scanning.
+a8dd2ccc37cb51f82a6514bc8fec3e53ae4ada20:docs/specs/observability-phase1/reports/evidence/create-gpu.json:generic-api-key:8
+a8dd2ccc37cb51f82a6514bc8fec3e53ae4ada20:docs/specs/observability-phase1/reports/evidence/lifecycle-delete-accepted.json:generic-api-key:8
+a8dd2ccc37cb51f82a6514bc8fec3e53ae4ada20:docs/specs/observability-phase1/reports/evidence/lifecycle-start-accepted.json:generic-api-key:8
+a8dd2ccc37cb51f82a6514bc8fec3e53ae4ada20:docs/specs/observability-phase1/reports/evidence/lifecycle-stop-accepted.json:generic-api-key:8
+a8dd2ccc37cb51f82a6514bc8fec3e53ae4ada20:docs/specs/observability-phase1/reports/version-lock.yaml:generic-api-key:10
