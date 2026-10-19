@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "modules": [
+    {
+      "module": "github.com/zhangzhe-ctrl/ani-observability-service/api",
+      "version": "v0.1.1",
+      "sum": "h1:SEr70/++V17GJrSzZMG6pEChKj+y9R7kThLe0bYmewQ=",
+      "go_mod_sum": "h1:a+WDRsjGC2HUmncHBgkHfUKaRfsfMqvFr+uJzJW2T4A=",
+      "origin": {
+        "VCS": "git",
+        "URL": "https://github.com/zhangzhe-ctrl/ani-observability-service",
+        "Subdir": "api",
+        "Hash": "44728ffbb722b30194a0cd8a25e60c5022ed0dfc"
+      },
+      "license_status": "UNDECLARED"
+    }
+  ]
+}
