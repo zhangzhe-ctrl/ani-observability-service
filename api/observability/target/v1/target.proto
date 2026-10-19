@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package observability.target.v1;
+
+option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/target/v1;targetv1";
+
+// TargetKind is the governed business object category.
+enum TargetKind {
+  TARGET_KIND_UNSPECIFIED = 0;
+  TARGET_KIND_CONTAINER_INSTANCE = 1;
+}
+
+// TargetScope is resolved by Gov through the resource owner.
+// It is never accepted as a public HTTP request body.
+message TargetScope {
+  TargetKind kind = 1;
+  string tenant_id = 2;
+  string instance_id = 3;
+  string cluster_id = 4;
+  string namespace = 5;
+  string container_name = 6;
+}

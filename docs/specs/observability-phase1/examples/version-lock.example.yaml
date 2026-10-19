@@ -1,0 +1,27 @@
+# 实施后按真实提交和可下载版本填写；当前没有发布声明。
+task_pack_version: "1.2"
+template_baseline: fd18422211c741dd5242d2992c3d307d522aa28c
+resource_design_baseline: f7459f7ae71c5573f53a50c5d20908b129c17e0c
+governance_design_baseline: 90b1ecc8cfa31b96ac43a8e4ff3aa18d41f03812
+observability:
+  commit: null
+  api_tag: null
+  api_consumer_version: null
+  api_download_verified: false
+  root_api_required_version: null
+  service_tag: null
+  image_digest: null
+resource:
+  scope_rpc_commit: null
+  consumer_version: null
+  download_verified: false
+governance:
+  commit: null
+  observability_api_required_version: null
+  resource_required_version: null
+  api_sync_verified: false
+  permission_registration_verified: false
+validation:
+  gowork_off_verified: false
+  real_collection_verified: false
+  backend_e2e_verified: false

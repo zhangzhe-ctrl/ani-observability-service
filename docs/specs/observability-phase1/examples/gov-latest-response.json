@@ -1,0 +1,24 @@
+{
+  "data": {
+    "instance_id": "5a01c947-5f3e-4de5-b070-818fde83d6a1",
+    "evaluated_at": "2026-10-19T03:02:00Z",
+    "series": [
+      {
+        "metric_code": "cpu.usage_cores",
+        "unit": "cores",
+        "status": "OK",
+        "points": [
+          { "timestamp": "2026-10-19T03:02:00Z", "value": 0.4 }
+        ]
+      },
+      {
+        "metric_code": "memory.working_set_bytes",
+        "unit": "bytes",
+        "status": "NO_DATA",
+        "points": [
+          { "timestamp": "2026-10-19T03:02:00Z", "value": null, "gap_reason": "NO_DATA" }
+        ]
+      }
+    ]
+  }
+}

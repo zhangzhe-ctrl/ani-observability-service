@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+*.go    text eol=lf
+*.proto text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+*.sh    text eol=lf
+
+*.pb.go linguist-generated=true
+
+*.png binary
+*.jpg binary
+*.ico binary
+## Frozen task-pack input retains its original checksum and final blank line.
+docs/specs/observability-phase1/MANUAL-METRICS.md whitespace=-blank-at-eof

@@ -1,0 +1,35 @@
+# 非部署配置；执行时读取实际环境后填写，不能直接 apply。
+# 所有 null 表示未知输入，不是可使用的默认值。
+workspace:
+  template_checkout: null
+  observability_checkout: null
+  resource_checkout: null
+  governance_checkout: null
+cluster:
+  kubernetes_context: null
+  cluster_id_from_res: null
+  tenant_id: null
+  validation_instance_id: null
+  validation_namespace: null
+  container_name: workspace
+collection:
+  monitoring_namespace: null
+  prometheus_resource_name: null
+  prometheus_version: null
+  operator_version: null
+  kube_state_metrics_version: null
+  cadvisor_service_monitor: null
+  kube_state_metrics_service_monitor: null
+  kube_state_metrics_deployment: null
+  rule_selector: null
+  rule_namespace_selector: null
+  prometheus_internal_address: null
+  existing_configuration_backup_path: null
+service:
+  deployment_namespace: null
+  image_registry: null
+  observability_server_certificate_ref: null
+  gov_client_certificate_ref: null
+  ca_ref: null
+  gov_api_address: null
+# 仅填引用或路径。不得在此文件放令牌、私钥、kubeconfig 正文。

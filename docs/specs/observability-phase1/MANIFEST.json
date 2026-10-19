@@ -1,0 +1,193 @@
+{
+  "title": "ANI 可观测服务一期任务包",
+  "version": "1.2",
+  "prepared_for_date": "2026-10-19",
+  "timezone": "Asia/Shanghai",
+  "status": "planning_package_not_executed",
+  "installer_in_scope": false,
+  "collection_delivery": "manual_field_patches_and_recording_rules",
+  "task_character_limit": 4000,
+  "character_count_method": "Unicode code points, including Markdown and code",
+  "baseline": {
+    "ani-kratos-layout": "fd18422211c741dd5242d2992c3d307d522aa28c",
+    "ani-resource-service": "f7459f7ae71c5573f53a50c5d20908b129c17e0c",
+    "ani-governance": "90b1ecc8cfa31b96ac43a8e4ff3aa18d41f03812"
+  },
+  "tasks": [
+    {
+      "id": "OBS-00",
+      "file": "tasks/OBS-00-bootstrap.md",
+      "title": "OBS-00：初始化项目与归档任务包",
+      "repositories": [
+        "ani-observability-service"
+      ],
+      "depends_on": [],
+      "status": "not_started",
+      "characters": 1845
+    },
+    {
+      "id": "OBS-01",
+      "file": "tasks/OBS-01-api-module.md",
+      "title": "OBS-01：建立并发布独立 API 子模块",
+      "repositories": [
+        "ani-observability-service"
+      ],
+      "depends_on": [
+        "OBS-00"
+      ],
+      "status": "not_started",
+      "characters": 2474
+    },
+    {
+      "id": "OBS-02",
+      "file": "tasks/OBS-02-manual-collection.md",
+      "title": "OBS-02 手工补齐采集与 recording rules",
+      "repositories": [
+        "ani-observability-service"
+      ],
+      "depends_on": [
+        "OBS-00"
+      ],
+      "status": "not_started",
+      "characters": 1910
+    },
+    {
+      "id": "OBS-03",
+      "file": "tasks/OBS-03-resource-scope.md",
+      "title": "OBS-03：Res 实例监控范围解析",
+      "repositories": [
+        "ani-resource-service"
+      ],
+      "depends_on": [],
+      "status": "not_started",
+      "characters": 2315
+    },
+    {
+      "id": "OBS-04",
+      "file": "tasks/OBS-04-prometheus-adapter.md",
+      "title": "OBS-04 Prometheus 查询适配",
+      "repositories": [
+        "ani-observability-service"
+      ],
+      "depends_on": [
+        "OBS-01"
+      ],
+      "status": "not_started",
+      "characters": 1759
+    },
+    {
+      "id": "OBS-05",
+      "file": "tasks/OBS-05-monitoring-usecases.md",
+      "title": "OBS-05 监控用例与结果规范化",
+      "repositories": [
+        "ani-observability-service"
+      ],
+      "depends_on": [
+        "OBS-04",
+        "OBS-01"
+      ],
+      "status": "not_started",
+      "characters": 1599
+    },
+    {
+      "id": "OBS-06",
+      "file": "tasks/OBS-06-trust-and-deployment.md",
+      "title": "OBS-06 受信 gRPC 与服务部署",
+      "repositories": [
+        "ani-observability-service"
+      ],
+      "depends_on": [
+        "OBS-05"
+      ],
+      "status": "not_started",
+      "characters": 1663
+    },
+    {
+      "id": "OBS-07",
+      "file": "tasks/OBS-07-governance.md",
+      "title": "OBS-07：Gov 监控入口与后端调用",
+      "repositories": [
+        "ani-governance"
+      ],
+      "depends_on": [
+        "OBS-01",
+        "OBS-03",
+        "OBS-06"
+      ],
+      "status": "not_started",
+      "characters": 3397
+    },
+    {
+      "id": "OBS-08",
+      "file": "tasks/OBS-08-backend-e2e.md",
+      "title": "OBS-08 真实后端链路验收",
+      "repositories": [
+        "ani-observability-service",
+        "ani-resource-service",
+        "ani-governance"
+      ],
+      "depends_on": [
+        "OBS-02",
+        "OBS-07"
+      ],
+      "status": "not_started",
+      "characters": 1482
+    },
+    {
+      "id": "OBS-09",
+      "file": "tasks/OBS-09-delivery.md",
+      "title": "OBS-09 版本与交付收口",
+      "repositories": [
+        "ani-observability-service",
+        "ani-resource-service",
+        "ani-governance"
+      ],
+      "depends_on": [
+        "OBS-00",
+        "OBS-01",
+        "OBS-02",
+        "OBS-03",
+        "OBS-04",
+        "OBS-05",
+        "OBS-06",
+        "OBS-07",
+        "OBS-08"
+      ],
+      "status": "not_started",
+      "characters": 1321
+    }
+  ],
+  "required_context": [
+    "README.md",
+    "CONTRACT.md",
+    "ACCEPTANCE.md"
+  ],
+  "files": [
+    "ACCEPTANCE.md",
+    "CONTRACT.md",
+    "MANUAL-METRICS.md",
+    "README.md",
+    "REVIEW.md",
+    "START.md",
+    "TASK-REPORT.md",
+    "contracts/api/observability/monitoring/v1/monitoring.proto",
+    "contracts/api/observability/target/v1/target.proto",
+    "contracts/gov-http.md",
+    "contracts/res-scope.md",
+    "examples/environment.example.yaml",
+    "examples/gov-latest-response.json",
+    "examples/gov-range-request.json",
+    "examples/gov-range-response.json",
+    "examples/version-lock.example.yaml",
+    "tasks/OBS-00-bootstrap.md",
+    "tasks/OBS-01-api-module.md",
+    "tasks/OBS-02-manual-collection.md",
+    "tasks/OBS-03-resource-scope.md",
+    "tasks/OBS-04-prometheus-adapter.md",
+    "tasks/OBS-05-monitoring-usecases.md",
+    "tasks/OBS-06-trust-and-deployment.md",
+    "tasks/OBS-07-governance.md",
+    "tasks/OBS-08-backend-e2e.md",
+    "tasks/OBS-09-delivery.md"
+  ]
+}

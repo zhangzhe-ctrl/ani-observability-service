@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package observability.monitoring.v1;
+
+import "google/protobuf/timestamp.proto";
+import "observability/target/v1/target.proto";
+
+option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1;monitoringv1";
+
+// MonitoringService is exposed only on the trusted Gov listener.
+service MonitoringService {
+  rpc QueryRange(QueryRangeRequest) returns (QueryRangeResponse);
+  rpc QueryLatest(QueryLatestRequest) returns (QueryLatestResponse);
+}
+
+message QueryRangeRequest {
+  observability.target.v1.TargetScope target = 1;
+  repeated string metric_codes = 2;
+  google.protobuf.Timestamp start = 3;
+  google.protobuf.Timestamp end = 4;
+  uint32 step_seconds = 5;
+}
+
+message QueryLatestRequest {
+  observability.target.v1.TargetScope target = 1;
+  repeated string metric_codes = 2;
+}
+
+message QueryRangeResponse {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+  uint32 step_seconds = 3;
+  repeated MetricSeries series = 4;
+}
+
+message QueryLatestResponse {
+  google.protobuf.Timestamp evaluated_at = 1;
+  repeated MetricSeries series = 2;
+}
+
+enum SeriesStatus {
+  SERIES_STATUS_UNSPECIFIED = 0;
+  SERIES_STATUS_OK = 1;
+  SERIES_STATUS_PARTIAL = 2;
+  SERIES_STATUS_NO_DATA = 3;
+}
+
+enum GapReason {
+  GAP_REASON_UNSPECIFIED = 0;
+  GAP_REASON_NO_DATA = 1;
+  GAP_REASON_AMBIGUOUS_SOURCE = 2;
+  GAP_REASON_INVALID_VALUE = 3;
+}
+
+message MetricSeries {
+  string metric_code = 1;
+  string unit = 2;
+  SeriesStatus status = 3;
+  repeated MetricPoint points = 4;
+}
+
+message MetricPoint {
+  google.protobuf.Timestamp timestamp = 1;
+  // Absent is missing data. Present zero is a valid measured value.
+  optional double value = 2;
+  // GAP_REASON_UNSPECIFIED for a valid value; otherwise a concrete reason.
+  GapReason gap_reason = 3;
+}

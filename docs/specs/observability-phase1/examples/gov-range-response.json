@@ -1,0 +1,30 @@
+{
+  "data": {
+    "instance_id": "5a01c947-5f3e-4de5-b070-818fde83d6a1",
+    "start": "2026-10-19T03:00:00Z",
+    "end": "2026-10-19T03:02:00Z",
+    "step_seconds": 60,
+    "series": [
+      {
+        "metric_code": "cpu.usage_cores",
+        "unit": "cores",
+        "status": "OK",
+        "points": [
+          { "timestamp": "2026-10-19T03:00:00Z", "value": 0.25 },
+          { "timestamp": "2026-10-19T03:01:00Z", "value": 0 },
+          { "timestamp": "2026-10-19T03:02:00Z", "value": 0.4 }
+        ]
+      },
+      {
+        "metric_code": "memory.working_set_bytes",
+        "unit": "bytes",
+        "status": "PARTIAL",
+        "points": [
+          { "timestamp": "2026-10-19T03:00:00Z", "value": 268435456 },
+          { "timestamp": "2026-10-19T03:01:00Z", "value": null, "gap_reason": "NO_DATA" },
+          { "timestamp": "2026-10-19T03:02:00Z", "value": 402653184 }
+        ]
+      }
+    ]
+  }
+}
