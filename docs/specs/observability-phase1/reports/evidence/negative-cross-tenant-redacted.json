@@ -1,0 +1,13 @@
+{
+  "method": "GET",
+  "path": "/api/v1/instances/<redacted-other-tenant-instance>/metrics/latest",
+  "status": 404,
+  "request_id": "5bf27e59-436b-41d1-a256-4617c5e5b9d7",
+  "request": null,
+  "response": {
+    "code": 404,
+    "reason": "INSTANCE_NOT_FOUND",
+    "message": "instance request failed",
+    "metadata": {}
+  }
+}

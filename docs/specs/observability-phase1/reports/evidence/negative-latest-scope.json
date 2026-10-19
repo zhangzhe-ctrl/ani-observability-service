@@ -1,0 +1,13 @@
+{
+  "method": "GET",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/latest?tenant_id=46936e6b-3a3b-4868-8d88-6833665abb70",
+  "status": 400,
+  "request_id": null,
+  "request": null,
+  "response": {
+    "code": 400,
+    "reason": "MONITORING_INVALID_QUERY",
+    "message": "invalid monitoring query",
+    "metadata": {}
+  }
+}

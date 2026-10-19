@@ -1,0 +1,13 @@
+{
+  "method": "GET",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/latest",
+  "status": 504,
+  "request_id": "cd7b378e-1924-472d-a736-f9aee8dc9307",
+  "request": null,
+  "response": {
+    "code": 504,
+    "reason": "MONITORING_QUERY_TIMEOUT",
+    "message": "monitoring query timed out",
+    "metadata": {}
+  }
+}

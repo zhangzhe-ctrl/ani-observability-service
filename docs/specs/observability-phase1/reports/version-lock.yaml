@@ -1,0 +1,41 @@
+task_pack_version: "1.2"
+template_baseline: fd18422211c741dd5242d2992c3d307d522aa28c
+resource_design_baseline: f7459f7ae71c5573f53a50c5d20908b129c17e0c
+governance_design_baseline: 90b1ecc8cfa31b96ac43a8e4ff3aa18d41f03812
+observability:
+  repository: https://github.com/zhangzhe-ctrl/ani-observability-service
+  commit: a5bef5d0a8ff8f97d1a6bae1d53227548ae387a4
+  implementation_commit: 07106f9cd5d57d6f00d381627eeb09fd8e4b4877
+  api_tag: api/v0.1.1
+  api_commit: 44728ffbb722b30194a0cd8a25e60c5022ed0dfc
+  api_consumer_version: v0.1.1
+  api_download_verified: true
+  root_api_required_version: v0.1.1
+  service_tag: v0.1.0
+  service_download_verified: true
+  runtime_version: v0.1.0
+  image_digest: sha256:f64a61d6ff248f3212fc986dda5ec254d690b2d0299f94e26a3d13f9f4d9cbe1
+resource:
+  scope_rpc_commit: 9fa3b4aa41f90db9ca0141a2b715904073f6e2d2
+  consumer_version: v0.0.0-20261019084504-9fa3b4aa41f9
+  download_verified: true
+  image_digest: sha256:54a1d322a366a364b8e5216ef177f8f1f87c41172969bf96bd863f90c42bd8bc
+governance:
+  commit: c905e49170b0dfeb23cf014cb4759a4e4ca2686d
+  observability_api_required_version: v0.1.1
+  resource_required_version: v0.0.0-20261019084504-9fa3b4aa41f9
+  api_sync_verified: true
+  permission_registration_verified: true
+  image_digest: sha256:084014194b6dd975c6c4ab9949402e81e0ea2282bd304e7104e2264adcf7e9b5
+validation:
+  gowork_off_verified: true
+  local_replace_used: false
+  real_collection_verified: true
+  core_backend_chain_verified: true
+  backend_e2e_verified: true
+  acceptance_basis: USER_ADJUSTED_SCOPE
+  original_task_pack_all_cases_passed: false
+  no_instance_read_identity_case: SKIPPED_BY_USER
+  cpu_spec_case: SKIPPED_BY_USER_AFTER_GPU_CPU_MEMORY_PASS
+  prometheus_extra_isolation: DEFERRED_BY_USER
+  expired_readonly_policy: DEFERRED_BY_USER

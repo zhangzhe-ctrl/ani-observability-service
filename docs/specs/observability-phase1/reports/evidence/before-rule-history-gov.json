@@ -1,0 +1,129 @@
+{
+  "method": "POST",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/query",
+  "status": 200,
+  "request_id": "bc6b6c56-39ec-43df-bd98-265d718666d8",
+  "request": {
+    "data": {
+      "metric_codes": [
+        "cpu.usage_cores",
+        "memory.working_set_bytes"
+      ],
+      "start": "2026-10-19T09:14:00Z",
+      "end": "2026-10-19T09:18:00Z",
+      "step_seconds": 30
+    }
+  },
+  "response": {
+    "data": {
+      "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+      "start": "2026-10-19T09:14:00Z",
+      "end": "2026-10-19T09:18:00Z",
+      "step_seconds": 30,
+      "series": [
+        {
+          "metric_code": "cpu.usage_cores",
+          "unit": "cores",
+          "status": "PARTIAL",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:14:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:14:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:18:00Z",
+              "value": 0.02575190093058797
+            }
+          ]
+        },
+        {
+          "metric_code": "memory.working_set_bytes",
+          "unit": "bytes",
+          "status": "PARTIAL",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:14:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:14:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:18:00Z",
+              "value": 65642496
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

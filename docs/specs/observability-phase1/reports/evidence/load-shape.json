@@ -1,0 +1,26 @@
+[
+  {
+    "metric": "cpu.usage_cores",
+    "first": {
+      "timestamp": "2026-10-19T09:18:00Z",
+      "value": 0.02575190093058797
+    },
+    "last": {
+      "timestamp": "2026-10-19T09:33:00Z",
+      "value": 0.024259269810497013
+    },
+    "maximum": 0.4862199201727315
+  },
+  {
+    "metric": "memory.working_set_bytes",
+    "first": {
+      "timestamp": "2026-10-19T09:18:00Z",
+      "value": 65642496
+    },
+    "last": {
+      "timestamp": "2026-10-19T09:33:00Z",
+      "value": 77168640
+    },
+    "maximum": 273072128
+  }
+]

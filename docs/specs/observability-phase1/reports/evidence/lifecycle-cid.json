@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "action": "cid",
+  "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+  "utc_fedora_started": "2026-10-19T09:36:02.019385+00:00",
+  "utc_fedora_verified": "2026-10-19T09:36:08.827750+00:00",
+  "before": {
+    "pod_uid": "7ea9b16e-c89b-4e6c-b548-d13040b606e5",
+    "cid": "2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60",
+    "restart_count": 0,
+    "ready": true
+  },
+  "after": {
+    "pod_uid": "7ea9b16e-c89b-4e6c-b548-d13040b606e5",
+    "cid": "0c277062ca5cb1b91ff79892b00eaa18afb5ccc5ae8b1a699b6c2cf1cdcb3f4b",
+    "restart_count": 1,
+    "ready": true
+  },
+  "detail": {
+    "version": "1",
+    "observedState": "running",
+    "desiredState": "running",
+    "computeCleaned": false,
+    "workspaceCleaned": false,
+    "quotaReturned": false
+  }
+}

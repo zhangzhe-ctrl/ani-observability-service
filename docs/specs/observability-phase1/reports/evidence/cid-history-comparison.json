@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "phase": "cid-history",
+  "grid_matches": true,
+  "tolerance": {
+    "relative": 1e-09,
+    "absolute": 1e-09
+  },
+  "valid_points": 10,
+  "metrics": [
+    {
+      "metric": "cpu.usage_cores",
+      "status": "PARTIAL",
+      "points": 6,
+      "valid": 5,
+      "min": 0.007609177565278466,
+      "max": 0.025152205737038934
+    },
+    {
+      "metric": "memory.working_set_bytes",
+      "status": "PARTIAL",
+      "points": 6,
+      "valid": 5,
+      "min": 65204224,
+      "max": 77225984
+    }
+  ]
+}

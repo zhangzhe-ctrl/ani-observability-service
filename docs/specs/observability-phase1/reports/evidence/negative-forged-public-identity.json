@@ -1,0 +1,11 @@
+{
+  "status": 401,
+  "response": {
+    "code": 401,
+    "reason": "UNAUTHORIZED",
+    "message": "missing bearer token",
+    "metadata": {
+      "request_id": "93f92bb0-a6e2-4273-b1bd-a5c047c86ae0"
+    }
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "method": "POST",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/query",
+  "status": 200,
+  "request_id": "7c678dc5-d1b9-42e5-a769-76262b751b6a",
+  "request": {
+    "data": {
+      "metric_codes": [
+        "cpu.usage_cores",
+        "memory.working_set_bytes"
+      ],
+      "start": "2026-10-19T09:34:00Z",
+      "end": "2026-10-19T09:36:30Z",
+      "step_seconds": 30
+    }
+  },
+  "response": {
+    "data": {
+      "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+      "start": "2026-10-19T09:34:00Z",
+      "end": "2026-10-19T09:36:30Z",
+      "step_seconds": 30,
+      "series": [
+        {
+          "metric_code": "cpu.usage_cores",
+          "unit": "cores",
+          "status": "PARTIAL",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:34:00Z",
+              "value": 0.025152205737038934
+            },
+            {
+              "timestamp": "2026-10-19T09:34:30Z",
+              "value": 0.02465411597764211
+            },
+            {
+              "timestamp": "2026-10-19T09:35:00Z",
+              "value": 0.02442078108130559
+            },
+            {
+              "timestamp": "2026-10-19T09:35:30Z",
+              "value": 0.024262432113830962
+            },
+            {
+              "timestamp": "2026-10-19T09:36:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:36:30Z",
+              "value": 0.007609177565278466
+            }
+          ]
+        },
+        {
+          "metric_code": "memory.working_set_bytes",
+          "unit": "bytes",
+          "status": "PARTIAL",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:34:00Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:34:30Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:35:00Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:35:30Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:36:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:36:30Z",
+              "value": 65204224
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

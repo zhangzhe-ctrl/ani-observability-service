@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "phase": "recovery-history",
+  "grid_matches": true,
+  "tolerance": {
+    "relative": 1e-09,
+    "absolute": 1e-09
+  },
+  "valid_points": 46,
+  "metrics": [
+    {
+      "metric": "cpu.usage_cores",
+      "status": "OK",
+      "points": 23,
+      "valid": 23,
+      "min": 0.024149589819153196,
+      "max": 0.4862199201727315
+    },
+    {
+      "metric": "memory.working_set_bytes",
+      "status": "OK",
+      "points": 23,
+      "valid": 23,
+      "min": 65642496,
+      "max": 273072128
+    }
+  ]
+}

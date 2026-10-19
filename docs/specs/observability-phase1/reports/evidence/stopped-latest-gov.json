@@ -1,0 +1,39 @@
+{
+  "method": "GET",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/latest",
+  "status": 200,
+  "request_id": "a0dc21ce-324d-46d7-accd-d292e53334cb",
+  "request": null,
+  "response": {
+    "data": {
+      "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+      "evaluated_at": "2026-10-19T09:39:26Z",
+      "series": [
+        {
+          "metric_code": "cpu.usage_cores",
+          "unit": "cores",
+          "status": "NO_DATA",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:39:26Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            }
+          ]
+        },
+        {
+          "metric_code": "memory.working_set_bytes",
+          "unit": "bytes",
+          "status": "NO_DATA",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:39:26Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

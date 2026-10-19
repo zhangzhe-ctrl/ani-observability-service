@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "phase": "stopped-latest",
+  "grid_matches": true,
+  "tolerance": {
+    "relative": 1e-09,
+    "absolute": 1e-09
+  },
+  "valid_points": 0,
+  "metrics": [
+    {
+      "metric": "cpu.usage_cores",
+      "status": "NO_DATA",
+      "points": 1,
+      "valid": 0,
+      "min": null,
+      "max": null
+    },
+    {
+      "metric": "memory.working_set_bytes",
+      "status": "NO_DATA",
+      "points": 1,
+      "valid": 0,
+      "min": null,
+      "max": null
+    }
+  ]
+}

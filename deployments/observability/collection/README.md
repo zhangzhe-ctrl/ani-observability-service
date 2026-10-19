@@ -7,9 +7,21 @@ TSDB CPU series carry the confirmed cluster label. Normal authenticated Gov/Res
 creation produced instance `90e2c65e-3601-44b6-9ef1-a7496c07a183`; its five raw
 inputs, owner labels and UID/CID were verified. All eight rules are now loaded
 and healthy; both canonical records first exist at `2026-10-19T09:17:55.589Z`.
-Three-cycle verification passed with real exit code 0; bounded load and lifecycle tests remain
-coordinated by OBS-08. This GPU-spec instance proves CPU/memory collection on
-that specification only; it does not claim CPU-spec or GPU metric acceptance.
+Three-cycle verification passed with real exit code 0. OBS-08 subsequently
+completed bounded load, same-UID CID restart, normal Gov stop/start with a new
+Pod UID, and normal Gov deletion. The acceptance Pod is now absent, fresh
+canonical CPU/memory are empty, and all three historical runtime identities
+remain queryable. This GPU-spec instance proves CPU/memory collection on that
+specification only; it does not claim CPU-spec or GPU metric acceptance.
+
+Lifecycle evidence is retained under the remote task root's
+`collection/lifecycle/`: `cid-exclusion-summary.json` proves the old CID's 5m
+counter still existed while only the new CID was recorded;
+`uid-exclusion-summary.json` proves the same exclusion across Pod UID replacement;
+`deleted-final-snapshot-summary.json` proves the final Pod is absent, both fresh
+records are empty, and each of the three identities can still be replayed at its
+own original sample time. These are real source identities and raw recording
+timestamps, not reconstructed business events.
 
 `source-profile.yaml` records the real cluster identity, selected objects,
 versions and source semantics. Resource's live `Service.ClusterID` is

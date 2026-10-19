@@ -1,0 +1,550 @@
+{
+  "method": "POST",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/query",
+  "status": 200,
+  "request_id": "4c0a37d1-8ace-41a1-920d-19740a7b527f",
+  "request": {
+    "data": {
+      "metric_codes": [
+        "cpu.usage_cores",
+        "memory.working_set_bytes"
+      ],
+      "start": "2026-10-19T09:14:00Z",
+      "end": "2026-10-19T09:43:30Z",
+      "step_seconds": 30
+    }
+  },
+  "response": {
+    "data": {
+      "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+      "start": "2026-10-19T09:14:00Z",
+      "end": "2026-10-19T09:43:30Z",
+      "step_seconds": 30,
+      "series": [
+        {
+          "metric_code": "cpu.usage_cores",
+          "unit": "cores",
+          "status": "PARTIAL",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:14:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:14:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:18:00Z",
+              "value": 0.02575190093058797
+            },
+            {
+              "timestamp": "2026-10-19T09:18:30Z",
+              "value": 0.028111612454837415
+            },
+            {
+              "timestamp": "2026-10-19T09:19:00Z",
+              "value": 0.03188276138191734
+            },
+            {
+              "timestamp": "2026-10-19T09:19:30Z",
+              "value": 0.024149589819153196
+            },
+            {
+              "timestamp": "2026-10-19T09:20:00Z",
+              "value": 0.058265330974845285
+            },
+            {
+              "timestamp": "2026-10-19T09:20:30Z",
+              "value": 0.09390427708194803
+            },
+            {
+              "timestamp": "2026-10-19T09:21:00Z",
+              "value": 0.15174507282852964
+            },
+            {
+              "timestamp": "2026-10-19T09:21:30Z",
+              "value": 0.21420572719615094
+            },
+            {
+              "timestamp": "2026-10-19T09:22:00Z",
+              "value": 0.2513180239145993
+            },
+            {
+              "timestamp": "2026-10-19T09:22:30Z",
+              "value": 0.29602475114908494
+            },
+            {
+              "timestamp": "2026-10-19T09:23:00Z",
+              "value": 0.34391329365009027
+            },
+            {
+              "timestamp": "2026-10-19T09:23:30Z",
+              "value": 0.39727493675716163
+            },
+            {
+              "timestamp": "2026-10-19T09:24:00Z",
+              "value": 0.445134651607396
+            },
+            {
+              "timestamp": "2026-10-19T09:24:30Z",
+              "value": 0.4862199201727315
+            },
+            {
+              "timestamp": "2026-10-19T09:25:00Z",
+              "value": 0.44581034059619823
+            },
+            {
+              "timestamp": "2026-10-19T09:25:30Z",
+              "value": 0.4161528056360789
+            },
+            {
+              "timestamp": "2026-10-19T09:26:00Z",
+              "value": 0.3318115003504735
+            },
+            {
+              "timestamp": "2026-10-19T09:26:30Z",
+              "value": 0.30811530388356617
+            },
+            {
+              "timestamp": "2026-10-19T09:27:00Z",
+              "value": 0.24643168874291696
+            },
+            {
+              "timestamp": "2026-10-19T09:27:30Z",
+              "value": 0.21087753027807055
+            },
+            {
+              "timestamp": "2026-10-19T09:28:00Z",
+              "value": 0.16710503711689623
+            },
+            {
+              "timestamp": "2026-10-19T09:28:30Z",
+              "value": 0.11181643581578887
+            },
+            {
+              "timestamp": "2026-10-19T09:29:00Z",
+              "value": 0.06496521093055588
+            },
+            {
+              "timestamp": "2026-10-19T09:29:30Z",
+              "value": 0.02309228734035024
+            },
+            {
+              "timestamp": "2026-10-19T09:30:00Z",
+              "value": 0.02436948373747267
+            },
+            {
+              "timestamp": "2026-10-19T09:30:30Z",
+              "value": 0.023650758586879064
+            },
+            {
+              "timestamp": "2026-10-19T09:31:00Z",
+              "value": 0.02500303460544992
+            },
+            {
+              "timestamp": "2026-10-19T09:31:30Z",
+              "value": 0.024898684158533187
+            },
+            {
+              "timestamp": "2026-10-19T09:32:00Z",
+              "value": 0.02443756712042492
+            },
+            {
+              "timestamp": "2026-10-19T09:32:30Z",
+              "value": 0.02430642428142427
+            },
+            {
+              "timestamp": "2026-10-19T09:33:00Z",
+              "value": 0.024259269810497013
+            },
+            {
+              "timestamp": "2026-10-19T09:33:30Z",
+              "value": 0.023393533624339914
+            },
+            {
+              "timestamp": "2026-10-19T09:34:00Z",
+              "value": 0.025152205737038934
+            },
+            {
+              "timestamp": "2026-10-19T09:34:30Z",
+              "value": 0.02465411597764211
+            },
+            {
+              "timestamp": "2026-10-19T09:35:00Z",
+              "value": 0.02442078108130559
+            },
+            {
+              "timestamp": "2026-10-19T09:35:30Z",
+              "value": 0.024262432113830962
+            },
+            {
+              "timestamp": "2026-10-19T09:36:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:36:30Z",
+              "value": 0.007609177565278466
+            },
+            {
+              "timestamp": "2026-10-19T09:37:00Z",
+              "value": 0.009741083433744411
+            },
+            {
+              "timestamp": "2026-10-19T09:37:30Z",
+              "value": 0.012189373216084126
+            },
+            {
+              "timestamp": "2026-10-19T09:38:00Z",
+              "value": 0.014326510880116983
+            },
+            {
+              "timestamp": "2026-10-19T09:38:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:39:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:39:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:40:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:40:30Z",
+              "value": 0.015514546666666663
+            },
+            {
+              "timestamp": "2026-10-19T09:41:00Z",
+              "value": 0.01683558139218974
+            },
+            {
+              "timestamp": "2026-10-19T09:41:30Z",
+              "value": 0.01923183526380702
+            },
+            {
+              "timestamp": "2026-10-19T09:42:00Z",
+              "value": 0.021629977869005383
+            },
+            {
+              "timestamp": "2026-10-19T09:42:30Z",
+              "value": 0.023669273114920543
+            },
+            {
+              "timestamp": "2026-10-19T09:43:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:43:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            }
+          ]
+        },
+        {
+          "metric_code": "memory.working_set_bytes",
+          "unit": "bytes",
+          "status": "PARTIAL",
+          "points": [
+            {
+              "timestamp": "2026-10-19T09:14:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:14:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:15:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:16:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:17:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:18:00Z",
+              "value": 65642496
+            },
+            {
+              "timestamp": "2026-10-19T09:18:30Z",
+              "value": 65642496
+            },
+            {
+              "timestamp": "2026-10-19T09:19:00Z",
+              "value": 65642496
+            },
+            {
+              "timestamp": "2026-10-19T09:19:30Z",
+              "value": 65642496
+            },
+            {
+              "timestamp": "2026-10-19T09:20:00Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:20:30Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:21:00Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:21:30Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:22:00Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:22:30Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:23:00Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:23:30Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:24:00Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:24:30Z",
+              "value": 273072128
+            },
+            {
+              "timestamp": "2026-10-19T09:25:00Z",
+              "value": 65646592
+            },
+            {
+              "timestamp": "2026-10-19T09:25:30Z",
+              "value": 65650688
+            },
+            {
+              "timestamp": "2026-10-19T09:26:00Z",
+              "value": 65650688
+            },
+            {
+              "timestamp": "2026-10-19T09:26:30Z",
+              "value": 65650688
+            },
+            {
+              "timestamp": "2026-10-19T09:27:00Z",
+              "value": 77045760
+            },
+            {
+              "timestamp": "2026-10-19T09:27:30Z",
+              "value": 77045760
+            },
+            {
+              "timestamp": "2026-10-19T09:28:00Z",
+              "value": 77045760
+            },
+            {
+              "timestamp": "2026-10-19T09:28:30Z",
+              "value": 77139968
+            },
+            {
+              "timestamp": "2026-10-19T09:29:00Z",
+              "value": 77139968
+            },
+            {
+              "timestamp": "2026-10-19T09:29:30Z",
+              "value": 77139968
+            },
+            {
+              "timestamp": "2026-10-19T09:30:00Z",
+              "value": 77139968
+            },
+            {
+              "timestamp": "2026-10-19T09:30:30Z",
+              "value": 65650688
+            },
+            {
+              "timestamp": "2026-10-19T09:31:00Z",
+              "value": 77074432
+            },
+            {
+              "timestamp": "2026-10-19T09:31:30Z",
+              "value": 77074432
+            },
+            {
+              "timestamp": "2026-10-19T09:32:00Z",
+              "value": 77168640
+            },
+            {
+              "timestamp": "2026-10-19T09:32:30Z",
+              "value": 77168640
+            },
+            {
+              "timestamp": "2026-10-19T09:33:00Z",
+              "value": 77168640
+            },
+            {
+              "timestamp": "2026-10-19T09:33:30Z",
+              "value": 88592384
+            },
+            {
+              "timestamp": "2026-10-19T09:34:00Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:34:30Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:35:00Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:35:30Z",
+              "value": 77225984
+            },
+            {
+              "timestamp": "2026-10-19T09:36:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:36:30Z",
+              "value": 65204224
+            },
+            {
+              "timestamp": "2026-10-19T09:37:00Z",
+              "value": 65204224
+            },
+            {
+              "timestamp": "2026-10-19T09:37:30Z",
+              "value": 65204224
+            },
+            {
+              "timestamp": "2026-10-19T09:38:00Z",
+              "value": 65204224
+            },
+            {
+              "timestamp": "2026-10-19T09:38:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:39:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:39:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:40:00Z",
+              "value": 13737984
+            },
+            {
+              "timestamp": "2026-10-19T09:40:30Z",
+              "value": 65343488
+            },
+            {
+              "timestamp": "2026-10-19T09:41:00Z",
+              "value": 65343488
+            },
+            {
+              "timestamp": "2026-10-19T09:41:30Z",
+              "value": 65343488
+            },
+            {
+              "timestamp": "2026-10-19T09:42:00Z",
+              "value": 65347584
+            },
+            {
+              "timestamp": "2026-10-19T09:42:30Z",
+              "value": 65347584
+            },
+            {
+              "timestamp": "2026-10-19T09:43:00Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            },
+            {
+              "timestamp": "2026-10-19T09:43:30Z",
+              "value": null,
+              "gap_reason": "NO_DATA"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

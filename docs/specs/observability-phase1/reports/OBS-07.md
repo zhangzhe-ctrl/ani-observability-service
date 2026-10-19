@@ -59,4 +59,7 @@
 - OBS-08/09 使用上述最终源码版本、镜像、API/Res 版本与 Gov 路由；最终无权限负例请使用正常管理 API 创建的专用角色，勿误用实际含 `instance:read` 的既有 role5。
 - 已只读核对真实负例用户 id19/tenant1 的 role5/no-model ACTIVE，实际拥有 permission403 `instance:read` ON/ALLOW，所以其返回200符合授权；permission295 是 `accelerator:profile:list`。证据 `logs/governance/negative-permission-db.log/.rc`。
 - 正常管理 API 创建专用空业务权限角色返回403，未创建角色或修改既有角色；OBS-08 执行者已向用户请求合适受限账户/管理员凭据引用。实际缺少 `instance:read` 的身份负例尚未执行，不把最初 role5 的200算产品漏洞或负例通过。独立 CPU 规格创建由用户授权跳过，验收实例仍实际验证 CPU 与内存两种指标；此范围决定由 OBS-08 记录。
+- 临时用户19经正常 numeric DELETE 返回200后，09:42:14Z 单次只读 PG 核对确认用户/有效角色关系均0，但遗留1条 ENABLED 孤立凭据。仅针对本任务自有凭据执行必要收尾：09:44:40Z 远程 Serializable 事务中设置2s锁/10s语句超时，锁定并验证唯一行、确切 identifier、原用户和同名身份均不存在，DELETE affected=1后提交；提交后 credential/active credential 均0。证据 `logs/governance/negative-user-cleanup-db.json`、`negative-user-credential-cleanup.json`，后者含准确SQL结构、前后计数和COMMIT证据；未读取凭据秘密字段，未碰其他用户/角色/策略/token。公共 UserDelete 未清理凭据的既有缺陷为 **NOT_FIXED**，未改源码；此清理不算 E05 成功。
 - 没有自行修改固定约定。用户已确认的两项延期沿用；未合并、未强推。
+
+最终协调补充：用户随后明确授权无可用受限账号时跳过该真实拒绝子用例；OBS-08/09 按用户调整范围完成，SKIPPED_BY_USER 不等于实际通过。原权限映射与失败证据仍保留，未越权造身份或扩大角色。

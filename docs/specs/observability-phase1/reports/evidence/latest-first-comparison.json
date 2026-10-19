@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "phase": "latest-first",
+  "grid_matches": true,
+  "tolerance": {
+    "relative": 1e-09,
+    "absolute": 1e-09
+  },
+  "valid_points": 2,
+  "metrics": [
+    {
+      "metric": "cpu.usage_cores",
+      "status": "OK",
+      "points": 1,
+      "valid": 1,
+      "min": 0.30811530388356617,
+      "max": 0.30811530388356617
+    },
+    {
+      "metric": "memory.working_set_bytes",
+      "status": "OK",
+      "points": 1,
+      "valid": 1,
+      "min": 65650688,
+      "max": 65650688
+    }
+  ]
+}

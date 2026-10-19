@@ -1,0 +1,13 @@
+{
+  "method": "GET",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183/metrics/latest",
+  "status": 503,
+  "request_id": "fe013fc9-5c4d-4c8d-8c1f-0cd5662446aa",
+  "request": null,
+  "response": {
+    "code": 503,
+    "reason": "MONITORING_SOURCE_UNAVAILABLE",
+    "message": "monitoring request failed",
+    "metadata": {}
+  }
+}

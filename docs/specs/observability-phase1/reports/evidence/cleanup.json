@@ -1,0 +1,27 @@
+{
+  "result": "PASS",
+  "task_port_forwards_stopped": [
+    {
+      "pid": 2498386,
+      "port": "19098",
+      "signal": "SIGTERM",
+      "task_owned_command": "/home/chabking/ani-four-service-deploy-20261012/tools/kubectl --kubeconfig /home/chabking/ani-four-service-deploy-20261012/private/kubeconfig -n ani-observability port-forward svc/ani-metrics-prometheus --address=127.0.0.1 19098:9090 "
+    },
+    {
+      "pid": 2878085,
+      "port": "29188",
+      "signal": "SIGTERM",
+      "task_owned_command": "/home/chabking/ani-four-service-deploy-20261012/tools/kubectl -n ani-system port-forward service/ani-governance 29188:7788 --address=127.0.0.1 "
+    },
+    {
+      "pid": 2927688,
+      "port": "49190",
+      "signal": "SIGTERM",
+      "task_owned_command": "/home/chabking/ani-four-service-deploy-20261012/tools/kubectl --context kubernetes-admin@ani-lab -n ani-observability port-forward pod/ani-observability-service-7866f57647-vqlsk 49190:19090 49191:19091 --address=127.0.0.1 "
+    }
+  ],
+  "loader_namespace_removed": true,
+  "ephemeral_mtls_copies_removed": true,
+  "production_services_certificates_and_metrics_retained": true,
+  "negative_user_and_credentials_counts": 0
+}

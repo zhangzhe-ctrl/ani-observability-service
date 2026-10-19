@@ -1,0 +1,24 @@
+[
+  {
+    "case": "connection_refused",
+    "status": 503,
+    "reason": "MONITORING_SOURCE_UNAVAILABLE",
+    "elapsed": 1.7449977600481361
+  },
+  {
+    "case": "timeout",
+    "status": 504,
+    "reason": "MONITORING_QUERY_TIMEOUT",
+    "elapsed": 6.7588923429721035
+  },
+  {
+    "case": "client_cancel",
+    "socket_closed_after": 0.75,
+    "upstream_evidence": "logs/fault-server.log"
+  },
+  {
+    "case": "restored",
+    "status": 200,
+    "reason": null
+  }
+]

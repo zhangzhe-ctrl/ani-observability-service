@@ -1,0 +1,20 @@
+{
+  "result": "PASS",
+  "request_id": "04dc2f70-3562-4abc-b9a9-87ef2b36465c",
+  "client_close_utc_fedora": "2026-10-19T09:35:12.320727+00:00",
+  "prom_requests_canceled": 2,
+  "upstream_events": [
+    {
+      "event": "peer_closed",
+      "utc": "2026-10-19T09:34:55.328088+00:00",
+      "elapsed": 1.268349093006691
+    },
+    {
+      "event": "peer_closed",
+      "utc": "2026-10-19T09:34:55.350465+00:00",
+      "elapsed": 1.2916136209969409
+    }
+  ],
+  "note": "External fixture now consumes chunked POST bodies before observing peer closure.",
+  "restored_status": 200
+}

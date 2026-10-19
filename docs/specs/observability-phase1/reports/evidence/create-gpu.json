@@ -1,0 +1,21 @@
+{
+  "method": "POST",
+  "path": "/api/v1/instances",
+  "status": 202,
+  "request_id": "9c12a26d-8c2a-4539-bf5a-204631ff3666",
+  "request": {
+    "data": {
+      "idempotency_key": "f9f9f57f-717a-42cb-9759-c2d0864ea199",
+      "name": "obs-phase1-20261019",
+      "image_id": "img_2ff31260dd6947d3956ffa3708b2996d",
+      "image_scope": "platform",
+      "preset_id": "d51c5fb9-4a06-4a33-bbad-f528c7820ce5"
+    }
+  },
+  "response": {
+    "operationId": "745ab0a0-f430-4729-bf37-aeff45c8a807",
+    "resourceId": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+    "replayed": false,
+    "result": "ACCEPTED"
+  }
+}

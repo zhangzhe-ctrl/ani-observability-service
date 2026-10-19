@@ -1,0 +1,28 @@
+{
+  "result": "PASS",
+  "phase": "deleted-full-history",
+  "grid_matches": true,
+  "tolerance": {
+    "relative": 1e-09,
+    "absolute": 1e-09
+  },
+  "valid_points": 91,
+  "metrics": [
+    {
+      "metric": "cpu.usage_cores",
+      "status": "PARTIAL",
+      "points": 60,
+      "valid": 45,
+      "min": 0.007609177565278466,
+      "max": 0.4862199201727315
+    },
+    {
+      "metric": "memory.working_set_bytes",
+      "status": "PARTIAL",
+      "points": 60,
+      "valid": 46,
+      "min": 13737984,
+      "max": 273072128
+    }
+  ]
+}

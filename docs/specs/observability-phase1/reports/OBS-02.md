@@ -77,3 +77,14 @@ podman run --rm --security-opt label=disable -v "$collection:/work:ro" --workdir
 - 只读脚本不操作业务实例；有界负载、CID/UID 更换、停止/删除与历史归 OBS-08 协调。
 - 用户明确延期 Prometheus 底层网络/写入限制和到期租户策略；未部署 netpol/认证代理/额外 Prometheus mTLS，不能将该边界标安全通过。
 - 恢复 patch 已准备并 server dry-run；未进行实际恢复演练。后续 Helm 操作可能覆盖手工字段。
+
+## OBS-08 生命周期补充证据
+
+上文 C07/生命周期的未执行项现已由正常业务生命周期完成；此处只补原始证据引用，不改写保留的失败记录。证据根仍为本报告所列远程任务根：
+
+- 同 UID 换 CID：`collection/lifecycle/cid-exclusion-summary.json`、`cid-explicit-*.json`，显式 record 点 `1792402615.589`；旧 CID 的 raw `rate[5m]` 仍存在，current helper 已为空，CPU/memory canonical 仅新 CID。
+- 正常 Gov stop：`collection/lifecycle/stop-first-snapshot-summary.json`、`stopped-empty-summary.json`；保留“Pod 已不存在但末点仍在 45s freshness 窗口 → 随后两指标为空”的真实过渡。
+- 同实例 ID 正常 Gov start 换 Pod UID：`collection/lifecycle/uid-exclusion-summary.json`、`uid-explicit-*.json`，显式 record 点 `1792402885.589`；旧 UID 的 raw `rate[5m]` 仍存在，current helper 已为空，canonical 仅新 UID/CID。
+- 最终正常 Gov delete 后：`collection/lifecycle/deleted-final-snapshot-summary.json`、`deleted-full-history-*.json`、`deleted-replay-*.json`。Pod 数量 0、fresh45 CPU/memory 均空；三段真实身份 CPU record 数为 36/4/5，memory 为 36/4/6，按各身份首个原始记录时刻重放仍得到原 UID/CID。新 UID 内存先于 CPU 一个周期存在，符合 CPU 至少两样本的启动窗口，不补零、不相加、不借当前 KSM 改写历史。
+
+本次补充仅做只读观测。业务 signal、stop/start/delete 均由协调任务通过已授权的正常路径执行。没有重跑既有 fixture/三周期/全量门禁。

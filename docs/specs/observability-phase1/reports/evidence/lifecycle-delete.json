@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "action": "delete",
+  "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+  "utc_fedora_started": "2026-10-19T09:42:50.031866+00:00",
+  "utc_fedora_verified": "2026-10-19T09:43:30.767395+00:00",
+  "before": {
+    "pod_uid": "2ac55f6c-808a-44b7-89bd-30a164ee6ff9",
+    "cid": "cfb0af3bda0bbd04004d8b4a52e28480c786f071aa9c44a86dd373e478eedcf3",
+    "restart_count": 0,
+    "ready": true
+  },
+  "after": null,
+  "detail": {
+    "version": "4",
+    "observedState": "deleted",
+    "desiredState": "deleted",
+    "computeCleaned": true,
+    "workspaceCleaned": true,
+    "quotaReturned": true
+  }
+}

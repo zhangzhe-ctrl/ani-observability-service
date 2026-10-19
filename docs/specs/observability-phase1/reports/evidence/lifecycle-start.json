@@ -1,0 +1,14 @@
+{
+  "result": "PASS",
+  "action": "start",
+  "note": "observe existing accepted operation; did not repeat start command",
+  "after": {
+    "pod_uid": "2ac55f6c-808a-44b7-89bd-30a164ee6ff9",
+    "cid": "cfb0af3bda0bbd04004d8b4a52e28480c786f071aa9c44a86dd373e478eedcf3",
+    "restart_count": 0,
+    "ready": true
+  },
+  "version": "3",
+  "observedState": "running",
+  "utc_fedora_verified": "2026-10-19T09:40:38.385217+00:00"
+}

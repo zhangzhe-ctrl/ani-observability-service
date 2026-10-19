@@ -1,0 +1,15 @@
+{
+  "request": {
+    "query": "ani_instance_memory_working_set_bytes{ani_cluster_id=\"0fcdb8b1-22bf-4528-af59-82843dc88f21\",ani_tenant_id=\"46936e6b-3a3b-4868-8d88-6833665abb70\",ani_instance_id=\"90e2c65e-3601-44b6-9ef1-a7496c07a183\",namespace=\"tenant-46936e6b-3a3b-4868-8d88-6833665abb70\",container=\"workspace\"} and (time() - timestamp(ani_instance_memory_working_set_bytes{ani_cluster_id=\"0fcdb8b1-22bf-4528-af59-82843dc88f21\",ani_tenant_id=\"46936e6b-3a3b-4868-8d88-6833665abb70\",ani_instance_id=\"90e2c65e-3601-44b6-9ef1-a7496c07a183\",namespace=\"tenant-46936e6b-3a3b-4868-8d88-6833665abb70\",container=\"workspace\"}) <= 45)",
+    "timeout": "4s",
+    "limit": 129,
+    "time": 1792402766
+  },
+  "response": {
+    "status": "success",
+    "data": {
+      "resultType": "vector",
+      "result": []
+    }
+  }
+}

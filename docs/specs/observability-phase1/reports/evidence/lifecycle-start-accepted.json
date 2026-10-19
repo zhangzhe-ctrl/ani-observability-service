@@ -1,0 +1,18 @@
+{
+  "method": "POST",
+  "path": "/api/v1/instances/90e2c65e-3601-44b6-9ef1-a7496c07a183:start",
+  "status": 202,
+  "request_id": "43b70a8d-f486-45bf-a9ad-92e17d1c3e4a",
+  "request": {
+    "data": {
+      "idempotency_key": "35c0692b-ce68-4884-8d2a-5a0d47bf904b",
+      "expected_version": "2"
+    }
+  },
+  "response": {
+    "operationId": "1b25a163-6275-4c79-9825-9c33f766efa9",
+    "resourceId": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+    "replayed": false,
+    "result": "ACCEPTED"
+  }
+}
