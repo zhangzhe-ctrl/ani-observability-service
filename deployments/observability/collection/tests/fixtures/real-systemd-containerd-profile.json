@@ -1,0 +1,46 @@
+{
+  "provenance": "Real samples from 172.16.101.10-12 before collection changes; profile evidence only, not a Res instance acceptance.",
+  "cadvisor": {
+    "metric": {
+      "__name__": "container_cpu_usage_seconds_total",
+      "container": "admission",
+      "cpu": "total",
+      "endpoint": "https-metrics",
+      "id": "/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod56ae22b1_8939_43a0_bc3a_6f3eabf4fe7d.slice/cri-containerd-263f20ae0789b2edcbd4fad130f82bc93c64872038fba27f4ad7ff704bbef1a4.scope",
+      "image": "localhost/ani-cpu03:09de408eec9f",
+      "instance": "172.16.101.10:10250",
+      "job": "kubelet",
+      "metrics_path": "/metrics/cadvisor",
+      "name": "263f20ae0789b2edcbd4fad130f82bc93c64872038fba27f4ad7ff704bbef1a4",
+      "namespace": "ani-system",
+      "node": "ani-01",
+      "pod": "ani-modeldev-exit-retention-69fbd7df4c-hrsq6",
+      "service": "ani-metrics-kubelet"
+    },
+    "value": [
+      1792398463.45,
+      "307.645225"
+    ]
+  },
+  "ksm_container_info": {
+    "metric": {
+      "__name__": "kube_pod_container_info",
+      "container": "admission",
+      "container_id": "containerd://263f20ae0789b2edcbd4fad130f82bc93c64872038fba27f4ad7ff704bbef1a4",
+      "endpoint": "http",
+      "image": "localhost/ani-cpu03:09de408eec9f",
+      "image_id": "localhost/ani-cpu03@sha256:53f1200cc679ad827aaad9306310d5577e89c26e6876de6d61800655c07b5040",
+      "image_spec": "localhost/ani-cpu03@sha256:53f1200cc679ad827aaad9306310d5577e89c26e6876de6d61800655c07b5040",
+      "instance": "10.16.0.234:8080",
+      "job": "kube-state-metrics",
+      "namespace": "ani-system",
+      "pod": "ani-modeldev-exit-retention-69fbd7df4c-hrsq6",
+      "service": "ani-metrics-kube-state-metrics",
+      "uid": "56ae22b1-8939-43a0-bc3a-6f3eabf4fe7d"
+    },
+    "value": [
+      1792398463.635,
+      "1"
+    ]
+  }
+}

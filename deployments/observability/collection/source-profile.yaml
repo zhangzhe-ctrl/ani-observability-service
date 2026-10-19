@@ -1,0 +1,89 @@
+profile: linux-containerd-systemd-v1
+status: rules_loaded_real_resource_instance_three_cycle_verification_passed
+cluster_id: 0fcdb8b1-22bf-4528-af59-82843dc88f21
+cluster_id_source: "Resource live config Service.ClusterID; ani-system/resource-instance-private reference, value independently verified by OBS-03"
+context: kubernetes-admin@ani-lab
+api_server: https://172.16.101.10:6443
+node_internal_ips: [172.16.101.10, 172.16.101.11, 172.16.101.12]
+kubernetes_version: v1.35.8
+container_runtime_version: containerd://2.3.4
+prometheus:
+  namespace: ani-observability
+  name: ani-metrics-prometheus
+  version: 3.11.3
+  operator_version: v0.90.1
+  internal_address: http://ani-metrics-prometheus.ani-observability.svc:9090
+  rule_selector: {matchLabels: {release: ani-metrics}}
+  rule_namespace_selector: {matchLabels: {kubernetes.io/metadata.name: ani-observability}}
+  rule_object: ani-instance-metrics-v1
+  rule_group: ani-instance-metrics-v1
+  rule_interval: 30s
+  rule_uid: a4923d51-418e-4dc7-b244-dffb3435c5cf
+  first_canonical_sample: "2026-10-19T09:17:55.589Z"
+  consecutive_verification_snapshots: 3
+  real_canonical_identity_verification: PASS
+  remote_write_receiver: true
+  tenant_network_isolation: deferred_by_user
+ksm:
+  namespace: ani-observability
+  deployment: ani-metrics-kube-state-metrics
+  deployment_uid: 0cf0d7be-3146-4c5f-804e-6e25d54cf0e9
+  version: v2.19.0
+  servicemonitor: ani-metrics-kube-state-metrics
+  servicemonitor_uid: aee0dd0d-2818-4b61-97b2-4266988e3355
+  endpoint_index: 0
+  endpoint_port: http
+  job: kube-state-metrics
+  previous_interval: "inherited 30s"
+  intended_interval: 15s
+  previous_allowlist: absent
+  intended_allowlist: "pods=[ani.io/tenant-id,ani.io/instance-id]"
+  owner_label_names: [label_ani_io_tenant_id, label_ani_io_instance_id]
+  current_identity: "uid plus container_id=containerd://<64 lowercase hex>; running==1"
+  applied_at: "2026-10-19T08:37:16Z"
+cadvisor:
+  namespace: ani-observability
+  servicemonitor: ani-metrics-kubelet
+  servicemonitor_uid: 8bd50206-f199-4caf-b3a2-e6a797bf4bac
+  endpoint_index: 1
+  path: /metrics/cadvisor
+  job: kubelet
+  source_labels_retained_until_unique: [id, job, instance, endpoint, metrics_path, service, node, image, name, cpu]
+  observed_cpu_dimension: 'cpu="total"'
+  previous_interval: 10s
+  intended_interval: 15s
+  honor_timestamps: true
+  track_timestamps_staleness: true
+  explicit_exposition_timestamp: "observed integer milliseconds; TSDB timestamp ages were 1.725 through 28.956 seconds before changes"
+  observed_cgroup: systemd
+  observed_uid_normalization: "8_4_4_4_12 to canonical 8-4-4-4-12"
+  observed_cid_normalization: "strip cri-containerd- and .scope; retain all 64 lowercase hex characters"
+  additional_offline_only_profile: cgroupfs
+  cgroupfs_live_verified: false
+  targets_after_reload: "one KSM and three cAdvisor targets all up, all 15s"
+  raw_cluster_label_after_reload: "497 CPU series all carry the confirmed Resource cluster UUID"
+freshness:
+  maximum_original_sample_age_seconds: 45
+  inclusive_boundary: true
+  every_helper_read: "timestamp(helper) == time() in the same ordered evaluation group"
+  cpu_algorithm: "rate(original counter[5m]) then intersect full-source original-current sample, then normalize, prove unique, bind current KSM UID/CID"
+  projection: "sum by seven labels only after singleton proof; no duplicate reduction"
+evidence:
+  remote_task_root: /home/chabking/ani-observability-runs/phase1-20261019-01a15321
+  original_objects_and_samples: collection/
+  original_context_and_targets: logs/collection/
+  fixture_profile: tests/fixtures/real-systemd-containerd-profile.json
+  fixture_business_identities: synthetic_test_only
+  promtool_version: 3.11.3
+  promtool_check: PASS_8_rules
+  promtool_fixture: PASS_30_cases
+  live_resource_instance:
+    creation_path: normal_authenticated_Gov_Resource_create
+    specification_kind: GPU_instance_CPU_and_memory_metrics_only
+    tenant_id: 46936e6b-3a3b-4868-8d88-6833665abb70
+    instance_id: 90e2c65e-3601-44b6-9ef1-a7496c07a183
+    namespace: tenant-46936e6b-3a3b-4868-8d88-6833665abb70
+    pod: instance-90e2c65e-3601-44b6-9ef1-a7496c07a183-0
+    pod_uid: 7ea9b16e-c89b-4e6c-b548-d13040b606e5
+    runtime_container_id: 2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60
+    container: workspace

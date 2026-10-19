@@ -24,7 +24,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: observability
-          image: 172.16.101.10:5000/ani-observability-service@sha256:98f89b379e9375dcb665b37d409a4e0e332876e77093bbb6ebab72fc87153a6c
+          image: 172.16.101.10:5000/ani-observability-service@sha256:ef95dd15d22c99aa2c257a2bec1954a950408612677509d8a7a0dac0b9862515
           imagePullPolicy: Never
           ports:
             - name: grpc

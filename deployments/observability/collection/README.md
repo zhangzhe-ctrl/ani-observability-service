@@ -1,0 +1,222 @@
+# Manual instance collection
+
+The current collection profile was read from the approved `172.16.101.10–12`
+cluster. The three minimal collector patches were applied at
+`2026-10-19T08:37:16Z`. One KSM and three cAdvisor targets are up at 15s, and real
+TSDB CPU series carry the confirmed cluster label. Normal authenticated Gov/Res
+creation produced instance `90e2c65e-3601-44b6-9ef1-a7496c07a183`; its five raw
+inputs, owner labels and UID/CID were verified. All eight rules are now loaded
+and healthy; both canonical records first exist at `2026-10-19T09:17:55.589Z`.
+Three-cycle verification passed with real exit code 0; bounded load and lifecycle tests remain
+coordinated by OBS-08. This GPU-spec instance proves CPU/memory collection on
+that specification only; it does not claim CPU-spec or GPU metric acceptance.
+
+`source-profile.yaml` records the real cluster identity, selected objects,
+versions and source semantics. Resource's live `Service.ClusterID` is
+`0fcdb8b1-22bf-4528-af59-82843dc88f21`. The KSM/cAdvisor source formats are real;
+business identities in the promtool tests are synthetic.
+`real-systemd-containerd-profile.json` is an existing non-Resource container and
+proves source syntax only; `real-resource-workspace-profile.json` records the
+normal Gov/Res-created workload's five actual source families. The
+cgroupfs path has offline coverage; only systemd/containerd has live evidence.
+
+All runtime commands below run through `ssh fedora`. The local workstation is
+used for source editing and transfer. No Installer file, Helm release, global
+selector, PVC or TSDB is modified. Prometheus tenant network isolation, writer
+authentication and receiver restrictions were explicitly deferred by the user.
+These changes do not claim that boundary is secure.
+
+## Verified baseline and field changes
+
+Prometheus `3.11.3`, Operator `0.90.1`, KSM `2.19.0`, Kubernetes `1.35.8`, and
+containerd `2.3.4` are running in the existing cluster. The rule namespace selector
+selects `ani-observability`; the rule label selector is `release: ani-metrics`.
+
+| Object | Existing field | Task change |
+| --- | --- | --- |
+| Deployment/ani-metrics-kube-state-metrics | args contain port/resources, no label allowlist | append the two ANI Pod labels, preserve both old args |
+| ServiceMonitor/ani-metrics-kube-state-metrics | endpoint 0 inherits 30s; no metric relabel | set 15s; append authoritative cluster label |
+| ServiceMonitor/ani-metrics-kubelet | cAdvisor endpoint 1 uses 10s | set this endpoint to 15s; append authoritative cluster label after existing metric filters |
+| PrometheusRule/ani-instance-metrics-v1 | absent at baseline | create the independently selected 30s group |
+
+`honorTimestamps: true` and `trackTimestampsStaleness: true` already satisfy the
+cAdvisor requirements and remain unchanged. Exposition samples have explicit
+millisecond timestamps. CPU samples expose `cpu="total"`; no per-CPU sum is used.
+Every helper retains the original source labels until uniqueness is proven.
+Final `sum by` only projects a proven singleton to the seven canonical labels;
+it never reduces multiple sources. Each helper consumer demands the current
+group evaluation timestamp, so a lookback result cannot renew stale inputs.
+
+## Evidence and access references
+
+The task-owned remote evidence root is:
+
+```text
+/home/chabking/ani-observability-runs/phase1-20261019-01a15321
+```
+
+Original objects, exposition, five TSDB queries and targets are in `collection/`;
+command/validation results are in `logs/collection/`. Keep those objects private.
+The repository's `artifacts/` is ignored for subsequent local evidence copies.
+Credential files are references only; never print or commit them.
+
+The following variables are the verified Fedora tool and access references:
+
+```bash
+obs_root=/home/chabking/ani-observability-runs/phase1-20261019-01a15321
+obs_collection="$obs_root/src/ani-observability-service/deployments/observability/collection"
+obs_kubectl=/home/chabking/ani-four-service-deploy-20261012/tools/kubectl
+export KUBECONFIG=/home/chabking/ani-four-service-deploy-20261012/private/kubeconfig
+obs_context=kubernetes-admin@ani-lab
+obs_namespace=ani-observability
+```
+
+## Read and back up before applying
+
+First require the completed OBS-00 output and the normal Resource acceptance
+instance's persisted scope. Re-read current objects. Each supplied JSON Patch
+tests the original object UID and affected fields. If a test fails, save the new
+object and reconcile the specific changed fields; do not remove the tests.
+
+```bash
+"$obs_kubectl" --context "$obs_context" get nodes -o wide
+"$obs_kubectl" --context "$obs_context" config view --minify -o jsonpath='{.clusters[0].cluster.server}'
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" get prometheus ani-metrics-prometheus -o json > "$obs_root/collection/prometheus.before.json"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" get deployment ani-metrics-kube-state-metrics -o json > "$obs_root/collection/ksm-workload.before.json"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" get servicemonitor ani-metrics-kube-state-metrics -o json > "$obs_root/collection/ksm-servicemonitor.before.json"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" get servicemonitor ani-metrics-kubelet -o json > "$obs_root/collection/cadvisor-servicemonitor.before.json"
+```
+
+Save the original `/api/v1/targets`, raw `/metrics/cadvisor` exposition and five
+`/api/v1/query` responses. Existing examples are already retained in the evidence
+root. An HTTP API vector's point time is evaluation time: use
+`time()-timestamp(raw_selector)` to inspect actual original sample age.
+
+## Check rules before applying
+
+The target image supplies the same `promtool 3.11.3` as the running Prometheus.
+It was pulled on Fedora from the existing internal registry; no global tool is
+installed. These are ordinary Prometheus checks, run on the pure groups file.
+
+```bash
+podman run --rm --security-opt label=disable -v "$obs_collection:/work:ro" --workdir /work --entrypoint /bin/promtool 172.16.101.10:5000/prometheus/prometheus:v3.11.3-distroless check rules rules/ani-instance.rules.yaml
+podman run --rm --security-opt label=disable -v "$obs_collection:/work:ro" --workdir /work --entrypoint /bin/promtool 172.16.101.10:5000/prometheus/prometheus:v3.11.3-distroless test rules tests/ani-instance.rules.test.yaml
+```
+
+The PrometheusRule's `spec.groups` is identical to the pure groups file. Verify
+this when editing either file. Fixtures cover systemd and offline cgroupfs,
+unknown paths, total/per-CPU selection, startup and reset, the inclusive 45s
+boundary, every KSM input's freshness, snapshot expiry, duplicates, owner
+conflicts/invalid IDs, UID/CID replacement, cross-cluster mismatch and retained
+history. The one-ULP Prometheus comparison option preserves floating-point rate
+semantics rather than rounding production values. All 30 fixtures passed on the
+target-version promtool, including retention of two separate runtime identities.
+
+## Apply the three field patches
+
+Dry-run all three patches and the rule first. Review the resulting affected
+fields. Do not load rules until real raw inputs pass the source checks.
+
+```bash
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" patch deployment ani-metrics-kube-state-metrics --type=json --patch-file "$obs_collection/patches/ksm-workload.patch.json" --dry-run=server -o json > "$obs_root/collection/ksm-workload.dry-run.json"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" patch servicemonitor ani-metrics-kube-state-metrics --type=json --patch-file "$obs_collection/patches/ksm-servicemonitor.patch.json" --dry-run=server -o json > "$obs_root/collection/ksm-servicemonitor.dry-run.json"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" patch servicemonitor ani-metrics-kubelet --type=json --patch-file "$obs_collection/patches/cadvisor-servicemonitor.patch.json" --dry-run=server -o json > "$obs_root/collection/cadvisor-servicemonitor.dry-run.json"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" apply --dry-run=server -f "$obs_collection/rules/ani-instance-metrics-v1.yaml"
+```
+
+Apply by removing only `--dry-run=server` from the first three commands, one at a
+time. Wait for KSM after its args patch:
+
+```bash
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" rollout status deployment/ani-metrics-kube-state-metrics --timeout=120s
+```
+
+KSM's rollout affects its own scrape availability. It does not restart business
+Pods. Save each applied object as `*.after.json`. Check the reloaded targets are
+up with 15s intervals. All five raw metric families must carry the authoritative
+cluster label, and KSM must expose the actual Resource owner labels. Applying
+these fields alone is not C02/C03 acceptance without a normal Resource instance.
+
+When source validation passes, load the rule and save its UID:
+
+```bash
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" apply -f "$obs_collection/rules/ani-instance-metrics-v1.yaml"
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" get prometheusrule ani-instance-metrics-v1 -o json > "$obs_root/collection/prometheusrule.after.json"
+```
+
+## Verify real canonical values
+
+Use the actual persisted Resource tenant, instance and namespace as shell inputs;
+the script intentionally has no example UUID fallback. A task-owned port-forward
+can make Prometheus accessible on Fedora's loopback only:
+
+```bash
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" port-forward svc/ani-metrics-prometheus --address=127.0.0.1 19098:9090
+```
+
+From another Fedora command, set `TENANT_ID`, `INSTANCE_ID`, `TARGET_NAMESPACE`
+from Resource and run:
+
+```bash
+export KUBECTL="$obs_kubectl" CONTEXT="$obs_context"
+export PROMETHEUS_URL=http://127.0.0.1:19098
+export CLUSTER_ID=0fcdb8b1-22bf-4528-af59-82843dc88f21
+export EVIDENCE_DIR="$obs_root/collection/verification-real"
+"$obs_collection/verify.sh"
+```
+
+The script reads nodes, the actual Resource Pod, targets, rules, original sample
+ages and both canonical series across three recording periods. It refuses
+duplicate inputs and validates exactly seven labels. It never creates, deletes,
+restarts or loads a business instance. Run `diagnostics.promql` at the recording
+group's actual evaluation timestamp when checking the helper-current filters.
+Empty canonical values cannot distinguish original conflicts from missing input;
+retain the raw diagnostics. The coordinated OBS-08 run supplies bounded load,
+CID/UID changes and stopped/deleted history tests through normal Resource
+lifecycle calls. These scenarios are coordinated separately and are not
+performed by the verifier.
+
+## Restore only this task's fields
+
+Restore is prepared. All three inverse patches passed server dry-run and their
+returned `spec` exactly matched the saved original `spec`; actual restoration
+has not been exercised. Re-read object UID and affected fields
+before each command. The inverse patches test the exact applied field values.
+Changes by another operator cause a failed patch; reconcile the conflict without
+replacing entire old objects or arrays. Patches are atomic per object.
+
+First remove this newly created rule only after its current UID equals the UID
+saved in `prometheusrule.after.json`. If the object was replaced, stop this step.
+Create the UID-precondition request body from the recorded UID. Its `dryRun`
+must be in the `DeleteOptions` body. A live attempt using only URL
+`?dryRun=All` unexpectedly deleted the newly created task-owned rule before it
+had loaded; it was restored immediately. That attempt is recorded as failed,
+and no further live delete dry-run has been executed. Inspect the current UID
+before any intended restoration:
+
+```bash
+python3 - <<'PY'
+import json, pathlib
+p = pathlib.Path('/home/chabking/ani-observability-runs/phase1-20261019-01a15321/collection')
+uid = json.loads((p / 'prometheusrule.after.json').read_text())['metadata']['uid']
+(p / 'rule-delete-options.json').write_text(json.dumps({'apiVersion': 'v1', 'kind': 'DeleteOptions', 'dryRun': ['All'], 'preconditions': {'uid': uid}}) + '\n')
+PY
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" get prometheusrule ani-instance-metrics-v1 -o jsonpath='{.metadata.uid}'
+"$obs_kubectl" --context "$obs_context" delete --raw '/apis/monitoring.coreos.com/v1/namespaces/ani-observability/prometheusrules/ani-instance-metrics-v1' -f "$obs_root/collection/rule-delete-options.json"
+```
+
+Only when restoration is intended, remove the `dryRun` property from the request
+body to delete this exact UID. This rule-deletion request remains prepared and
+unverified; the three inverse collector patches below did pass server dry-run:
+
+```bash
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" patch servicemonitor ani-metrics-kubelet --type=json --patch-file "$obs_collection/patches/restore-cadvisor-servicemonitor.patch.json" --dry-run=server -o json
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" patch servicemonitor ani-metrics-kube-state-metrics --type=json --patch-file "$obs_collection/patches/restore-ksm-servicemonitor.patch.json" --dry-run=server -o json
+"$obs_kubectl" --context "$obs_context" -n "$obs_namespace" patch deployment ani-metrics-kube-state-metrics --type=json --patch-file "$obs_collection/patches/restore-ksm-workload.patch.json" --dry-run=server -o json
+```
+
+Apply each inverse patch by removing `--dry-run=server`, then wait for KSM and
+verify the original targets. Rule removal leaves recorded TSDB history intact.
+Do not Helm rollback, restore an old complete YAML, delete a namespace/PVC or
+change unrelated collectors. Future Helm operations can overwrite these manual
+fields; pass these exact artifacts to the later automation task.

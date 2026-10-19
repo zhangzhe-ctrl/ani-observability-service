@@ -1,0 +1,91 @@
+[
+  {
+    "op": "test",
+    "path": "/metadata/uid",
+    "value": "8bd50206-f199-4caf-b3a2-e6a797bf4bac"
+  },
+  {
+    "op": "test",
+    "path": "/spec/endpoints/1/metricRelabelings",
+    "value": [
+      {
+        "action": "drop",
+        "regex": "container_cpu_(cfs_throttled_seconds_total|load_average_10s|system_seconds_total|user_seconds_total)",
+        "sourceLabels": [
+          "__name__"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": "container_fs_(io_current|io_time_seconds_total|io_time_weighted_seconds_total|reads_merged_total|sector_reads_total|sector_writes_total|writes_merged_total)",
+        "sourceLabels": [
+          "__name__"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": "container_memory_(mapped_file|swap)",
+        "sourceLabels": [
+          "__name__"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": "container_(file_descriptors|tasks_state|threads_max)",
+        "sourceLabels": [
+          "__name__"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": "container_memory_failures_total;hierarchy",
+        "sourceLabels": [
+          "__name__",
+          "scope"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": "container_network_.*;(cali|cilium|cni|lxc|nodelocaldns|tunl).*",
+        "sourceLabels": [
+          "__name__",
+          "interface"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": "container_spec.*",
+        "sourceLabels": [
+          "__name__"
+        ]
+      },
+      {
+        "action": "drop",
+        "regex": ".+;",
+        "sourceLabels": [
+          "id",
+          "pod"
+        ]
+      },
+      {
+        "action": "replace",
+        "replacement": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+        "targetLabel": "ani_cluster_id"
+      }
+    ]
+  },
+  {
+    "op": "remove",
+    "path": "/spec/endpoints/1/metricRelabelings/8"
+  },
+  {
+    "op": "test",
+    "path": "/spec/endpoints/1/interval",
+    "value": "15s"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/endpoints/1/interval",
+    "value": "10s"
+  }
+]

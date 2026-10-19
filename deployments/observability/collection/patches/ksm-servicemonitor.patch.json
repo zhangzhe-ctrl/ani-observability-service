@@ -1,0 +1,31 @@
+[
+  {
+    "op": "test",
+    "path": "/metadata/uid",
+    "value": "aee0dd0d-2818-4b61-97b2-4266988e3355"
+  },
+  {
+    "op": "test",
+    "path": "/spec/endpoints/0",
+    "value": {
+      "honorLabels": true,
+      "port": "http"
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/endpoints/0/interval",
+    "value": "15s"
+  },
+  {
+    "op": "add",
+    "path": "/spec/endpoints/0/metricRelabelings",
+    "value": [
+      {
+        "action": "replace",
+        "replacement": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+        "targetLabel": "ani_cluster_id"
+      }
+    ]
+  }
+]

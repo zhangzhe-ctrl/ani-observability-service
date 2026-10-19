@@ -1,0 +1,110 @@
+{
+  "provenance": "Real normal Gov/Resource-created GPU instance workspace; this records CPU/memory source identity, not CPU-spec or GPU-metric acceptance.",
+  "instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+  "source_evidence_root": "/home/chabking/ani-observability-runs/phase1-20261019-01a15321/collection",
+  "container_cpu_usage_seconds_total": {
+    "metric": {
+      "__name__": "container_cpu_usage_seconds_total",
+      "ani_cluster_id": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+      "container": "workspace",
+      "cpu": "total",
+      "endpoint": "https-metrics",
+      "id": "/kubepods.slice/kubepods-pod7ea9b16e_c89b_4e6c_b548_d13040b606e5.slice/cri-containerd-2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60.scope",
+      "image": "172.16.101.10:30003/ani-platform-images/formal-gpu-cuda@sha256:4566f1a53ee7b0bc40db4bb5b140ea931d0a13f3e6c4b8a8bbc8cb91838ee34a",
+      "instance": "172.16.101.12:10250",
+      "job": "kubelet",
+      "metrics_path": "/metrics/cadvisor",
+      "name": "2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60",
+      "namespace": "tenant-46936e6b-3a3b-4868-8d88-6833665abb70",
+      "node": "ani-03",
+      "pod": "instance-90e2c65e-3601-44b6-9ef1-a7496c07a183-0",
+      "service": "ani-metrics-kubelet"
+    },
+    "value": [
+      1792401279,
+      "0.345338"
+    ]
+  },
+  "container_memory_working_set_bytes": {
+    "metric": {
+      "__name__": "container_memory_working_set_bytes",
+      "ani_cluster_id": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+      "container": "workspace",
+      "endpoint": "https-metrics",
+      "id": "/kubepods.slice/kubepods-pod7ea9b16e_c89b_4e6c_b548_d13040b606e5.slice/cri-containerd-2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60.scope",
+      "image": "172.16.101.10:30003/ani-platform-images/formal-gpu-cuda@sha256:4566f1a53ee7b0bc40db4bb5b140ea931d0a13f3e6c4b8a8bbc8cb91838ee34a",
+      "instance": "172.16.101.12:10250",
+      "job": "kubelet",
+      "metrics_path": "/metrics/cadvisor",
+      "name": "2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60",
+      "namespace": "tenant-46936e6b-3a3b-4868-8d88-6833665abb70",
+      "node": "ani-03",
+      "pod": "instance-90e2c65e-3601-44b6-9ef1-a7496c07a183-0",
+      "service": "ani-metrics-kubelet"
+    },
+    "value": [
+      1792401279,
+      "13721600"
+    ]
+  },
+  "kube_pod_container_info": {
+    "metric": {
+      "__name__": "kube_pod_container_info",
+      "ani_cluster_id": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+      "container": "workspace",
+      "container_id": "containerd://2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60",
+      "endpoint": "http",
+      "image": "sha256:10d013e0b5980b92e7ae424f82c0d9337f89cfe8e76b03279943ee1cda944c58",
+      "image_id": "172.16.101.10:30003/ani-platform-images/formal-gpu-cuda@sha256:4566f1a53ee7b0bc40db4bb5b140ea931d0a13f3e6c4b8a8bbc8cb91838ee34a",
+      "image_spec": "172.16.101.10:30003/ani-platform-images/formal-gpu-cuda@sha256:4566f1a53ee7b0bc40db4bb5b140ea931d0a13f3e6c4b8a8bbc8cb91838ee34a",
+      "instance": "10.16.1.2:8080",
+      "job": "kube-state-metrics",
+      "namespace": "tenant-46936e6b-3a3b-4868-8d88-6833665abb70",
+      "pod": "instance-90e2c65e-3601-44b6-9ef1-a7496c07a183-0",
+      "service": "ani-metrics-kube-state-metrics",
+      "uid": "7ea9b16e-c89b-4e6c-b548-d13040b606e5"
+    },
+    "value": [
+      1792401279,
+      "1"
+    ]
+  },
+  "kube_pod_container_status_running": {
+    "metric": {
+      "__name__": "kube_pod_container_status_running",
+      "ani_cluster_id": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+      "container": "workspace",
+      "endpoint": "http",
+      "instance": "10.16.1.2:8080",
+      "job": "kube-state-metrics",
+      "namespace": "tenant-46936e6b-3a3b-4868-8d88-6833665abb70",
+      "pod": "instance-90e2c65e-3601-44b6-9ef1-a7496c07a183-0",
+      "service": "ani-metrics-kube-state-metrics",
+      "uid": "7ea9b16e-c89b-4e6c-b548-d13040b606e5"
+    },
+    "value": [
+      1792401279,
+      "1"
+    ]
+  },
+  "kube_pod_labels": {
+    "metric": {
+      "__name__": "kube_pod_labels",
+      "ani_cluster_id": "0fcdb8b1-22bf-4528-af59-82843dc88f21",
+      "container": "kube-state-metrics",
+      "endpoint": "http",
+      "instance": "10.16.1.2:8080",
+      "job": "kube-state-metrics",
+      "label_ani_io_instance_id": "90e2c65e-3601-44b6-9ef1-a7496c07a183",
+      "label_ani_io_tenant_id": "46936e6b-3a3b-4868-8d88-6833665abb70",
+      "namespace": "tenant-46936e6b-3a3b-4868-8d88-6833665abb70",
+      "pod": "instance-90e2c65e-3601-44b6-9ef1-a7496c07a183-0",
+      "service": "ani-metrics-kube-state-metrics",
+      "uid": "7ea9b16e-c89b-4e6c-b548-d13040b606e5"
+    },
+    "value": [
+      1792401279,
+      "1"
+    ]
+  }
+}
