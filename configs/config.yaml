@@ -2,9 +2,23 @@ server:
   grpc:
     network: "${SERVER_GRPC_NETWORK:tcp}"
     addr: "${SERVER_GRPC_ADDR:127.0.0.1:19090}"
-    timeout: "${SERVER_GRPC_TIMEOUT:1s}"
+    timeout: "${SERVER_GRPC_TIMEOUT:6s}"
   admin:
     network: "${SERVER_ADMIN_NETWORK:tcp}"
     addr: "${SERVER_ADMIN_ADDR:127.0.0.1:19091}"
     timeout: "${SERVER_ADMIN_TIMEOUT:1s}"
-  shutdown_timeout: "${SERVER_SHUTDOWN_TIMEOUT:5s}"
+  shutdown_timeout: "${SERVER_SHUTDOWN_TIMEOUT:10s}"
+governance:
+  tls_cert_file: "${GOVERNANCE_TLS_CERT_FILE:/etc/ani-observability/tls/tls.crt}"
+  tls_key_file: "${GOVERNANCE_TLS_KEY_FILE:/etc/ani-observability/tls/tls.key}"
+  client_ca_file: "${GOVERNANCE_CLIENT_CA_FILE:/etc/ani-observability/tls/ca.crt}"
+monitoring:
+  prometheus_timeout: 4s
+  max_concurrent_requests: 16
+  max_concurrent_requests_per_tenant: 4
+  datasources:
+    - cluster_id: "0fcdb8b1-22bf-4528-af59-82843dc88f21"
+      address: "http://ani-metrics-prometheus.ani-observability.svc:9090"
+      bearer_token_file: ""
+      tls_ca_file: ""
+      tls_server_name: ""

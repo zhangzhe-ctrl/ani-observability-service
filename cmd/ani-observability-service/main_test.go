@@ -3,7 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,6 +71,38 @@ func TestMainProcessHandlesSignalAndClosesListeners(t *testing.T) {
 	}
 	commandDir := filepath.Dir(filename)
 	repositoryRoot := filepath.Clean(filepath.Join(commandDir, "..", ".."))
+	material := newRuntimeTLS(t)
+	prometheus := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"status":"success","data":{"resultType":"vector","result":[]}}`)
+	}))
+	defer prometheus.Close()
+	configDirectory := t.TempDir()
+	configText := fmt.Sprintf(`server:
+  grpc:
+    network: tcp
+    addr: "${SERVER_GRPC_ADDR:127.0.0.1:19090}"
+    timeout: 6s
+  admin:
+    network: tcp
+    addr: "${SERVER_ADMIN_ADDR:127.0.0.1:19091}"
+    timeout: 1s
+  shutdown_timeout: 2s
+governance:
+  tls_cert_file: %q
+  tls_key_file: %q
+  client_ca_file: %q
+monitoring:
+  prometheus_timeout: 4s
+  max_concurrent_requests: 16
+  max_concurrent_requests_per_tenant: 4
+  datasources:
+    - cluster_id: 0fcdb8b1-22bf-4528-af59-82843dc88f21
+      address: %q
+`, material.serverCert, material.serverKey, material.ca, prometheus.URL)
+	if err := os.WriteFile(filepath.Join(configDirectory, "config.yaml"), []byte(configText), 0600); err != nil {
+		t.Fatal(err)
+	}
 	binaryPath := filepath.Join(t.TempDir(), "service")
 	build := exec.Command("go", "build", "-trimpath", "-o", binaryPath, ".")
 	build.Dir = commandDir
@@ -80,7 +116,7 @@ func TestMainProcessHandlesSignalAndClosesListeners(t *testing.T) {
 		adminAddress = reserveAddress(t)
 	}
 	var stdout, stderr bytes.Buffer
-	process := exec.Command(binaryPath, "-conf", filepath.Join(repositoryRoot, "configs"))
+	process := exec.Command(binaryPath, "-conf", configDirectory)
 	process.Dir = repositoryRoot
 	process.Stdout = &stdout
 	process.Stderr = &stderr
@@ -102,7 +138,7 @@ func TestMainProcessHandlesSignalAndClosesListeners(t *testing.T) {
 	})
 
 	waitForHTTP(t, "http://"+adminAddress+"/readyz")
-	assertProductionGRPCHealth(t, grpcAddress)
+	assertProductionMonitoring(t, grpcAddress, material.client)
 	if err := process.Process.Signal(os.Interrupt); err != nil {
 		t.Fatalf("send interrupt: %v", err)
 	}
@@ -119,6 +155,11 @@ func TestMainProcessHandlesSignalAndClosesListeners(t *testing.T) {
 	if response, err := client.Get("http://" + adminAddress + "/healthz"); err == nil {
 		response.Body.Close()
 		t.Fatalf("admin listener remained reachable after process exit: %s", response.Status)
+	}
+	connection, err := net.DialTimeout("tcp", grpcAddress, 250*time.Millisecond)
+	if err == nil {
+		connection.Close()
+		t.Fatal("monitoring listener remained reachable after process exit")
 	}
 }
 

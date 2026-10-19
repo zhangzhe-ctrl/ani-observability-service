@@ -25,6 +25,8 @@ const (
 type Bootstrap struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Server        *Server                `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
+	Governance    *Governance            `protobuf:"bytes,2,opt,name=governance,proto3" json:"governance,omitempty"`
+	Monitoring    *Monitoring            `protobuf:"bytes,3,opt,name=monitoring,proto3" json:"monitoring,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,6 +68,224 @@ func (x *Bootstrap) GetServer() *Server {
 	return nil
 }
 
+func (x *Bootstrap) GetGovernance() *Governance {
+	if x != nil {
+		return x.Governance
+	}
+	return nil
+}
+
+func (x *Bootstrap) GetMonitoring() *Monitoring {
+	if x != nil {
+		return x.Monitoring
+	}
+	return nil
+}
+
+type Governance struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TlsCertFile   string                 `protobuf:"bytes,1,opt,name=tls_cert_file,json=tlsCertFile,proto3" json:"tls_cert_file,omitempty"`
+	TlsKeyFile    string                 `protobuf:"bytes,2,opt,name=tls_key_file,json=tlsKeyFile,proto3" json:"tls_key_file,omitempty"`
+	ClientCaFile  string                 `protobuf:"bytes,3,opt,name=client_ca_file,json=clientCaFile,proto3" json:"client_ca_file,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Governance) Reset() {
+	*x = Governance{}
+	mi := &file_conf_v1_conf_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Governance) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Governance) ProtoMessage() {}
+
+func (x *Governance) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Governance.ProtoReflect.Descriptor instead.
+func (*Governance) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Governance) GetTlsCertFile() string {
+	if x != nil {
+		return x.TlsCertFile
+	}
+	return ""
+}
+
+func (x *Governance) GetTlsKeyFile() string {
+	if x != nil {
+		return x.TlsKeyFile
+	}
+	return ""
+}
+
+func (x *Governance) GetClientCaFile() string {
+	if x != nil {
+		return x.ClientCaFile
+	}
+	return ""
+}
+
+type Monitoring struct {
+	state                          protoimpl.MessageState `protogen:"open.v1"`
+	PrometheusTimeout              *durationpb.Duration   `protobuf:"bytes,1,opt,name=prometheus_timeout,json=prometheusTimeout,proto3" json:"prometheus_timeout,omitempty"`
+	MaxConcurrentRequests          uint32                 `protobuf:"varint,2,opt,name=max_concurrent_requests,json=maxConcurrentRequests,proto3" json:"max_concurrent_requests,omitempty"`
+	MaxConcurrentRequestsPerTenant uint32                 `protobuf:"varint,3,opt,name=max_concurrent_requests_per_tenant,json=maxConcurrentRequestsPerTenant,proto3" json:"max_concurrent_requests_per_tenant,omitempty"`
+	Datasources                    []*Datasource          `protobuf:"bytes,4,rep,name=datasources,proto3" json:"datasources,omitempty"`
+	unknownFields                  protoimpl.UnknownFields
+	sizeCache                      protoimpl.SizeCache
+}
+
+func (x *Monitoring) Reset() {
+	*x = Monitoring{}
+	mi := &file_conf_v1_conf_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Monitoring) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Monitoring) ProtoMessage() {}
+
+func (x *Monitoring) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Monitoring.ProtoReflect.Descriptor instead.
+func (*Monitoring) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Monitoring) GetPrometheusTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.PrometheusTimeout
+	}
+	return nil
+}
+
+func (x *Monitoring) GetMaxConcurrentRequests() uint32 {
+	if x != nil {
+		return x.MaxConcurrentRequests
+	}
+	return 0
+}
+
+func (x *Monitoring) GetMaxConcurrentRequestsPerTenant() uint32 {
+	if x != nil {
+		return x.MaxConcurrentRequestsPerTenant
+	}
+	return 0
+}
+
+func (x *Monitoring) GetDatasources() []*Datasource {
+	if x != nil {
+		return x.Datasources
+	}
+	return nil
+}
+
+type Datasource struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ClusterId       string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	Address         string                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	BearerTokenFile string                 `protobuf:"bytes,3,opt,name=bearer_token_file,json=bearerTokenFile,proto3" json:"bearer_token_file,omitempty"`
+	TlsCaFile       string                 `protobuf:"bytes,4,opt,name=tls_ca_file,json=tlsCaFile,proto3" json:"tls_ca_file,omitempty"`
+	TlsServerName   string                 `protobuf:"bytes,5,opt,name=tls_server_name,json=tlsServerName,proto3" json:"tls_server_name,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Datasource) Reset() {
+	*x = Datasource{}
+	mi := &file_conf_v1_conf_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Datasource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Datasource) ProtoMessage() {}
+
+func (x *Datasource) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_v1_conf_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Datasource.ProtoReflect.Descriptor instead.
+func (*Datasource) Descriptor() ([]byte, []int) {
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Datasource) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+func (x *Datasource) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *Datasource) GetBearerTokenFile() string {
+	if x != nil {
+		return x.BearerTokenFile
+	}
+	return ""
+}
+
+func (x *Datasource) GetTlsCaFile() string {
+	if x != nil {
+		return x.TlsCaFile
+	}
+	return ""
+}
+
+func (x *Datasource) GetTlsServerName() string {
+	if x != nil {
+		return x.TlsServerName
+	}
+	return ""
+}
+
 type Server struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Grpc            *Server_GRPC           `protobuf:"bytes,1,opt,name=grpc,proto3" json:"grpc,omitempty"`
@@ -77,7 +297,7 @@ type Server struct {
 
 func (x *Server) Reset() {
 	*x = Server{}
-	mi := &file_conf_v1_conf_proto_msgTypes[1]
+	mi := &file_conf_v1_conf_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -89,7 +309,7 @@ func (x *Server) String() string {
 func (*Server) ProtoMessage() {}
 
 func (x *Server) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[1]
+	mi := &file_conf_v1_conf_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -102,7 +322,7 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server.ProtoReflect.Descriptor instead.
 func (*Server) Descriptor() ([]byte, []int) {
-	return file_conf_v1_conf_proto_rawDescGZIP(), []int{1}
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Server) GetGrpc() *Server_GRPC {
@@ -137,7 +357,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_conf_v1_conf_proto_msgTypes[2]
+	mi := &file_conf_v1_conf_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -149,7 +369,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[2]
+	mi := &file_conf_v1_conf_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -162,7 +382,7 @@ func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_GRPC.ProtoReflect.Descriptor instead.
 func (*Server_GRPC) Descriptor() ([]byte, []int) {
-	return file_conf_v1_conf_proto_rawDescGZIP(), []int{1, 0}
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *Server_GRPC) GetNetwork() string {
@@ -197,7 +417,7 @@ type Server_Admin struct {
 
 func (x *Server_Admin) Reset() {
 	*x = Server_Admin{}
-	mi := &file_conf_v1_conf_proto_msgTypes[3]
+	mi := &file_conf_v1_conf_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -209,7 +429,7 @@ func (x *Server_Admin) String() string {
 func (*Server_Admin) ProtoMessage() {}
 
 func (x *Server_Admin) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_v1_conf_proto_msgTypes[3]
+	mi := &file_conf_v1_conf_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -222,7 +442,7 @@ func (x *Server_Admin) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Server_Admin.ProtoReflect.Descriptor instead.
 func (*Server_Admin) Descriptor() ([]byte, []int) {
-	return file_conf_v1_conf_proto_rawDescGZIP(), []int{1, 1}
+	return file_conf_v1_conf_proto_rawDescGZIP(), []int{4, 1}
 }
 
 func (x *Server_Admin) GetNetwork() string {
@@ -250,9 +470,35 @@ var File_conf_v1_conf_proto protoreflect.FileDescriptor
 
 const file_conf_v1_conf_proto_rawDesc = "" +
 	"\n" +
-	"\x12conf/v1/conf.proto\x12\aconf.v1\x1a\x1egoogle/protobuf/duration.proto\"4\n" +
+	"\x12conf/v1/conf.proto\x12\aconf.v1\x1a\x1egoogle/protobuf/duration.proto\"\x9e\x01\n" +
 	"\tBootstrap\x12'\n" +
-	"\x06server\x18\x01 \x01(\v2\x0f.conf.v1.ServerR\x06server\"\xfc\x02\n" +
+	"\x06server\x18\x01 \x01(\v2\x0f.conf.v1.ServerR\x06server\x123\n" +
+	"\n" +
+	"governance\x18\x02 \x01(\v2\x13.conf.v1.GovernanceR\n" +
+	"governance\x123\n" +
+	"\n" +
+	"monitoring\x18\x03 \x01(\v2\x13.conf.v1.MonitoringR\n" +
+	"monitoring\"x\n" +
+	"\n" +
+	"Governance\x12\"\n" +
+	"\rtls_cert_file\x18\x01 \x01(\tR\vtlsCertFile\x12 \n" +
+	"\ftls_key_file\x18\x02 \x01(\tR\n" +
+	"tlsKeyFile\x12$\n" +
+	"\x0eclient_ca_file\x18\x03 \x01(\tR\fclientCaFile\"\x91\x02\n" +
+	"\n" +
+	"Monitoring\x12H\n" +
+	"\x12prometheus_timeout\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x11prometheusTimeout\x126\n" +
+	"\x17max_concurrent_requests\x18\x02 \x01(\rR\x15maxConcurrentRequests\x12J\n" +
+	"\"max_concurrent_requests_per_tenant\x18\x03 \x01(\rR\x1emaxConcurrentRequestsPerTenant\x125\n" +
+	"\vdatasources\x18\x04 \x03(\v2\x13.conf.v1.DatasourceR\vdatasources\"\xb9\x01\n" +
+	"\n" +
+	"Datasource\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x01 \x01(\tR\tclusterId\x12\x18\n" +
+	"\aaddress\x18\x02 \x01(\tR\aaddress\x12*\n" +
+	"\x11bearer_token_file\x18\x03 \x01(\tR\x0fbearerTokenFile\x12\x1e\n" +
+	"\vtls_ca_file\x18\x04 \x01(\tR\ttlsCaFile\x12&\n" +
+	"\x0ftls_server_name\x18\x05 \x01(\tR\rtlsServerName\"\xfc\x02\n" +
 	"\x06Server\x12(\n" +
 	"\x04grpc\x18\x01 \x01(\v2\x14.conf.v1.Server.GRPCR\x04grpc\x12+\n" +
 	"\x05admin\x18\x02 \x01(\v2\x15.conf.v1.Server.AdminR\x05admin\x12D\n" +
@@ -278,26 +524,33 @@ func file_conf_v1_conf_proto_rawDescGZIP() []byte {
 	return file_conf_v1_conf_proto_rawDescData
 }
 
-var file_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_conf_v1_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_conf_v1_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: conf.v1.Bootstrap
-	(*Server)(nil),              // 1: conf.v1.Server
-	(*Server_GRPC)(nil),         // 2: conf.v1.Server.GRPC
-	(*Server_Admin)(nil),        // 3: conf.v1.Server.Admin
-	(*durationpb.Duration)(nil), // 4: google.protobuf.Duration
+	(*Governance)(nil),          // 1: conf.v1.Governance
+	(*Monitoring)(nil),          // 2: conf.v1.Monitoring
+	(*Datasource)(nil),          // 3: conf.v1.Datasource
+	(*Server)(nil),              // 4: conf.v1.Server
+	(*Server_GRPC)(nil),         // 5: conf.v1.Server.GRPC
+	(*Server_Admin)(nil),        // 6: conf.v1.Server.Admin
+	(*durationpb.Duration)(nil), // 7: google.protobuf.Duration
 }
 var file_conf_v1_conf_proto_depIdxs = []int32{
-	1, // 0: conf.v1.Bootstrap.server:type_name -> conf.v1.Server
-	2, // 1: conf.v1.Server.grpc:type_name -> conf.v1.Server.GRPC
-	3, // 2: conf.v1.Server.admin:type_name -> conf.v1.Server.Admin
-	4, // 3: conf.v1.Server.shutdown_timeout:type_name -> google.protobuf.Duration
-	4, // 4: conf.v1.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	4, // 5: conf.v1.Server.Admin.timeout:type_name -> google.protobuf.Duration
-	6, // [6:6] is the sub-list for method output_type
-	6, // [6:6] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	4,  // 0: conf.v1.Bootstrap.server:type_name -> conf.v1.Server
+	1,  // 1: conf.v1.Bootstrap.governance:type_name -> conf.v1.Governance
+	2,  // 2: conf.v1.Bootstrap.monitoring:type_name -> conf.v1.Monitoring
+	7,  // 3: conf.v1.Monitoring.prometheus_timeout:type_name -> google.protobuf.Duration
+	3,  // 4: conf.v1.Monitoring.datasources:type_name -> conf.v1.Datasource
+	5,  // 5: conf.v1.Server.grpc:type_name -> conf.v1.Server.GRPC
+	6,  // 6: conf.v1.Server.admin:type_name -> conf.v1.Server.Admin
+	7,  // 7: conf.v1.Server.shutdown_timeout:type_name -> google.protobuf.Duration
+	7,  // 8: conf.v1.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	7,  // 9: conf.v1.Server.Admin.timeout:type_name -> google.protobuf.Duration
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_conf_v1_conf_proto_init() }
@@ -311,7 +564,7 @@ func file_conf_v1_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_v1_conf_proto_rawDesc), len(file_conf_v1_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ani-observability-service
+  namespace: ani-observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ani-observability-service
+  template:
+    metadata:
+      labels:
+        app: ani-observability-service
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: observability
+          image: 172.16.101.10:5000/ani-observability-service@sha256:98f89b379e9375dcb665b37d409a4e0e332876e77093bbb6ebab72fc87153a6c
+          imagePullPolicy: Never
+          ports:
+            - name: grpc
+              containerPort: 19090
+            - name: admin
+              containerPort: 19091
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: admin
+            periodSeconds: 5
+            timeoutSeconds: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: admin
+            periodSeconds: 10
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: configs
+              mountPath: /etc/ani-observability/configs
+              readOnly: true
+            - name: tls
+              mountPath: /etc/ani-observability/tls
+              readOnly: true
+      volumes:
+        - name: configs
+          configMap:
+            name: ani-observability-config
+        - name: tls
+          secret:
+            secretName: ani-observability-server-tls
+            defaultMode: 0440

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ani-observability-config
+  namespace: ani-observability
+data:
+  config.yaml: |
+    server:
+      grpc:
+        network: tcp
+        addr: 0.0.0.0:19090
+        timeout: 6s
+      admin:
+        network: tcp
+        addr: 0.0.0.0:19091
+        timeout: 1s
+      shutdown_timeout: 10s
+    governance:
+      tls_cert_file: /etc/ani-observability/tls/tls.crt
+      tls_key_file: /etc/ani-observability/tls/tls.key
+      client_ca_file: /etc/ani-observability/tls/ca.crt
+    monitoring:
+      prometheus_timeout: 4s
+      max_concurrent_requests: 16
+      max_concurrent_requests_per_tenant: 4
+      datasources:
+        - cluster_id: 0fcdb8b1-22bf-4528-af59-82843dc88f21
+          address: http://ani-metrics-prometheus.ani-observability.svc:9090
+          bearer_token_file: ""
+          tls_ca_file: ""
+          tls_server_name: ""

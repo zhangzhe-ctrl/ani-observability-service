@@ -1,0 +1,43 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ani-observability-server-tls
+  namespace: ani-observability
+spec:
+  secretName: ani-observability-server-tls
+  duration: 2160h
+  renewBefore: 360h
+  dnsNames:
+    - ani-observability-service
+  issuerRef:
+    kind: ClusterIssuer
+    name: ani-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - server auth
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ani-observability-governance-client-tls
+  namespace: ani-system
+spec:
+  secretName: ani-observability-governance-client-tls
+  duration: 2160h
+  renewBefore: 360h
+  dnsNames:
+    - ani-governance
+  issuerRef:
+    kind: ClusterIssuer
+    name: ani-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - client auth
