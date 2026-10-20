@@ -62,6 +62,22 @@ cadvisor:
   cgroupfs_live_verified: false
   targets_after_reload: "one KSM and three cAdvisor targets all up, all 15s"
   raw_cluster_label_after_reload: "497 CPU series all carry the confirmed Resource cluster UUID"
+network:
+  source_metrics: [container_network_receive_bytes_total, container_network_transmit_bytes_total]
+  interface: eth0
+  interface_rationale: "observed pod main interface under the current CNI; 112/112 non-hostNetwork pods expose exactly one eth0 series; hostNetwork pods expose none"
+  semantics: pod_netns_level
+  network_pod_level_semantics: true
+  pod_level_semantics_note: "sidecar traffic inside the pod netns is included; container-level precision is not claimed"
+  cni_dependency: "eth0 is the main interface under the current CNI; changing CNI requires re-verification; failure mode is zero eth0 series and network NO_DATA while CPU/memory remain unaffected"
+  coverage_promise: none
+  coverage_note: "values exist only while the instance pod has an eth0 interface; workspace-instance live confirmation pending (no Resource instance exists since phase-1 deletion)"
+  identity: "pod_uid is extracted from the cgroup id only; runtime_container_id and container are projected from ani:instance:binding, never from the sandbox CID inside id"
+  uniqueness_group: [ani_cluster_id, namespace, pod, pod_uid]
+  unit: bytes_per_second
+  phase2_rules_loaded: true
+  phase2_rules_applied_at: "2026-10-20"
+  phase2_live_verification: "12 rules health=ok no lastError; helpers 112/112 of raw eth0 series with pod_uid extracted, max sample age < 30s group interval; canonicals empty (no workspace instance exists)"
 freshness:
   maximum_original_sample_age_seconds: 45
   inclusive_boundary: true
@@ -75,8 +91,8 @@ evidence:
   fixture_profile: tests/fixtures/real-systemd-containerd-profile.json
   fixture_business_identities: synthetic_test_only
   promtool_version: 3.11.3
-  promtool_check: PASS_8_rules
-  promtool_fixture: PASS_30_cases
+  promtool_check: PASS_12_rules
+  promtool_fixture: PASS_41_cases
   live_resource_instance:
     creation_path: normal_authenticated_Gov_Resource_create
     specification_kind: GPU_instance_CPU_and_memory_metrics_only

@@ -38,6 +38,29 @@ selector, PVC or TSDB is modified. Prometheus tenant network isolation, writer
 authentication and receiver restrictions were explicitly deferred by the user.
 These changes do not claim that boundary is secure.
 
+## Phase 2 increment: instance network rate metrics (2026-10-20)
+
+The same rule group now records four additional rules. The two
+`ani:instance:network_{receive,transmit}_source` helpers sit **before**
+`ani:instance:binding` (same-group rules evaluate in file order, which keeps every
+`timestamp(helper) == time()` snapshot guard satisfiable), and the two
+`ani_instance_network_{receive,transmit}_bytes_per_second` canonicals are appended
+last. The helpers compute `rate(...[5m])` over
+`container_network_{receive,transmit}_bytes_total{interface="eth0"}`, extract only
+`pod_uid` from the cgroup `id` (the `id` points at the pause sandbox, so
+`runtime_container_id` and `container` are projected from the binding through the
+4-key join `ani_cluster_id,namespace,pod,pod_uid`), and the canonical `sum by`
+projects the same seven labels as CPU/memory. Unit is `bytes_per_second`.
+
+Verified on ani-01: promtool `3.11.3` check (12 rules) and 41 fixtures PASS;
+the applied PrometheusRule reports all 12 rules `health=ok` with no `lastError`;
+each helper produces 112 current series, exactly matching the raw
+`interface="eth0"` count, with `pod_uid` extracted and maximum sample age below
+the 30s group interval. The canonicals are empty because no workspace instance
+exists; end-to-end `verify.sh` acceptance stays deferred until one is created.
+Pod-level semantics (sidecar traffic included), the conditional coverage wording
+and the eth0/CNI re-verification contract are recorded in `source-profile.yaml`.
+
 ## Verified baseline and field changes
 
 Prometheus `3.11.3`, Operator `0.90.1`, KSM `2.19.0`, Kubernetes `1.35.8`, and

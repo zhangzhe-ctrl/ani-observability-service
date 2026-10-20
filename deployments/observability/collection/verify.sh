@@ -69,19 +69,29 @@ for sample in range(int(os.environ['SNAPSHOTS'])):
     require(all(x['health']=='up' and x.get('scrapeInterval')=='15s' for x in relevant),'selected scrape targets must be up with 15s intervals')
     rules=get('/api/v1/rules'); save(prefix+'-rules.json',rules)
     group=[g for g in rules['data']['groups'] if g['name']=='ani-instance-metrics-v1']
-    require(len(group)==1 and len(group[0]['rules'])==8,'all eight ordered recording rules must load')
+    require(len(group)==1 and len(group[0]['rules'])==12,'all twelve ordered recording rules must load')
     require(all(r.get('health')=='ok' and not r.get('lastError') for r in group[0]['rules']),'recording rule evaluation failed')
+    network_names=('container_network_receive_bytes_total','container_network_transmit_bytes_total')
     raw_names=['container_cpu_usage_seconds_total','container_memory_working_set_bytes','kube_pod_container_info','kube_pod_container_status_running','kube_pod_labels']
+    raw_names.extend(network_names)
     for name in raw_names:
         selector=name+'{namespace='+json.dumps(ns)+',pod='+json.dumps(pod['metadata']['name'])+'}'
-        if name=='container_cpu_usage_seconds_total': selector=selector[:-1]+',container="workspace",cpu="total"}'
+        if name in network_names:
+            # Pod netns series carry no container label and their id points at the pause sandbox.
+            selector=selector[:-1]+',interface="eth0"}'
+        elif name=='container_cpu_usage_seconds_total': selector=selector[:-1]+',container="workspace",cpu="total"}'
         elif name!='kube_pod_labels': selector=selector[:-1]+',container="workspace"}'
         data=query(selector,t); ages=query('time()-timestamp('+selector+')',t)
         save(prefix+'-'+name+'.json',data); save(prefix+'-'+name+'-ages.json',ages)
         rows=data['data']['result']; require(len(rows)==1,name+' must have exactly one raw source before transport label projection')
         metric=rows[0]['metric']; require(metric.get('ani_cluster_id')==cluster,name+' has wrong cluster label')
         require(len(ages['data']['result'])==1 and 0<=float(ages['data']['result'][0]['value'][1])<=45,name+' is stale')
-        if name.startswith('container_'):
+        if name in network_names:
+            # Pod-level series: compare the pod UID parsed from the cgroup id only; never the sandbox CID.
+            # len(rows)==1 above already proves no more than one eth0 series for this 4-key pod identity.
+            parsed=parse_id(metric.get('id',''))
+            require(parsed is not None and parsed[0]==uid,name+' Pod UID differs from current Resource Pod')
+        elif name.startswith('container_'):
             require(parse_id(metric.get('id',''))==(uid,cid),name+' UID/CID differs from current Resource Pod')
         else:
             require(metric.get('uid')==uid,name+' Pod UID differs')
@@ -90,7 +100,7 @@ for sample in range(int(os.environ['SNAPSHOTS'])):
         if name=='kube_pod_labels':
             require(metric.get('label_ani_io_tenant_id')==tenant and metric.get('label_ani_io_instance_id')==instance,'KSM owner labels differ from persisted scope')
     values={}
-    for name in ['ani_instance_cpu_usage_cores','ani_instance_memory_working_set_bytes']:
+    for name in ['ani_instance_cpu_usage_cores','ani_instance_memory_working_set_bytes','ani_instance_network_receive_bytes_per_second','ani_instance_network_transmit_bytes_per_second']:
         selector=name+'{ani_cluster_id='+json.dumps(cluster)+',ani_tenant_id='+json.dumps(tenant)+',ani_instance_id='+json.dumps(instance)+',namespace='+json.dumps(ns)+',container="workspace"}'
         data=query(selector+' and (time()-timestamp('+selector+')<=45)',t); save(prefix+'-'+name+'.json',data)
         rows=data['data']['result']; require(len(rows)==1,name+' needs exactly one current canonical source')

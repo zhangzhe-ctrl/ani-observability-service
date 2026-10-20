@@ -17,3 +17,14 @@ container_cpu_usage_seconds_total{container="workspace",cpu="total",id!~"/kubepo
 kube_pod_container_info{container="workspace",container_id!~"containerd://[0-9a-f]{64}"}
 # Current cAdvisor identities lacking matching KSM runtime identity.
 (ani:instance:cpu_source and (timestamp(ani:instance:cpu_source) == time())) unless on (ani_cluster_id,namespace,pod,pod_uid,runtime_container_id,container) (ani:instance:binding and (timestamp(ani:instance:binding) == time()))
+# Network helpers are Pod-level and carry no runtime_container_id/container, so the
+# identity-unless guard must use the 4-key group; a 6-key on() would never match and
+# would falsely report every series.
+count by (ani_cluster_id, namespace, pod, pod_uid) (ani:instance:network_receive_source and (timestamp(ani:instance:network_receive_source) == time())) > 1
+count by (ani_cluster_id, namespace, pod, pod_uid) (ani:instance:network_transmit_source and (timestamp(ani:instance:network_transmit_source) == time())) > 1
+time() - timestamp(container_network_receive_bytes_total{interface="eth0"})
+time() - timestamp(container_network_transmit_bytes_total{interface="eth0"})
+container_network_receive_bytes_total{interface="eth0",id!~"/kubepods\\.slice/(?:kubepods-(?:besteffort|burstable)\\.slice/)?kubepods(?:-(?:besteffort|burstable))?-pod[0-9a-f]{8}_[0-9a-f]{4}_[0-9a-f]{4}_[0-9a-f]{4}_[0-9a-f]{12}\\.slice/cri-containerd-[0-9a-f]{64}\\.scope|/kubepods/(?:besteffort/|burstable/)?pod[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{64}"}
+container_network_transmit_bytes_total{interface="eth0",id!~"/kubepods\\.slice/(?:kubepods-(?:besteffort|burstable)\\.slice/)?kubepods(?:-(?:besteffort|burstable))?-pod[0-9a-f]{8}_[0-9a-f]{4}_[0-9a-f]{4}_[0-9a-f]{4}_[0-9a-f]{12}\\.slice/cri-containerd-[0-9a-f]{64}\\.scope|/kubepods/(?:besteffort/|burstable/)?pod[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/[0-9a-f]{64}"}
+(ani:instance:network_receive_source and (timestamp(ani:instance:network_receive_source) == time())) unless on (ani_cluster_id,namespace,pod,pod_uid) (ani:instance:binding and (timestamp(ani:instance:binding) == time()))
+(ani:instance:network_transmit_source and (timestamp(ani:instance:network_transmit_source) == time())) unless on (ani_cluster_id,namespace,pod,pod_uid) (ani:instance:binding and (timestamp(ani:instance:binding) == time()))

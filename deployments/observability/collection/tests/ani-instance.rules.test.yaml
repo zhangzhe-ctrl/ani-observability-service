@@ -1267,6 +1267,434 @@
           ]
         }
       ]
+    },
+    {
+      "name": "network-systemd-normal-both-directions",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+60x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_instance_network_receive_bytes_per_second\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "expr": "ani_instance_network_transmit_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_instance_network_transmit_bytes_per_second\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 4
+            }
+          ]
+        },
+        {
+          "expr": "sum by(ani_cluster_id,ani_tenant_id,ani_instance_id,namespace,pod_uid,runtime_container_id,container) ((((ani:instance:network_receive_source) * on(ani_cluster_id,namespace,pod,pod_uid) group_left(ani_tenant_id,ani_instance_id,runtime_container_id,container) (ani:instance:binding and (timestamp(ani:instance:binding) == time())))))",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "network-hostnetwork-no-eth0",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"lo\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"lo\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+60x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "ani_instance_network_transmit_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-raw-stale-cannot-be-refreshed",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0 30 _ _ _ _ _"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0 60 _ _ _ _ _"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_instance_network_receive_bytes_per_second and (time()-timestamp(ani_instance_network_receive_bytes_per_second)<=45))",
+          "eval_time": "1m30s",
+          "exp_samples": []
+        },
+        {
+          "expr": "count(ani_instance_network_transmit_bytes_per_second and (time()-timestamp(ani_instance_network_transmit_bytes_per_second)<=45))",
+          "eval_time": "1m30s",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-45-seconds-is-inclusive",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0 30 _ _ _ _ _"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_instance_network_receive_bytes_per_second and (time()-timestamp(ani_instance_network_receive_bytes_per_second)<=45))",
+          "eval_time": "1m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "1m30s",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-pod-level-duplicate-is-suppressed",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor-duplicate\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+60x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor-duplicate\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+60x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "ani_instance_network_transmit_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-binding-missing",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+60x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "ani_instance_network_transmit_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-binding-non-workspace-container",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"sidecar\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"sidecar\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-binding-stale",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1 _ _ _ _ _ _"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "1m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-cgroupfs-branch",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods/burstable/pod44444444-4444-4444-8444-444444444444/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods/burstable/pod44444444-4444-4444-8444-444444444444/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+60x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_instance_network_receive_bytes_per_second\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "expr": "ani_instance_network_transmit_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_instance_network_transmit_bytes_per_second\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "network-unknown-path-is-rejected",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/unrecognized/pod44444444-4444-4444-8444-444444444444/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+30x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "network-rate-numeric-precision",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_network_receive_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+4500x20"
+        },
+        {
+          "series": "container_network_transmit_bytes_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",interface=\"eth0\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "0+4515x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_instance_network_receive_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_instance_network_receive_bytes_per_second\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 300
+            }
+          ]
+        },
+        {
+          "expr": "ani_instance_network_transmit_bytes_per_second",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_instance_network_transmit_bytes_per_second\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"tenant-a\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"workspace\"}",
+              "value": 301
+            }
+          ]
+        }
+      ]
     }
   ]
 }
