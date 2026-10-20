@@ -91,6 +91,44 @@ func TestInvalidQueryNeverCallsProvider(t *testing.T) {
 	}
 }
 
+func TestMetricCountLimitAndNetworkCatalog(t *testing.T) {
+	for _, code := range []string{NetworkReceive, NetworkTransmit} {
+		m, ok := Lookup(code)
+		if !ok || m.Unit != "bytes_per_second" || m.Record == "" {
+			t.Fatalf("network catalog entry wrong: %+v ok=%v", m, ok)
+		}
+	}
+	three := []string{CPU, Memory, NetworkReceive}
+	four := []string{CPU, Memory, NetworkReceive, NetworkTransmit}
+	for _, codes := range [][]string{three, four} {
+		q := validQuery()
+		q.Codes = codes
+		u := NewUseCase(providerFunc(func(_ context.Context, _ Query, _ Metric) ([]Source, error) {
+			return nil, nil
+		}), func() time.Time { return q.End })
+		result, err := u.Execute(context.Background(), q)
+		if err != nil {
+			t.Fatalf("%d codes rejected: %v", len(codes), err)
+		}
+		if len(result.Series) != len(codes) {
+			t.Fatalf("series count %d != %d", len(result.Series), len(codes))
+		}
+		for i, code := range codes {
+			if result.Series[i].Code != code {
+				t.Fatalf("series[%d].Code=%s want %s", i, result.Series[i].Code, code)
+			}
+		}
+	}
+	q := validQuery()
+	q.Codes = []string{CPU, Memory, NetworkReceive, NetworkTransmit, CPU}
+	u := NewUseCase(providerFunc(func(context.Context, Query, Metric) ([]Source, error) {
+		t.Fatal("five-code query reached provider")
+		return nil, nil
+	}), func() time.Time { return q.End })
+	_, err := u.Execute(context.Background(), q)
+	reason(t, err, InvalidQuery)
+}
+
 func TestLatestCapturesOneClockAndKeepsOrder(t *testing.T) {
 	q := validQuery()
 	q.Latest = true
