@@ -52,7 +52,7 @@ func scope(v *targetapi.TargetScope) target.Scope {
 	if v == nil {
 		return target.Scope{}
 	}
-	return target.Scope{Kind: int32(v.Kind), TenantID: v.TenantId, InstanceID: v.InstanceId, ClusterID: v.ClusterId, Namespace: v.Namespace, ContainerName: v.ContainerName}
+	return target.Scope{Kind: int32(v.Kind), TenantID: v.TenantId, InstanceID: v.InstanceId, ClusterID: v.ClusterId, Namespace: v.Namespace, ContainerName: v.ContainerName, PodUID: v.PodUid}
 }
 
 func series(input []biz.Series) []*api.MetricSeries {

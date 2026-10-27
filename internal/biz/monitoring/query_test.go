@@ -31,7 +31,7 @@ func reason(t *testing.T, err error, want string) {
 
 func TestNormalizeZeroGapsAndRuntimeHistory(t *testing.T) {
 	q := validQuery()
-	m, _ := Lookup(CPU)
+	m, _ := Lookup(CPU, target.ContainerInstance)
 	series, err := Normalize(q, m, []Source{{PodUID: "old", ContainerID: "old", Samples: []Sample{{q.Start, 0}}}, {PodUID: "new", ContainerID: "new", Samples: []Sample{{q.Start.Add(60 * time.Second), 2.5}}}})
 	if err != nil {
 		t.Fatal(err)
@@ -51,7 +51,7 @@ func TestNormalizeZeroGapsAndRuntimeHistory(t *testing.T) {
 
 func TestNormalizeAmbiguityBeforeInvalidAndRejectsBrokenGrid(t *testing.T) {
 	q := validQuery()
-	m, _ := Lookup(Memory)
+	m, _ := Lookup(Memory, target.ContainerInstance)
 	for _, value := range []float64{math.NaN(), math.Inf(1), math.Inf(-1), -1} {
 		one := Source{PodUID: "one", ContainerID: "one", Samples: []Sample{{q.Start, value}}}
 		series, err := Normalize(q, m, []Source{one})
@@ -93,7 +93,7 @@ func TestInvalidQueryNeverCallsProvider(t *testing.T) {
 
 func TestMetricCountLimitAndNetworkCatalog(t *testing.T) {
 	for _, code := range []string{NetworkReceive, NetworkTransmit} {
-		m, ok := Lookup(code)
+		m, ok := Lookup(code, target.ContainerInstance)
 		if !ok || m.Unit != "bytes_per_second" || m.Record == "" {
 			t.Fatalf("network catalog entry wrong: %+v ok=%v", m, ok)
 		}
@@ -123,6 +123,45 @@ func TestMetricCountLimitAndNetworkCatalog(t *testing.T) {
 	q.Codes = []string{CPU, Memory, NetworkReceive, NetworkTransmit, CPU}
 	u := NewUseCase(providerFunc(func(context.Context, Query, Metric) ([]Source, error) {
 		t.Fatal("five-code query reached provider")
+		return nil, nil
+	}), func() time.Time { return q.End })
+	_, err := u.Execute(context.Background(), q)
+	reason(t, err, InvalidQuery)
+}
+
+func trainingQuery() Query {
+	q := validQuery()
+	q.Target = target.Scope{Kind: target.TrainingExecution, TenantID: "11111111-1111-4111-8111-111111111111",
+		InstanceID: "22222222-2222-4222-8222-222222222222", ClusterID: "33333333-3333-4333-8333-333333333333",
+		Namespace: "ani-modeldev-tenant-a-v21", ContainerName: "node", PodUID: "44444444-4444-4444-8444-444444444444"}
+	return q
+}
+
+func TestTrainingCatalogAndKindIsolation(t *testing.T) {
+	instanceCPU, ok := Lookup(CPU, target.ContainerInstance)
+	if !ok || instanceCPU.Record != "ani_instance_cpu_usage_cores" {
+		t.Fatalf("instance cpu catalog wrong: %+v ok=%v", instanceCPU, ok)
+	}
+	trainingCPU, ok := Lookup(CPU, target.TrainingExecution)
+	if !ok || trainingCPU.Record != "ani_training_cpu_usage_cores" || trainingCPU.Unit != "cores" {
+		t.Fatalf("training cpu catalog wrong: %+v ok=%v", trainingCPU, ok)
+	}
+	trainingMemory, ok := Lookup(Memory, target.TrainingExecution)
+	if !ok || trainingMemory.Record != "ani_training_memory_working_set_bytes" || trainingMemory.Unit != "bytes" {
+		t.Fatalf("training memory catalog wrong: %+v ok=%v", trainingMemory, ok)
+	}
+	for _, code := range []string{NetworkReceive, NetworkTransmit} {
+		if _, ok := Lookup(code, target.TrainingExecution); ok {
+			t.Fatalf("training kind must not register %s", code)
+		}
+	}
+	if _, ok := Lookup(CPU, 99); ok {
+		t.Fatal("unknown kind resolved a metric")
+	}
+	q := trainingQuery()
+	q.Codes = []string{NetworkReceive}
+	u := NewUseCase(providerFunc(func(context.Context, Query, Metric) ([]Source, error) {
+		t.Fatal("training network query reached provider")
 		return nil, nil
 	}), func() time.Time { return q.End })
 	_, err := u.Execute(context.Background(), q)

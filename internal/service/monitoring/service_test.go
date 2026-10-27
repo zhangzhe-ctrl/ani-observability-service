@@ -25,6 +25,20 @@ func rpcTarget() *targetapi.TargetScope {
 	return &targetapi.TargetScope{Kind: targetapi.TargetKind_TARGET_KIND_CONTAINER_INSTANCE, TenantId: "11111111-1111-4111-8111-111111111111", InstanceId: "22222222-2222-4222-8222-222222222222", ClusterId: "33333333-3333-4333-8333-333333333333", Namespace: "workspace-a", ContainerName: "workspace"}
 }
 
+func TestScopeMapsTrainingPodUID(t *testing.T) {
+	got := scope(&targetapi.TargetScope{Kind: targetapi.TargetKind_TARGET_KIND_TRAINING_EXECUTION,
+		TenantId: "11111111-1111-4111-8111-111111111111", InstanceId: "22222222-2222-4222-8222-222222222222",
+		ClusterId: "33333333-3333-4333-8333-333333333333", Namespace: "ani-modeldev-tenant-a-v21",
+		ContainerName: "node", PodUid: "44444444-4444-4444-8444-444444444444"})
+	if got.Kind != int32(targetapi.TargetKind_TARGET_KIND_TRAINING_EXECUTION) ||
+		got.PodUID != "44444444-4444-4444-8444-444444444444" || got.ContainerName != "node" {
+		t.Fatalf("training scope mapping lost pod uid: %+v", got)
+	}
+	if instance := scope(rpcTarget()); instance.PodUID != "" {
+		t.Fatalf("instance scope must leave pod uid empty: %+v", instance)
+	}
+}
+
 func TestRPCPreservesMeasuredZeroVersusMissing(t *testing.T) {
 	start := time.Unix(1700000000, 0).UTC()
 	provider := providerFunc(func(_ context.Context, q biz.Query, m biz.Metric) ([]biz.Source, error) {

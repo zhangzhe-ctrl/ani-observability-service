@@ -237,6 +237,9 @@ func validLabels(labels map[string]string, s target.Scope, m biz.Metric) bool {
 	if len(labels) != 8 || labels["__name__"] != m.Record || labels["ani_cluster_id"] != s.ClusterID || labels["ani_tenant_id"] != s.TenantID || labels["ani_instance_id"] != s.InstanceID || labels["namespace"] != s.Namespace || labels["container"] != s.ContainerName {
 		return false
 	}
+	if s.Kind == target.TrainingExecution && labels["pod_uid"] != s.PodUID {
+		return false
+	}
 	return target.ValidUUID(labels["pod_uid"]) && cidPattern.MatchString(labels["runtime_container_id"])
 }
 

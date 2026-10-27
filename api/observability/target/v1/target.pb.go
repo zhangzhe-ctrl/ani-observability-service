@@ -27,6 +27,7 @@ type TargetKind int32
 const (
 	TargetKind_TARGET_KIND_UNSPECIFIED        TargetKind = 0
 	TargetKind_TARGET_KIND_CONTAINER_INSTANCE TargetKind = 1
+	TargetKind_TARGET_KIND_TRAINING_EXECUTION TargetKind = 2
 )
 
 // Enum value maps for TargetKind.
@@ -34,10 +35,12 @@ var (
 	TargetKind_name = map[int32]string{
 		0: "TARGET_KIND_UNSPECIFIED",
 		1: "TARGET_KIND_CONTAINER_INSTANCE",
+		2: "TARGET_KIND_TRAINING_EXECUTION",
 	}
 	TargetKind_value = map[string]int32{
 		"TARGET_KIND_UNSPECIFIED":        0,
 		"TARGET_KIND_CONTAINER_INSTANCE": 1,
+		"TARGET_KIND_TRAINING_EXECUTION": 2,
 	}
 )
 
@@ -78,6 +81,14 @@ type TargetScope struct {
 	ClusterId     string                 `protobuf:"bytes,4,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
 	Namespace     string                 `protobuf:"bytes,5,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	ContainerName string                 `protobuf:"bytes,6,opt,name=container_name,json=containerName,proto3" json:"container_name,omitempty"`
+	// Required for TARGET_KIND_TRAINING_EXECUTION; must be empty for
+	// TARGET_KIND_CONTAINER_INSTANCE.
+	// TRAINING_EXECUTION: instance_id carries the execution id (worker) or the
+	// KFP run id (step); both are canonical UUIDs but neither is a container
+	// instance. container_name is part of the external contract
+	// (worker="node", step="main") — renaming a container silently breaks the
+	// metric chain.
+	PodUid        string `protobuf:"bytes,7,opt,name=pod_uid,json=podUid,proto3" json:"pod_uid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -154,11 +165,18 @@ func (x *TargetScope) GetContainerName() string {
 	return ""
 }
 
+func (x *TargetScope) GetPodUid() string {
+	if x != nil {
+		return x.PodUid
+	}
+	return ""
+}
+
 var File_observability_target_v1_target_proto protoreflect.FileDescriptor
 
 const file_observability_target_v1_target_proto_rawDesc = "" +
 	"\n" +
-	"$observability/target/v1/target.proto\x12\x17observability.target.v1\"\xe8\x01\n" +
+	"$observability/target/v1/target.proto\x12\x17observability.target.v1\"\x81\x02\n" +
 	"\vTargetScope\x127\n" +
 	"\x04kind\x18\x01 \x01(\x0e2#.observability.target.v1.TargetKindR\x04kind\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x1f\n" +
@@ -167,11 +185,13 @@ const file_observability_target_v1_target_proto_rawDesc = "" +
 	"\n" +
 	"cluster_id\x18\x04 \x01(\tR\tclusterId\x12\x1c\n" +
 	"\tnamespace\x18\x05 \x01(\tR\tnamespace\x12%\n" +
-	"\x0econtainer_name\x18\x06 \x01(\tR\rcontainerName*M\n" +
+	"\x0econtainer_name\x18\x06 \x01(\tR\rcontainerName\x12\x17\n" +
+	"\apod_uid\x18\a \x01(\tR\x06podUid*q\n" +
 	"\n" +
 	"TargetKind\x12\x1b\n" +
 	"\x17TARGET_KIND_UNSPECIFIED\x10\x00\x12\"\n" +
-	"\x1eTARGET_KIND_CONTAINER_INSTANCE\x10\x01BYZWgithub.com/zhangzhe-ctrl/ani-observability-service/api/observability/target/v1;targetv1b\x06proto3"
+	"\x1eTARGET_KIND_CONTAINER_INSTANCE\x10\x01\x12\"\n" +
+	"\x1eTARGET_KIND_TRAINING_EXECUTION\x10\x02BYZWgithub.com/zhangzhe-ctrl/ani-observability-service/api/observability/target/v1;targetv1b\x06proto3"
 
 var (
 	file_observability_target_v1_target_proto_rawDescOnce sync.Once

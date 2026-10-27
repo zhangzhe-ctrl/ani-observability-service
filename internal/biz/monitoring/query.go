@@ -88,7 +88,7 @@ func (q Query) Validate(now time.Time) error {
 	}
 	seen := make(map[string]bool)
 	for _, code := range q.Codes {
-		if _, ok := Lookup(code); !ok || seen[code] {
+		if _, ok := Lookup(code, q.Target.Kind); !ok || seen[code] {
 			return Fail(InvalidQuery, errors.New("unknown or duplicate metric"))
 		}
 		seen[code] = true
@@ -127,7 +127,7 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 	}
 	results := make(chan item, len(q.Codes))
 	for i, code := range q.Codes {
-		metric, _ := Lookup(code)
+		metric, _ := Lookup(code, q.Target.Kind)
 		go func(index int, metric Metric) {
 			sources, err := u.provider.Query(batch, q, metric)
 			if err != nil {

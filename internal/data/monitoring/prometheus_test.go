@@ -47,7 +47,7 @@ func provider(t *testing.T, h http.HandlerFunc) *Prometheus {
 
 func TestFixedHTTPQueryUsesTrustedScopeAndFreshness(t *testing.T) {
 	q := dataQuery()
-	m, _ := biz.Lookup(biz.CPU)
+	m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 	p := provider(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/api/v1/query_range" {
 			t.Errorf("unexpected endpoint: %s %s", r.Method, r.URL.Path)
@@ -80,7 +80,7 @@ func TestLatestAndInvalidValuesReachBusinessNormalization(t *testing.T) {
 	q := dataQuery()
 	q.Latest = true
 	q.End = q.Start
-	m, _ := biz.Lookup(biz.CPU)
+	m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 	p := provider(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/v1/query" {
 			t.Error("not instant endpoint")
@@ -140,10 +140,49 @@ func TestMalformedOrMismatchedResponsesFail(t *testing.T) {
 				mutate(body)
 				_ = json.NewEncoder(w).Encode(body)
 			})
-			m, _ := biz.Lookup(biz.CPU)
+			m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 			_, err := p.Query(context.Background(), dataQuery(), m)
 			requireReason(t, err, biz.SourceResponseInvalid)
 		})
+	}
+}
+
+func TestTrainingExpressionAndLabelsPinPodUID(t *testing.T) {
+	s := target.Scope{Kind: target.TrainingExecution, TenantID: "11111111-1111-4111-8111-111111111111",
+		InstanceID: "22222222-2222-4222-8222-222222222222", ClusterID: "33333333-3333-4333-8333-333333333333",
+		Namespace: "ani-modeldev-tenant-a-v21", ContainerName: "node", PodUID: "44444444-4444-4444-8444-444444444444"}
+	m, ok := biz.Lookup(biz.CPU, target.TrainingExecution)
+	if !ok {
+		t.Fatal("training cpu not registered")
+	}
+	expr, err := Expression(s, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Count(expr, "pod_uid=") != 2 {
+		t.Fatalf("training expression must pin pod_uid in body and guard: %s", expr)
+	}
+	if !strings.Contains(expr, "ani_training_cpu_usage_cores{") || !strings.Contains(expr, "<= 45") {
+		t.Fatalf("training expression shape wrong: %s", expr)
+	}
+	instanceMetric, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
+	instanceExpr, err := Expression(dataQuery().Target, instanceMetric)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(instanceExpr, "pod_uid") {
+		t.Fatalf("instance expression must not match pod_uid: %s", instanceExpr)
+	}
+
+	labels := map[string]string{"__name__": m.Record, "ani_cluster_id": s.ClusterID,
+		"ani_tenant_id": s.TenantID, "ani_instance_id": s.InstanceID, "namespace": s.Namespace,
+		"container": s.ContainerName, "pod_uid": s.PodUID, "runtime_container_id": strings.Repeat("b", 64)}
+	if !validLabels(labels, s, m) {
+		t.Fatal("exact training labels rejected")
+	}
+	labels["pod_uid"] = "55555555-5555-4555-8555-555555555555"
+	if validLabels(labels, s, m) {
+		t.Fatal("foreign pod uid accepted")
 	}
 }
 
@@ -161,7 +200,7 @@ func TestSeriesAndResponseByteBoundaries(t *testing.T) {
 				b["data"].(map[string]any)["result"] = items
 				_ = json.NewEncoder(w).Encode(b)
 			})
-			m, _ := biz.Lookup(biz.CPU)
+			m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 			series, err := p.Query(context.Background(), dataQuery(), m)
 			if count == 128 {
 				if err != nil || len(series) != 128 {
@@ -179,7 +218,7 @@ func TestSeriesAndResponseByteBoundaries(t *testing.T) {
 				_, _ = w.Write(body)
 				_, _ = w.Write([]byte(strings.Repeat(" ", size-len(body))))
 			})
-			m, _ := biz.Lookup(biz.CPU)
+			m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 			_, err := p.Query(context.Background(), dataQuery(), m)
 			if size == maxBody {
 				if err != nil {
@@ -203,7 +242,7 @@ func TestUpstreamFailuresDoNotBecomeNoData(t *testing.T) {
 				w.WriteHeader(item.status)
 				_, _ = w.Write([]byte(item.body))
 			})
-			m, _ := biz.Lookup(biz.CPU)
+			m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 			_, err := p.Query(context.Background(), dataQuery(), m)
 			requireReason(t, err, item.reason)
 		})
@@ -211,7 +250,7 @@ func TestUpstreamFailuresDoNotBecomeNoData(t *testing.T) {
 	p := provider(t, func(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"status": "success", "data": map[string]any{"resultType": "matrix", "result": []any{}}})
 	})
-	m, _ := biz.Lookup(biz.CPU)
+	m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 	series, err := p.Query(context.Background(), dataQuery(), m)
 	if err != nil || len(series) != 0 {
 		t.Fatalf("legitimate empty result: %v", err)
@@ -230,7 +269,7 @@ func TestDatasourceConfigurationAndCancellation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	m, _ := biz.Lookup(biz.CPU)
+	m, _ := biz.Lookup(biz.CPU, target.ContainerInstance)
 	_, err = p.Query(context.Background(), dataQuery(), m)
 	requireReason(t, err, biz.SourceNotConfigured)
 	canceled := make(chan struct{})

@@ -8,6 +8,7 @@ option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/obse
 enum TargetKind {
   TARGET_KIND_UNSPECIFIED = 0;
   TARGET_KIND_CONTAINER_INSTANCE = 1;
+  TARGET_KIND_TRAINING_EXECUTION = 2;
 }
 
 // TargetScope is resolved by Gov through the resource owner.
@@ -19,4 +20,12 @@ message TargetScope {
   string cluster_id = 4;
   string namespace = 5;
   string container_name = 6;
+  // Required for TARGET_KIND_TRAINING_EXECUTION; must be empty for
+  // TARGET_KIND_CONTAINER_INSTANCE.
+  // TRAINING_EXECUTION: instance_id carries the execution id (worker) or the
+  // KFP run id (step); both are canonical UUIDs but neither is a container
+  // instance. container_name is part of the external contract
+  // (worker="node", step="main") — renaming a container silently breaks the
+  // metric chain.
+  string pod_uid = 7;
 }
