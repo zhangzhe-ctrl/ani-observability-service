@@ -1,6 +1,6 @@
 module github.com/zhangzhe-ctrl/ani-observability-service
 
-go 1.26.9
+go 1.26.10
 
 require (
 	github.com/go-kratos/kratos/contrib/otel/v3 v3.0.0-20260515082355-1ddb58e407c5
