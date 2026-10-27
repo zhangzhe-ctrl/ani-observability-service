@@ -1,0 +1,94 @@
+{
+  "apiVersion": "monitoring.coreos.com/v1",
+  "kind": "ServiceMonitor",
+  "metadata": {
+    "name": "ani-gpu-hami-v11",
+    "namespace": "ani-observability",
+    "labels": {
+      "release": "ani-metrics",
+      "ani.io/task": "gpu-monitoring-v11-20261028"
+    }
+  },
+  "spec": {
+    "namespaceSelector": {
+      "matchNames": [
+        "kube-system"
+      ]
+    },
+    "selector": {
+      "matchLabels": {
+        "app.kubernetes.io/name": "ani-gpu-hami-container-monitor"
+      }
+    },
+    "endpoints": [
+      {
+        "port": "metrics",
+        "path": "/metrics",
+        "interval": "30s",
+        "scrapeTimeout": "10s",
+        "relabelings": [
+          {
+            "action": "replace",
+            "sourceLabels": [
+              "__meta_kubernetes_pod_node_name"
+            ],
+            "targetLabel": "node"
+          }
+        ],
+        "metricRelabelings": [
+          {
+            "action": "keep",
+            "sourceLabels": [
+              "__name__"
+            ],
+            "regex": "vGPU_device_memory_usage_in_bytes|vGPU_device_memory_limit_in_bytes"
+          },
+          {
+            "action": "replace",
+            "targetLabel": "ani_cluster_id",
+            "replacement": "f39bf6e2-f3ed-4191-ada3-caeebf86c220"
+          },
+          {
+            "action": "replace",
+            "targetLabel": "ani_gpu_source",
+            "replacement": "hami"
+          },
+          {
+            "action": "replace",
+            "sourceLabels": [
+              "node"
+            ],
+            "targetLabel": "ani_node_id"
+          },
+          {
+            "action": "replace",
+            "sourceLabels": [
+              "node"
+            ],
+            "regex": "node1",
+            "targetLabel": "ani_node_uid",
+            "replacement": "b8c6525d-6d03-4ab9-a2ea-97753f0fca67"
+          },
+          {
+            "action": "replace",
+            "sourceLabels": [
+              "node"
+            ],
+            "regex": "node2",
+            "targetLabel": "ani_node_uid",
+            "replacement": "b9f72348-e7e9-4a60-bdb4-2d2410845ce9"
+          },
+          {
+            "action": "replace",
+            "sourceLabels": [
+              "node"
+            ],
+            "regex": "node3",
+            "targetLabel": "ani_node_uid",
+            "replacement": "5e736bcd-c06d-4713-a831-be9adc567e97"
+          }
+        ]
+      }
+    ]
+  }
+}

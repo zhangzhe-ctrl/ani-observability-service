@@ -1,0 +1,316 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "metadata": {
+        "name": "ani-gpu-nvml-v11",
+        "namespace": "ani-observability",
+        "labels": {
+          "app.kubernetes.io/name": "ani-gpu-nvml-v11",
+          "app.kubernetes.io/part-of": "ani-gpu-monitoring",
+          "ani.io/task": "gpu-monitoring-v11-20261028"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "ani-gpu-nvml-v11"
+          }
+        },
+        "updateStrategy": {
+          "type": "OnDelete"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app.kubernetes.io/name": "ani-gpu-nvml-v11",
+              "app.kubernetes.io/part-of": "ani-gpu-monitoring",
+              "ani.io/task": "gpu-monitoring-v11-20261028"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "runtimeClassName": "nvidia",
+            "nodeSelector": {
+              "ani.io/gpu-enabled": "true",
+              "kubernetes.io/os": "linux"
+            },
+            "tolerations": [
+              {
+                "key": "node-role.kubernetes.io/control-plane",
+                "operator": "Exists",
+                "effect": "NoSchedule"
+              },
+              {
+                "key": "volcano.sh/gpu-memory",
+                "operator": "Exists",
+                "effect": "NoSchedule"
+              }
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534,
+              "runAsGroup": 65534,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "containers": [
+              {
+                "name": "exporter",
+                "image": "localhost/ani-gpu-monitoring/nvidia-gpu-exporter@sha256:8bcaae69f55db00f8a215e30701df300712605de129aa706149eb3c214c8dca9",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "--collect.backend=nvml",
+                  "--web.listen-address=:9835",
+                  "--collect.timeout=5s",
+                  "--query-field-names=uuid,index,name,driver_version,pci.bus_id,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,power.draw.average,power.draw.instant,ecc.mode.current,ecc.errors.corrected.volatile.total,ecc.errors.corrected.aggregate.total,ecc.errors.uncorrected.volatile.total,ecc.errors.uncorrected.aggregate.total,retired_pages.single_bit_ecc.count,retired_pages.double_bit.count,remapped_rows.correctable,remapped_rows.uncorrectable,remapped_rows.pending,remapped_rows.failure"
+                ],
+                "env": [
+                  {
+                    "name": "NVIDIA_VISIBLE_DEVICES",
+                    "value": "all"
+                  },
+                  {
+                    "name": "NVIDIA_DRIVER_CAPABILITIES",
+                    "value": "utility"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "gpu-metrics",
+                    "containerPort": 9835
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "200m",
+                    "memory": "128Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/-/ready",
+                    "port": "gpu-metrics"
+                  },
+                  "periodSeconds": 10
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/-/healthy",
+                    "port": "gpu-metrics"
+                  },
+                  "initialDelaySeconds": 10,
+                  "periodSeconds": 20
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "ani-gpu-nvml-v11",
+        "namespace": "ani-observability",
+        "labels": {
+          "app.kubernetes.io/name": "ani-gpu-nvml-v11",
+          "app.kubernetes.io/part-of": "ani-gpu-monitoring",
+          "ani.io/task": "gpu-monitoring-v11-20261028"
+        }
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app.kubernetes.io/name": "ani-gpu-nvml-v11"
+        },
+        "ports": [
+          {
+            "name": "gpu-metrics",
+            "port": 9835,
+            "targetPort": "gpu-metrics"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "monitoring.coreos.com/v1",
+      "kind": "ServiceMonitor",
+      "metadata": {
+        "name": "ani-gpu-nvml-v11",
+        "namespace": "ani-observability",
+        "labels": {
+          "app.kubernetes.io/name": "ani-gpu-nvml-v11",
+          "app.kubernetes.io/part-of": "ani-gpu-monitoring",
+          "ani.io/task": "gpu-monitoring-v11-20261028",
+          "release": "ani-metrics"
+        }
+      },
+      "spec": {
+        "namespaceSelector": {
+          "matchNames": [
+            "ani-observability"
+          ]
+        },
+        "selector": {
+          "matchLabels": {
+            "app.kubernetes.io/name": "ani-gpu-nvml-v11",
+            "app.kubernetes.io/part-of": "ani-gpu-monitoring",
+            "ani.io/task": "gpu-monitoring-v11-20261028"
+          }
+        },
+        "endpoints": [
+          {
+            "port": "gpu-metrics",
+            "path": "/metrics",
+            "interval": "15s",
+            "scrapeTimeout": "10s",
+            "relabelings": [
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__meta_kubernetes_pod_node_name"
+                ],
+                "targetLabel": "node"
+              }
+            ],
+            "metricRelabelings": [
+              {
+                "action": "keep",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_(gpu_info|utilization_gpu_ratio|memory_(used|total)_bytes|temperature_gpu|power_draw_(instant|average)_watts|power_draw_watts|energy_joules_total|ecc_.*|retired_pages_.*|remapped_rows_.*|xid_.*|last_collect_.*|nvml_return_code|failed_scrapes_total)|process_start_time_seconds"
+              },
+              {
+                "action": "replace",
+                "targetLabel": "ani_cluster_id",
+                "replacement": "f39bf6e2-f3ed-4191-ada3-caeebf86c220"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "uuid"
+                ],
+                "regex": "(.+)",
+                "targetLabel": "device_uuid",
+                "replacement": "GPU-$1"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_utilization_gpu_ratio",
+                "targetLabel": "source_unit",
+                "replacement": "ratio"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_memory_.*_bytes",
+                "targetLabel": "source_unit",
+                "replacement": "bytes"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_temperature_gpu",
+                "targetLabel": "source_unit",
+                "replacement": "celsius"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_power_draw.*_watts",
+                "targetLabel": "source_unit",
+                "replacement": "watts"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_energy_joules_total",
+                "targetLabel": "source_unit",
+                "replacement": "joules"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "__name__"
+                ],
+                "regex": "nvidia_smi_(last_collect_success_timestamp_seconds|xid_last_timestamp_seconds)",
+                "targetLabel": "source_unit",
+                "replacement": "unix_seconds"
+              },
+              {
+                "action": "replace",
+                "targetLabel": "ani_gpu_source",
+                "replacement": "nvml"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "node"
+                ],
+                "targetLabel": "ani_node_id"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "node"
+                ],
+                "regex": "node1",
+                "targetLabel": "ani_node_uid",
+                "replacement": "b8c6525d-6d03-4ab9-a2ea-97753f0fca67"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "node"
+                ],
+                "regex": "node2",
+                "targetLabel": "ani_node_uid",
+                "replacement": "b9f72348-e7e9-4a60-bdb4-2d2410845ce9"
+              },
+              {
+                "action": "replace",
+                "sourceLabels": [
+                  "node"
+                ],
+                "regex": "node3",
+                "targetLabel": "ani_node_uid",
+                "replacement": "5e736bcd-c06d-4713-a831-be9adc567e97"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
