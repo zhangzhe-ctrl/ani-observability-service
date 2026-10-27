@@ -300,38 +300,8 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 	for i, code := range q.Codes {
 		m, _ := Lookup(code)
 		go func(i int, m Metric) {
-			src, err := u.provider.QueryGPU(batch, q, m)
-			if err != nil {
-				results <- item{i: i, err: err}
-				return
-			}
-			groups := map[string][]Source{"": src}
-			if m.Event {
-				groups = map[string][]Source{}
-				for _, v := range src {
-					groups[v.Dimension] = append(groups[v.Dimension], v)
-				}
-				if len(groups) == 0 {
-					groups[""] = nil
-				}
-			}
-			rows := []Series{}
-			var failure error
-			keys := []string{}
-			for k := range groups {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				row, e := Aggregate(q, m, groups[k])
-				if e != nil {
-					failure = e
-					break
-				}
-				row.EventCode = k
-				rows = append(rows, row)
-			}
-			results <- item{i, rows, failure}
+			rows, err := u.queryMetric(batch, q, m)
+			results <- item{i, rows, err}
 		}(i, m)
 	}
 	ordered := make([][]Series, len(q.Codes))
@@ -357,6 +327,185 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 		return nil, Fail("GPU_QUERY_TIMEOUT", err)
 	}
 	return out, nil
+}
+
+// Fold each bounded time chunk immediately. Six hours is divisible by every
+// display step, so chunk boundaries retain the original request bucket origin
+// and epoch-aligned base grid; no complete-window source matrix is retained.
+func (u *UseCase) queryMetric(ctx context.Context, q Query, m Metric) ([]Series, error) {
+	if q.Latest || q.End.Sub(q.Start) <= 6*time.Hour {
+		return u.metricChunk(ctx, q, m)
+	}
+	states := map[string]Series{}
+	for start := q.Start; start.Before(q.End); start = start.Add(6 * time.Hour) {
+		if err := ctx.Err(); err != nil {
+			return nil, Fail("GPU_QUERY_TIMEOUT", err)
+		}
+		chunk := q
+		chunk.Start = start
+		chunk.End = start.Add(6 * time.Hour)
+		if chunk.End.After(q.End) {
+			chunk.End = q.End
+		}
+		src, err := u.provider.QueryGPU(ctx, chunk, m)
+		if err != nil {
+			return nil, err
+		}
+		groups := map[string][]Source{"": src}
+		if m.Event {
+			groups = map[string][]Source{}
+			for _, v := range src {
+				groups[v.Dimension] = append(groups[v.Dimension], v)
+			}
+		}
+		keys := map[string]bool{}
+		for k := range states {
+			keys[k] = true
+		}
+		for k := range groups {
+			keys[k] = true
+		}
+		if len(keys) > 12 {
+			return nil, Fail("GPU_BUDGET_EXCEEDED", errors.New("event-code curve budget exceeded"))
+		}
+		for key := range keys {
+			row, err := Aggregate(chunk, m, groups[key])
+			if err != nil {
+				return nil, err
+			}
+			row.EventCode = key
+			prior, ok := states[key]
+			if !ok && !start.Equal(q.Start) {
+				prefix := q
+				prefix.End = start
+				prior, err = Aggregate(prefix, m, nil)
+				if err != nil {
+					return nil, err
+				}
+				prior.EventCode = key
+				ok = true
+			}
+			if ok {
+				row = foldSeries(prior, row)
+			}
+			states[key] = row
+		}
+	}
+	if len(states) == 0 {
+		row, err := Aggregate(q, m, nil)
+		return []Series{row}, err
+	}
+	keys := []string{}
+	for k := range states {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := make([]Series, 0, len(keys))
+	for _, k := range keys {
+		out = append(out, states[k])
+	}
+	return out, nil
+}
+func (u *UseCase) metricChunk(ctx context.Context, q Query, m Metric) ([]Series, error) {
+	src, err := u.provider.QueryGPU(ctx, q, m)
+	if err != nil {
+		return nil, err
+	}
+	groups := map[string][]Source{"": src}
+	if m.Event {
+		groups = map[string][]Source{}
+		for _, v := range src {
+			groups[v.Dimension] = append(groups[v.Dimension], v)
+		}
+		if len(groups) == 0 {
+			groups[""] = nil
+		}
+	}
+	keys := []string{}
+	for k := range groups {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	out := make([]Series, 0, len(keys))
+	for _, key := range keys {
+		row, err := Aggregate(q, m, groups[key])
+		if err != nil {
+			return nil, err
+		}
+		row.EventCode = key
+		out = append(out, row)
+	}
+	return out, nil
+}
+func foldSeries(a, b Series) Series {
+	ca, cb := a.Quality.Complete, b.Quality.Complete
+	if ca+cb > 0 && !a.Metric.Snapshot {
+		sum := 0.0
+		if a.Mean != nil {
+			sum += *a.Mean * float64(ca)
+		}
+		if b.Mean != nil {
+			sum += *b.Mean * float64(cb)
+		}
+		v := sum / float64(ca+cb)
+		a.Mean = &v
+	}
+	if b.Peak != nil && (a.Peak == nil || *b.Peak > *a.Peak) {
+		v := *b.Peak
+		a.Peak = &v
+	}
+	a.Points = append(a.Points, b.Points...)
+	a.AvailableFrom = minTime(a.AvailableFrom, b.AvailableFrom)
+	a.Cutoff = maxTime(a.Cutoff, b.Cutoff)
+	a.Quality.Complete += b.Quality.Complete
+	a.Quality.Observed += b.Quality.Observed
+	a.Quality.Expected += b.Quality.Expected
+	a.Quality.Partial += b.Quality.Partial
+	a.Quality.Empty += b.Quality.Empty
+	if b.Quality.ObservedSources > a.Quality.ObservedSources {
+		a.Quality.ObservedSources = b.Quality.ObservedSources
+	}
+	if a.Quality.ExpectedSources == nil || b.Quality.ExpectedSources == nil {
+		a.Quality.ExpectedSources = nil
+	} else if *b.Quality.ExpectedSources > *a.Quality.ExpectedSources {
+		v := *b.Quality.ExpectedSources
+		a.Quality.ExpectedSources = &v
+	}
+	reasons := map[string]bool{}
+	for _, r := range a.Quality.Reasons {
+		reasons[r] = true
+	}
+	for _, r := range b.Quality.Reasons {
+		reasons[r] = true
+	}
+	a.Quality.Reasons = nil
+	for r := range reasons {
+		a.Quality.Reasons = append(a.Quality.Reasons, r)
+	}
+	sort.Strings(a.Quality.Reasons)
+	a.Quality.Status = "NO_DATA"
+	if a.Quality.Observed > 0 {
+		a.Quality.Status = "PARTIAL"
+		if a.Quality.Complete == a.Quality.Expected {
+			a.Quality.Status = "OK"
+		}
+	}
+	if a.Quality.Expected > 0 {
+		v := float64(a.Quality.Complete) / float64(a.Quality.Expected)
+		a.Quality.Coverage = &v
+	}
+	starts := map[int64]bool{}
+	for _, v := range a.ProcessStarts {
+		starts[v.UnixNano()] = true
+	}
+	for _, v := range b.ProcessStarts {
+		if !starts[v.UnixNano()] {
+			starts[v.UnixNano()] = true
+			a.ProcessStarts = append(a.ProcessStarts, v)
+		}
+	}
+	sort.Slice(a.ProcessStarts, func(i, j int) bool { return a.ProcessStarts[i].Before(a.ProcessStarts[j]) })
+	return a
 }
 
 func Aggregate(q Query, m Metric, sources []Source) (Series, error) {

@@ -2,6 +2,7 @@ package gpu
 
 import (
 	"context"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -224,5 +225,121 @@ func TestOwnershipIsMatchedAtOriginalSampleTime(t *testing.T) {
 	s, e := Aggregate(q, m, []Source{src})
 	if e != nil || s.Points[0].Value != nil || s.Points[1].Value == nil {
 		t.Fatal(s, e)
+	}
+}
+
+type denseGridProvider struct {
+	scope  Scope
+	origin time.Time
+	calls  int
+	events bool
+}
+
+func (p *denseGridProvider) QueryGPU(_ context.Context, q Query, m Metric) ([]Source, error) {
+	p.calls++
+	begin := q.Start.Unix()
+	base := int64(m.Base / time.Second)
+	if rem := begin % base; rem != 0 {
+		begin += base - rem
+	}
+	groups := map[string]*Source{}
+	for at := time.Unix(begin, 0).UTC(); at.Before(q.End); at = at.Add(m.Base) {
+		code := ""
+		if p.events {
+			if at.Before(p.origin.Add(6 * time.Hour)) {
+				continue
+			}
+			code = "79"
+			if !at.Before(p.origin.Add(12 * time.Hour)) {
+				code = "31"
+			}
+		}
+		if groups[code] == nil {
+			groups[code] = &Source{Key: SourceKey(p.scope, m.Profile == "nvml"), Scope: p.scope, Dimension: code}
+		}
+		v := float64(at.Unix() % 173)
+		if at.Equal(p.origin.Add(6*time.Hour - 7*time.Second)) {
+			v = 10000
+		}
+		point := Sample{Timestamp: at, SampleTime: at, Value: v}
+		if p.events {
+			point.ProcessStart = p.origin.Add(-time.Hour)
+		}
+		groups[code].Samples = append(groups[code].Samples, point)
+	}
+	out := []Source{}
+	for _, s := range groups {
+		out = append(out, *s)
+	}
+	return out, nil
+}
+func TestChunkFoldingMatchesWholeEpochGridWithUnalignedStart(t *testing.T) {
+	q := fixture()
+	q.Target.Scopes = q.Target.Scopes[:1]
+	q.Start = epoch.Add(7 * time.Second)
+	q.End = q.Start.Add(7*24*time.Hour + 45*time.Second)
+	p := &denseGridProvider{scope: q.Target.Scopes[0], origin: q.Start}
+	result, e := New(p, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if p.calls != 29 {
+		t.Fatalf("expected bounded29chunks, got%d", p.calls)
+	}
+	if e := q.Validate(q.End); e != nil {
+		t.Fatal(e)
+	}
+	m, _ := Lookup(q.Codes[0])
+	all, e := p.QueryGPU(context.Background(), q, m)
+	if e != nil {
+		t.Fatal(e)
+	}
+	whole, e := Aggregate(q, m, all)
+	if e != nil {
+		t.Fatal(e)
+	}
+	got := result.Series[0]
+	if !reflect.DeepEqual(got.Points, whole.Points) || !reflect.DeepEqual(got.Quality, whole.Quality) || *got.Mean != *whole.Mean || *got.Peak != *whole.Peak {
+		t.Fatalf("chunk fold changed base-grid/bucket/weighted statistics: got=%v want=%v means=%v/%v", got.Quality, whole.Quality, got.Mean, whole.Mean)
+	}
+}
+func TestChunkFoldingPreservesLateAndDisappearingXidDimensions(t *testing.T) {
+	q := fixture()
+	q.Target.Kind = "PHYSICAL"
+	q.Target.TenantID = ""
+	q.Target.Scopes = q.Target.Scopes[:1]
+	q.Codes = []string{"gpu.physical.xid_errors_total"}
+	q.Start = epoch
+	q.End = q.Start.Add(13 * time.Hour)
+	p := &denseGridProvider{scope: q.Target.Scopes[0], origin: q.Start, events: true}
+	result, e := New(p, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if e != nil {
+		t.Fatal(e)
+	}
+	if len(result.Series) != 2 {
+		t.Fatal(result.Series)
+	}
+	if e := q.Validate(q.End); e != nil {
+		t.Fatal(e)
+	}
+	m, _ := Lookup(q.Codes[0])
+	all, e := p.QueryGPU(context.Background(), q, m)
+	if e != nil {
+		t.Fatal(e)
+	}
+	for _, got := range result.Series {
+		group := []Source{}
+		for _, s := range all {
+			if s.Dimension == got.EventCode {
+				group = append(group, s)
+			}
+		}
+		whole, e := Aggregate(q, m, group)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if !reflect.DeepEqual(got.Points, whole.Points) || !reflect.DeepEqual(got.Quality, whole.Quality) || !reflect.DeepEqual(got.ProcessStarts, whole.ProcessStarts) {
+			t.Fatalf("event dimension%s changed across chunks: %v/%v", got.EventCode, got.Quality, whole.Quality)
+		}
 	}
 }

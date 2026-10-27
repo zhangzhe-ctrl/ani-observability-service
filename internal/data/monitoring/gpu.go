@@ -443,10 +443,13 @@ func gpuProcessExpression(scopes []gpu.Scope) string {
 	return strings.Join(parts, " or ")
 }
 func gpuProcessPath(labels map[string]string) string {
+	// Process evidence belongs to the exporter scrape endpoint. GPU dimensions
+	// and metric relabels (device_uuid, source_unit, and similar fields) are
+	// absent from process_start_time_seconds and must not split that identity.
 	out := map[string]string{}
-	for k, v := range labels {
-		if k != "uuid" && k != "xid" {
-			out[k] = v
+	for _, key := range []string{"ani_cluster_id", "ani_node_id", "ani_node_uid", "ani_gpu_source", "job", "instance", "endpoint", "namespace", "pod", "service"} {
+		if value, ok := labels[key]; ok {
+			out[key] = value
 		}
 	}
 	return gpuPath(out)
