@@ -108,8 +108,12 @@ type GpuSourceScope struct {
 	OwnershipState string `protobuf:"bytes,12,opt,name=ownership_state,json=ownershipState,proto3" json:"ownership_state,omitempty"`
 	ResourceKind   string `protobuf:"bytes,13,opt,name=resource_kind,json=resourceKind,proto3" json:"resource_kind,omitempty"`
 	DeviceId       string `protobuf:"bytes,14,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Immutable node identity from ACC; controlled scrape profile must match.
+	NodeUid           string   `protobuf:"bytes,15,opt,name=node_uid,json=nodeUid,proto3" json:"node_uid,omitempty"`
+	CandidateComplete bool     `protobuf:"varint,16,opt,name=candidate_complete,json=candidateComplete,proto3" json:"candidate_complete,omitempty"`
+	Reasons           []string `protobuf:"bytes,17,rep,name=reasons,proto3" json:"reasons,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *GpuSourceScope) Reset() {
@@ -238,6 +242,27 @@ func (x *GpuSourceScope) GetDeviceId() string {
 		return x.DeviceId
 	}
 	return ""
+}
+
+func (x *GpuSourceScope) GetNodeUid() string {
+	if x != nil {
+		return x.NodeUid
+	}
+	return ""
+}
+
+func (x *GpuSourceScope) GetCandidateComplete() bool {
+	if x != nil {
+		return x.CandidateComplete
+	}
+	return false
+}
+
+func (x *GpuSourceScope) GetReasons() []string {
+	if x != nil {
+		return x.Reasons
+	}
+	return nil
 }
 
 type GpuTarget struct {
@@ -716,9 +741,13 @@ type GpuSeries struct {
 	OwnershipAvailableFrom *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=ownership_available_from,json=ownershipAvailableFrom,proto3" json:"ownership_available_from,omitempty"`
 	DataCutoff             *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=data_cutoff,json=dataCutoff,proto3" json:"data_cutoff,omitempty"`
 	// UNKNOWN unless explicit device capability evidence proves support/unsupported.
-	Capability    string `protobuf:"bytes,12,opt,name=capability,proto3" json:"capability,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Capability string `protobuf:"bytes,12,opt,name=capability,proto3" json:"capability,omitempty"`
+	// Physical event-code dimension; absent for ordinary gauges.
+	EventCode             string                   `protobuf:"bytes,13,opt,name=event_code,json=eventCode,proto3" json:"event_code,omitempty"`
+	Semantics             string                   `protobuf:"bytes,14,opt,name=semantics,proto3" json:"semantics,omitempty"`
+	ExporterProcessStarts []*timestamppb.Timestamp `protobuf:"bytes,15,rep,name=exporter_process_starts,json=exporterProcessStarts,proto3" json:"exporter_process_starts,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *GpuSeries) Reset() {
@@ -833,6 +862,27 @@ func (x *GpuSeries) GetCapability() string {
 		return x.Capability
 	}
 	return ""
+}
+
+func (x *GpuSeries) GetEventCode() string {
+	if x != nil {
+		return x.EventCode
+	}
+	return ""
+}
+
+func (x *GpuSeries) GetSemantics() string {
+	if x != nil {
+		return x.Semantics
+	}
+	return ""
+}
+
+func (x *GpuSeries) GetExporterProcessStarts() []*timestamppb.Timestamp {
+	if x != nil {
+		return x.ExporterProcessStarts
+	}
+	return nil
 }
 
 type QueryGpuResponse struct {
@@ -1041,7 +1091,7 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\rowner_service\x18\x02 \x01(\tR\fownerService\x12\x1f\n" +
 	"\vresource_id\x18\x03 \x01(\tR\n" +
 	"resourceId\x12.\n" +
-	"\x13create_operation_id\x18\x04 \x01(\tR\x11createOperationId\"\xb9\x04\n" +
+	"\x13create_operation_id\x18\x04 \x01(\tR\x11createOperationId\"\x9d\x05\n" +
 	"\x0eGpuSourceScope\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x01 \x01(\tR\tclusterId\x12\x17\n" +
@@ -1061,7 +1111,10 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"evidenceAt\x12'\n" +
 	"\x0fownership_state\x18\f \x01(\tR\x0eownershipState\x12#\n" +
 	"\rresource_kind\x18\r \x01(\tR\fresourceKind\x12\x1b\n" +
-	"\tdevice_id\x18\x0e \x01(\tR\bdeviceId\"\xd4\x03\n" +
+	"\tdevice_id\x18\x0e \x01(\tR\bdeviceId\x12\x19\n" +
+	"\bnode_uid\x18\x0f \x01(\tR\anodeUid\x12-\n" +
+	"\x12candidate_complete\x18\x10 \x01(\bR\x11candidateComplete\x12\x18\n" +
+	"\areasons\x18\x11 \x03(\tR\areasons\"\xd4\x03\n" +
 	"\tGpuTarget\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12#\n" +
@@ -1113,7 +1166,7 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\x06_valueB\a\n" +
 	"\x05_peakB\x0e\n" +
 	"\f_known_valueB\r\n" +
-	"\v_known_peak\"\xd5\x04\n" +
+	"\v_known_peak\"\xe6\x05\n" +
 	"\tGpuSeries\x12\x1f\n" +
 	"\vmetric_code\x18\x01 \x01(\tR\n" +
 	"metricCode\x12\x12\n" +
@@ -1131,7 +1184,11 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"dataCutoff\x12\x1e\n" +
 	"\n" +
 	"capability\x18\f \x01(\tR\n" +
-	"capabilityB\a\n" +
+	"capability\x12\x1d\n" +
+	"\n" +
+	"event_code\x18\r \x01(\tR\teventCode\x12\x1c\n" +
+	"\tsemantics\x18\x0e \x01(\tR\tsemantics\x12R\n" +
+	"\x17exporter_process_starts\x18\x0f \x03(\v2\x1a.google.protobuf.TimestampR\x15exporterProcessStartsB\a\n" +
 	"\x05_meanB\a\n" +
 	"\x05_peak\"\xde\x03\n" +
 	"\x10QueryGpuResponse\x129\n" +
@@ -1201,21 +1258,22 @@ var file_observability_gpu_v1_gpu_proto_depIdxs = []int32{
 	11, // 17: observability.gpu.v1.GpuSeries.metric_available_from:type_name -> google.protobuf.Timestamp
 	11, // 18: observability.gpu.v1.GpuSeries.ownership_available_from:type_name -> google.protobuf.Timestamp
 	11, // 19: observability.gpu.v1.GpuSeries.data_cutoff:type_name -> google.protobuf.Timestamp
-	11, // 20: observability.gpu.v1.QueryGpuResponse.query_time:type_name -> google.protobuf.Timestamp
-	11, // 21: observability.gpu.v1.QueryGpuResponse.start:type_name -> google.protobuf.Timestamp
-	11, // 22: observability.gpu.v1.QueryGpuResponse.end:type_name -> google.protobuf.Timestamp
-	7,  // 23: observability.gpu.v1.QueryGpuResponse.series:type_name -> observability.gpu.v1.GpuSeries
-	8,  // 24: observability.gpu.v1.QueryGpuLatestResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
-	8,  // 25: observability.gpu.v1.QueryGpuRangeResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
-	3,  // 26: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:input_type -> observability.gpu.v1.QueryGpuLatestRequest
-	4,  // 27: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:input_type -> observability.gpu.v1.QueryGpuRangeRequest
-	9,  // 28: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:output_type -> observability.gpu.v1.QueryGpuLatestResponse
-	10, // 29: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:output_type -> observability.gpu.v1.QueryGpuRangeResponse
-	28, // [28:30] is the sub-list for method output_type
-	26, // [26:28] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	11, // 20: observability.gpu.v1.GpuSeries.exporter_process_starts:type_name -> google.protobuf.Timestamp
+	11, // 21: observability.gpu.v1.QueryGpuResponse.query_time:type_name -> google.protobuf.Timestamp
+	11, // 22: observability.gpu.v1.QueryGpuResponse.start:type_name -> google.protobuf.Timestamp
+	11, // 23: observability.gpu.v1.QueryGpuResponse.end:type_name -> google.protobuf.Timestamp
+	7,  // 24: observability.gpu.v1.QueryGpuResponse.series:type_name -> observability.gpu.v1.GpuSeries
+	8,  // 25: observability.gpu.v1.QueryGpuLatestResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
+	8,  // 26: observability.gpu.v1.QueryGpuRangeResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
+	3,  // 27: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:input_type -> observability.gpu.v1.QueryGpuLatestRequest
+	4,  // 28: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:input_type -> observability.gpu.v1.QueryGpuRangeRequest
+	9,  // 29: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:output_type -> observability.gpu.v1.QueryGpuLatestResponse
+	10, // 30: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:output_type -> observability.gpu.v1.QueryGpuRangeResponse
+	29, // [29:31] is the sub-list for method output_type
+	27, // [27:29] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_observability_gpu_v1_gpu_proto_init() }

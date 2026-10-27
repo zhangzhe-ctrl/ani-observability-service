@@ -36,6 +36,10 @@ message GpuSourceScope {
   string ownership_state = 12;
   string resource_kind = 13;
   string device_id = 14;
+  // Immutable node identity from ACC; controlled scrape profile must match.
+  string node_uid = 15;
+  bool candidate_complete = 16;
+  repeated string reasons = 17;
 }
 
 message GpuTarget {
@@ -104,6 +108,10 @@ message GpuSeries {
   google.protobuf.Timestamp data_cutoff = 11;
   // UNKNOWN unless explicit device capability evidence proves support/unsupported.
   string capability = 12;
+  // Physical event-code dimension; absent for ordinary gauges.
+  string event_code = 13;
+  string semantics = 14;
+  repeated google.protobuf.Timestamp exporter_process_starts = 15;
 }
 
 message QueryGpuResponse {
