@@ -17,6 +17,8 @@ prometheus:
   rule_namespace_selector: {matchLabels: {kubernetes.io/metadata.name: ani-observability}}
   rule_object: ani-instance-metrics-v1
   rule_group: ani-instance-metrics-v1
+  training_rule_object: ani-training-metrics-v1
+  training_rule_group: ani-training-metrics-v1
   rule_interval: 30s
   rule_uid: a4923d51-418e-4dc7-b244-dffb3435c5cf
   first_canonical_sample: "2026-10-19T09:17:55.589Z"
@@ -37,8 +39,11 @@ ksm:
   previous_interval: "inherited 30s"
   intended_interval: 15s
   previous_allowlist: absent
-  intended_allowlist: "pods=[ani.io/tenant-id,ani.io/instance-id]"
-  owner_label_names: [label_ani_io_tenant_id, label_ani_io_instance_id]
+  intended_allowlist: "pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind]"
+  owner_label_names: [label_ani_io_tenant_id, label_ani_io_instance_id, label_ani_io_workload_kind]
+  phase3_patch: patches/ksm-workload-phase3.patch.json
+  phase3_restore_patch: patches/restore-ksm-workload-phase3.patch.json
+  phase3_allowlist_exposure: "only Pods that actually carry ani.io/workload-kind emit label_ani_io_workload_kind"
   current_identity: "uid plus container_id=containerd://<64 lowercase hex>; running==1"
   applied_at: "2026-10-19T08:37:16Z"
 cadvisor:
@@ -78,6 +83,44 @@ network:
   phase2_rules_loaded: true
   phase2_rules_applied_at: "2026-10-20"
   phase2_live_verification: "12 rules health=ok no lastError; helpers 112/112 of raw eth0 series with pod_uid extracted, max sample age < 30s group interval; canonicals empty (no workspace instance exists)"
+training:
+  rule_group: ani-training-metrics-v1
+  interval: 30s
+  selector_join: 'series and on(ani_cluster_id,namespace,pod) kube_pod_labels{label_ani_io_workload_kind="trainer"}'
+  isolation: "workload-kind=trainer excludes instance workspace records; instance rule group is untouched"
+  namespace_pattern: "unstable per environment (for example ani-modeldev-tenant-a-v21); no namespace regex filter"
+  containers: {worker: node, step: main, step_sidecar: wait}
+  init_containers:
+    fact: "not present in kube_pod_container_info; reported by the independent kube_pod_init_container_info family"
+    effect: "init containers produce transient cpu_source/memory_source only and never a canonical"
+    verification: verified_20261027_kcn
+    verification_promql: count by (container) (kube_pod_container_info{namespace="<training namespace>"})
+    live_evidence: "training ns kube_pod_container_info: wait=28, main=28, node=1; kube_pod_init_container_info: init=28, kfp-launcher=8"
+  worker_containers:
+    fact: "single regular container node, no initContainers"
+    source: "ModelDev demand document v4 section 1 live sample; runtime_plan.go is outside this repository"
+    verification: verified_20261027_kcn
+    live_evidence: "worker pod md-8726f819-9742-4a51-8509-99f4d9135350-node-0-0-mppxl reports only container node"
+  ksm_rollout_gap:
+    no_new_samples: 30-45s
+    no_data_after_freshness_guard: 45-90s
+    affects: [ani_instance_metrics, ani_training_metrics]
+  series_budget:
+    steady_state_max: 8000
+    per_pod: {worker: 8, step: 15}
+    per_execution: 143
+    basis: "500 simultaneously alive step Pods plus about 56 workers; init containers add transient series only"
+  deployment:
+    date: "2026-10-27"
+    environment: kcn
+    cluster_id: f39bf6e2-f3ed-4191-ada3-caeebf86c220
+    image: 10.10.1.66:30003/ani-gpu-platform/ani-observability-service:training-20261027
+    image_digest: sha256:2fc0d9561209cb1bff2d344f42f130f3e6a9b93b57fbf7538651564cb8dac9c9
+    ksm_deployment_uid: 5a334163-8bdc-4216-8f97-df0553d917c9
+    rules_health: "8/8 ok, no lastError; group loaded by Prometheus"
+    probe_pod: "obs-p3-probe with three labels; canonical produced with 8 labels; removed after verification"
+    grpc_training_query: "2 series x 21 points PARTIAL; missing pod_uid, training network code and zero uuid each return InvalidArgument"
+
 freshness:
   maximum_original_sample_age_seconds: 45
   inclusive_boundary: true

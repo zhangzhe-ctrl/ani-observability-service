@@ -1,0 +1,21 @@
+[
+  {
+    "op": "test",
+    "path": "/metadata/uid",
+    "value": "REPLACE_WITH_DEPLOYMENT_UID"
+  },
+  {
+    "op": "test",
+    "path": "/spec/template/spec/containers/0/args",
+    "value": [
+      "--port=8080",
+      "--resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpointslices,horizontalpodautoscalers,ingresses,jobs,leases,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments",
+      "--metric-labels-allowlist=pods=[ani.io/tenant-id,ani.io/instance-id]"
+    ]
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/args/2",
+    "value": "--metric-labels-allowlist=pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind]"
+  }
+]

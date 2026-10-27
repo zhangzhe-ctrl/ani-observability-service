@@ -61,6 +61,27 @@ exists; end-to-end `verify.sh` acceptance stays deferred until one is created.
 Pod-level semantics (sidecar traffic included), the conditional coverage wording
 and the eth0/CNI re-verification contract are recorded in `source-profile.yaml`.
 
+## Phase 3 increment: training execution metrics (2026-10-27)
+
+A separate rule group `ani-training-metrics-v1` (8 rules, 30s) records
+`ani_training_cpu_usage_cores` and `ani_training_memory_working_set_bytes` from
+the same cAdvisor/KSM sources. The instance group is untouched. Training
+selection requires the third Pod label `ani.io/workload-kind=trainer`, exposed
+to KSM by a new patch pair (`ksm-workload-phase3.patch.json` /
+`restore-ksm-workload-phase3.patch.json`); the phase 1 patches remain replayable
+because each pair only covers one state transition.
+
+Selection joins cAdvisor and KSM series with
+`on(ani_cluster_id,namespace,pod)` to `kube_pod_labels{label_ani_io_workload_kind="trainer"}`,
+so instance `workspace` containers never enter `ani_training_*`. Container names
+are an external contract: worker `node`, step `main`; the step sidecar `wait` is
+recorded but never selected by the query path. init containers exist only in
+`kube_pod_init_container_info`, therefore they can never form a canonical — only
+transient helper series while they run.
+
+KSM rollout creates a 30-45s window without new samples and 45-90s of `NO_DATA`
+for both instance and training records. Schedule it away from active executions.
+
 ## Verified baseline and field changes
 
 Prometheus `3.11.3`, Operator `0.90.1`, KSM `2.19.0`, Kubernetes `1.35.8`, and

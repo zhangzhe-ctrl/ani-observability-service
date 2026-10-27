@@ -1,0 +1,356 @@
+{
+  "rule_files": [
+    "../rules/ani-training.rules.yaml"
+  ],
+  "evaluation_interval": "30s",
+  "fuzzy_compare": true,
+  "tests": [
+    {
+      "name": "training-worker-node-normal-eight-labels",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "container_memory_working_set_bytes{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "1048576x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_training_cpu_usage_cores",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_training_cpu_usage_cores\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"ani-modeldev-tenant-a-v21\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"node\"}",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "expr": "ani_training_memory_working_set_bytes",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{__name__=\"ani_training_memory_working_set_bytes\",ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",ani_tenant_id=\"22222222-2222-4222-8222-222222222222\",ani_instance_id=\"33333333-3333-4333-8333-333333333333\",namespace=\"ani-modeldev-tenant-a-v21\",pod_uid=\"44444444-4444-4444-8444-444444444444\",runtime_container_id=\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",container=\"node\"}",
+              "value": 1048576
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "instance-workspace-container-never-enters-training-records",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod77777777_7777_4777_8777_777777777777.slice/cri-containerd-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"77777777-7777-4777-8777-777777777777\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",container=\"workspace\",uid=\"77777777-7777-4777-8777-777777777777\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"tenant-a\",pod=\"instance-a\",uid=\"77777777-7777-4777-8777-777777777777\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"88888888-8888-4888-8888-888888888888\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_training_cpu_usage_cores{container=\"workspace\"})",
+          "eval_time": "5m",
+          "exp_samples": []
+        },
+        {
+          "expr": "count(ani_training_cpu_usage_cores)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "missing-instance-label-produces-nothing",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_training_cpu_usage_cores)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "pause-sandbox-container-is-filtered",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"POD\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani:training:cpu_source{container=\"POD\"})",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "init-container-transient-source-only",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"init\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod55555555_5555_4555_8555_555555555555.slice/cri-containerd-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"init\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"66666666-6666-4666-8666-666666666666\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani:training:cpu_source{container=\"init\"})",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "expr": "count(ani_training_cpu_usage_cores{container=\"init\"})",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "two-step-pods-stay-independent",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod55555555_5555_4555_8555_555555555555.slice/cri-containerd-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"66666666-6666-4666-8666-666666666666\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-3-2284525702\",container=\"main\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod99999999_9999_4999_8999_999999999999.slice/cri-containerd-dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-3-2284525702\",container=\"main\",uid=\"99999999-9999-4999-8999-999999999999\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-3-2284525702\",container=\"main\",uid=\"99999999-9999-4999-8999-999999999999\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-3-2284525702\",uid=\"99999999-9999-4999-8999-999999999999\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"66666666-6666-4666-8666-666666666666\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_training_cpu_usage_cores)",
+          "eval_time": "5m",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "labels-without-cluster-id-never-join",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_training_cpu_usage_cores)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "same-pod-two-container-ids-rejected-by-singleton-guard",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod44444444_4444_4444_8444_444444444444.slice/cri-containerd-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "0+15x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",container=\"node\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1x20"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-1-node-0-0-abcde\",uid=\"44444444-4444-4444-8444-444444444444\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"33333333-3333-4333-8333-333333333333\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1x20"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_training_cpu_usage_cores)",
+          "eval_time": "5m",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "short-lived-step-has-no-rate-but-has-memory",
+      "interval": "15s",
+      "input_series": [
+        {
+          "series": "container_cpu_usage_seconds_total{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod55555555_5555_4555_8555_555555555555.slice/cri-containerd-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\",cpu=\"total\"}",
+          "values": "5"
+        },
+        {
+          "series": "container_memory_working_set_bytes{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",id=\"/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod55555555_5555_4555_8555_555555555555.slice/cri-containerd-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.scope\",job=\"cadvisor\",instance=\"node:10250\",endpoint=\"https-metrics\"}",
+          "values": "1048576"
+        },
+        {
+          "series": "kube_pod_container_info{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",container_id=\"containerd://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}",
+          "values": "1"
+        },
+        {
+          "series": "kube_pod_container_status_running{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",container=\"main\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\"}",
+          "values": "1"
+        },
+        {
+          "series": "kube_pod_labels{ani_cluster_id=\"11111111-1111-4111-8111-111111111111\",namespace=\"ani-modeldev-tenant-a-v21\",pod=\"md-2-2284525701\",uid=\"55555555-5555-4555-8555-555555555555\",job=\"ksm\",instance=\"ksm:8080\",endpoint=\"http\",label_ani_io_tenant_id=\"22222222-2222-4222-8222-222222222222\",label_ani_io_instance_id=\"66666666-6666-4666-8666-666666666666\",label_ani_io_workload_kind=\"trainer\"}",
+          "values": "1"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "count(ani_training_cpu_usage_cores{container=\"main\"})",
+          "eval_time": "20s",
+          "exp_samples": []
+        },
+        {
+          "expr": "count(ani_training_memory_working_set_bytes{container=\"main\"})",
+          "eval_time": "20s",
+          "exp_samples": [
+            {
+              "labels": "{}",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
