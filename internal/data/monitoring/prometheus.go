@@ -82,7 +82,7 @@ func New(config []Datasource) (*Prometheus, error) {
 		transport.MaxConnsPerHost = 32
 		transport.MaxIdleConnsPerHost = 16
 		transport.IdleConnTimeout = 30 * time.Second
-		client := &http.Client{Transport: transport, Timeout: 4 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+		client := &http.Client{Transport: transport, Timeout: 15 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 		p.sources[c.ClusterID] = &source{base: base, client: client, transport: transport, token: token}
 	}
 	return p, nil
@@ -119,12 +119,23 @@ func (p *Prometheus) Query(ctx context.Context, q biz.Query, m biz.Metric) ([]bi
 		return nil, err
 	}
 	s := p.sources[q.Target.ClusterID]
+	if s == nil && q.Target.ClusterID == "" && q.Target.Kind == target.TENANT && len(p.sources) == 1 {
+		// 租户级 target 的 ClusterID 可选：单数据源部署直接解析，多数据源必须显式指定。
+		for _, only := range p.sources {
+			s = only
+		}
+	}
 	if s == nil {
 		return nil, biz.Fail(biz.SourceNotConfigured, fmt.Errorf("no configured datasource"))
 	}
 	address := *s.base
 	endpoint := "/api/v1/query_range"
-	form := url.Values{"query": {expr}, "timeout": {"4s"}, "limit": {"129"}}
+	// 实例/训练沿用 4s 求值超时；租户级长窗口放宽到 14s（批次预算 15s 内留余量）。
+	prometheusTimeout := "4s"
+	if q.Target.Kind == target.TENANT {
+		prometheusTimeout = "14s"
+	}
+	form := url.Values{"query": {expr}, "timeout": {prometheusTimeout}, "limit": {"129"}}
 	if q.Latest {
 		endpoint = "/api/v1/query"
 		form.Set("time", strconv.FormatInt(q.Start.Unix(), 10))
@@ -234,6 +245,15 @@ func requestFailure(ctx context.Context, err error) error {
 }
 
 func validLabels(labels map[string]string, s target.Scope, m biz.Metric) bool {
+	if s.Kind == target.TENANT {
+		// 租户级聚合结果没有运行时身份标签：CPU/内存按 ani_tenant_id 聚合后只剩
+		// 该标签，GPU 的 sum() 归一无标签。租户锚定由服务端表达式保证，这里只接受
+		// 零标签或恰好一个正确的租户标签。
+		if len(labels) == 0 {
+			return true
+		}
+		return len(labels) == 1 && labels["ani_tenant_id"] == s.TenantID
+	}
 	if len(labels) != 8 || labels["__name__"] != m.Record || labels["ani_cluster_id"] != s.ClusterID || labels["ani_tenant_id"] != s.TenantID || labels["ani_instance_id"] != s.InstanceID || labels["namespace"] != s.Namespace || labels["container"] != s.ContainerName {
 		return false
 	}

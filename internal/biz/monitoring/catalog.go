@@ -9,14 +9,22 @@ const Memory = "memory.working_set_bytes"
 const NetworkReceive = "network.receive_bytes_per_second"
 const NetworkTransmit = "network.transmit_bytes_per_second"
 
+// 租户级聚合编码：首页资源趋势专用，表达式由 query_builder 按编码生成。
+const TenantCPU = "tenant.cpu.usage_cores"
+const TenantMemory = "tenant.memory.working_set_bytes"
+const TenantGPU = "tenant.gpu.allocated_cores"
+
 // Lookup 按 target kind 返回已登记的指标定义。训练 kind 只登记 CPU 与内存，
 // 网络码在训练 kind 下返回未登记，由调用方转为 InvalidQuery。
+// 租户 kind 只登记三个租户级聚合编码，实例/训练编码互不可见。
 func Lookup(code string, kind int32) (Metric, bool) {
 	switch kind {
 	case target.ContainerInstance:
 		return lookupInstance(code)
 	case target.TrainingExecution:
 		return lookupTraining(code)
+	case target.TENANT:
+		return lookupTenant(code)
 	default:
 		return Metric{}, false
 	}
@@ -43,6 +51,21 @@ func lookupTraining(code string) (Metric, bool) {
 		return Metric{CPU, "ani_training_cpu_usage_cores", "cores"}, true
 	case Memory:
 		return Metric{Memory, "ani_training_memory_working_set_bytes", "bytes"}, true
+	default:
+		return Metric{}, false
+	}
+}
+
+// lookupTenant：GPU 是完整 join 表达式（volcano vGPU 份额 join 租户标签），
+// Record 留空，表达式由 query_builder.tenantExpression 固定生成。
+func lookupTenant(code string) (Metric, bool) {
+	switch code {
+	case TenantCPU:
+		return Metric{TenantCPU, "ani_instance_cpu_usage_cores", "cores"}, true
+	case TenantMemory:
+		return Metric{TenantMemory, "ani_instance_memory_working_set_bytes", "bytes"}, true
+	case TenantGPU:
+		return Metric{TenantGPU, "", "cores"}, true
 	default:
 		return Metric{}, false
 	}

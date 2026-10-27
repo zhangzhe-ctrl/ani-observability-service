@@ -168,6 +168,68 @@ func TestTrainingCatalogAndKindIsolation(t *testing.T) {
 	reason(t, err, InvalidQuery)
 }
 
+func TestTenantCatalogAndWindowLimits(t *testing.T) {
+	cpu, ok := Lookup(TenantCPU, target.TENANT)
+	if !ok || cpu.Record != "ani_instance_cpu_usage_cores" || cpu.Unit != "cores" {
+		t.Fatalf("tenant cpu catalog wrong: %+v ok=%v", cpu, ok)
+	}
+	memory, ok := Lookup(TenantMemory, target.TENANT)
+	if !ok || memory.Record != "ani_instance_memory_working_set_bytes" || memory.Unit != "bytes" {
+		t.Fatalf("tenant memory catalog wrong: %+v ok=%v", memory, ok)
+	}
+	gpu, ok := Lookup(TenantGPU, target.TENANT)
+	if !ok || gpu.Unit != "cores" {
+		t.Fatalf("tenant gpu catalog wrong: %+v ok=%v", gpu, ok)
+	}
+	// kind 隔离：实例/训练编码在租户 kind 下未登记，租户编码在实例 kind 下未登记。
+	for _, code := range []string{CPU, Memory, NetworkReceive, NetworkTransmit} {
+		if _, ok := Lookup(code, target.TENANT); ok {
+			t.Fatalf("tenant kind must not register %s", code)
+		}
+	}
+	for _, code := range []string{TenantCPU, TenantMemory, TenantGPU} {
+		if _, ok := Lookup(code, target.ContainerInstance); ok {
+			t.Fatalf("instance kind must not register %s", code)
+		}
+		if _, ok := Lookup(code, target.TrainingExecution); ok {
+			t.Fatalf("training kind must not register %s", code)
+		}
+	}
+
+	tenantQ := func() Query {
+		start := time.Date(2026, 9, 27, 0, 0, 0, 0, time.UTC)
+		return Query{Target: target.Scope{Kind: target.TENANT, TenantID: "11111111-1111-4111-8111-111111111111"},
+			Codes: []string{TenantCPU, TenantMemory, TenantGPU}, Start: start, End: start.Add(30 * 24 * time.Hour), Step: 2 * time.Hour}
+	}
+	u := func(q Query) *UseCase {
+		return NewUseCase(providerFunc(func(_ context.Context, _ Query, _ Metric) ([]Source, error) { return nil, nil }), func() time.Time { return q.End })
+	}
+	q := tenantQ()
+	result, err := u(q).Execute(context.Background(), q)
+	if err != nil || len(result.Series) != 3 {
+		t.Fatalf("30d tenant query rejected: %v", err)
+	}
+	rejections := map[string]func(*Query){
+		"31d span":     func(q *Query) { q.Start = q.End.Add(-31 * 24 * time.Hour) },
+		"step over 4h": func(q *Query) { q.Step = 4*time.Hour + 30*time.Second },
+	}
+	for name, mutate := range rejections {
+		t.Run(name, func(t *testing.T) {
+			q := tenantQ()
+			mutate(&q)
+			_, err := u(q).Execute(context.Background(), q)
+			reason(t, err, InvalidQuery)
+		})
+	}
+	// 1d 档 5m 默认 step 必须被租户校验接受（实例 kind 的 step 上限不适用于租户）。
+	day := tenantQ()
+	day.End = day.Start.Add(24 * time.Hour)
+	day.Step = 5 * time.Minute
+	if _, err := u(day).Execute(context.Background(), day); err != nil {
+		t.Fatalf("1d tier 5m step rejected: %v", err)
+	}
+}
+
 func TestLatestCapturesOneClockAndKeepsOrder(t *testing.T) {
 	q := validQuery()
 	q.Latest = true

@@ -93,10 +93,15 @@ func (q Query) Validate(now time.Time) error {
 		}
 		seen[code] = true
 	}
-	if q.Start.Nanosecond() != 0 || q.End.Nanosecond() != 0 || q.End.Before(q.Start) || q.End.After(now) || q.End.Sub(q.Start) > 24*time.Hour {
+	// 租户级趋势放宽到 30d / 4h（首页三档），实例与训练保持原 24h / 1h 合同不变。
+	maxSpan, maxStep := 24*time.Hour, time.Hour
+	if q.Target.Kind == target.TENANT {
+		maxSpan, maxStep = 30*24*time.Hour, 4*time.Hour
+	}
+	if q.Start.Nanosecond() != 0 || q.End.Nanosecond() != 0 || q.End.Before(q.Start) || q.End.After(now) || q.End.Sub(q.Start) > maxSpan {
 		return Fail(InvalidQuery, errors.New("invalid query time window"))
 	}
-	if q.Step < 30*time.Second || q.Step > time.Hour || q.Step%(30*time.Second) != 0 || q.End.Sub(q.Start)/q.Step+1 > 3000 {
+	if q.Step < 30*time.Second || q.Step > maxStep || q.Step%(30*time.Second) != 0 || q.End.Sub(q.Start)/q.Step+1 > 3000 {
 		return Fail(InvalidQuery, errors.New("invalid step or point count"))
 	}
 	return nil
@@ -118,7 +123,12 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 		return nil, err
 	}
 	defer release()
-	batch, cancel := context.WithTimeout(ctx, 4*time.Second)
+	// 实例/训练批次预算 4s；租户级长窗口（最多 30d）放宽到 15s。
+	budget := 4 * time.Second
+	if q.Target.Kind == target.TENANT {
+		budget = 15 * time.Second
+	}
+	batch, cancel := context.WithTimeout(ctx, budget)
 	defer cancel()
 	type item struct {
 		index  int

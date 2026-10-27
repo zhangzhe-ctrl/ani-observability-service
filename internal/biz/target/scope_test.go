@@ -58,3 +58,39 @@ func TestValidateRejectsKindMismatch(t *testing.T) {
 		})
 	}
 }
+
+func tenantScope() Scope {
+	return Scope{Kind: TENANT, TenantID: "11111111-1111-4111-8111-111111111111",
+		ClusterID: "33333333-3333-4333-8333-333333333333"}
+}
+
+func TestValidateTenantScope(t *testing.T) {
+	if err := tenantScope().Validate(); err != nil {
+		t.Fatalf("tenant scope with cluster rejected: %v", err)
+	}
+	withoutCluster := tenantScope()
+	withoutCluster.ClusterID = ""
+	if err := withoutCluster.Validate(); err != nil {
+		t.Fatalf("tenant scope without cluster rejected: %v", err)
+	}
+	rejections := []struct {
+		name   string
+		mutate func(*Scope)
+	}{
+		{"instance id", func(s *Scope) { s.InstanceID = "22222222-2222-4222-8222-222222222222" }},
+		{"namespace", func(s *Scope) { s.Namespace = "tenant-workload" }},
+		{"container", func(s *Scope) { s.ContainerName = "workspace" }},
+		{"pod uid", func(s *Scope) { s.PodUID = "44444444-4444-4444-8444-444444444444" }},
+		{"bad tenant", func(s *Scope) { s.TenantID = "00000000-0000-0000-0000-000000000000" }},
+		{"bad cluster", func(s *Scope) { s.ClusterID = "not-a-uuid" }},
+	}
+	for _, tc := range rejections {
+		t.Run(tc.name, func(t *testing.T) {
+			s := tenantScope()
+			tc.mutate(&s)
+			if err := s.Validate(); err == nil {
+				t.Fatalf("%s was accepted", tc.name)
+			}
+		})
+	}
+}

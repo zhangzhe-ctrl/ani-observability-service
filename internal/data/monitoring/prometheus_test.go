@@ -284,3 +284,111 @@ func TestDatasourceConfigurationAndCancellation(t *testing.T) {
 		t.Fatal("HTTP work survived cancellation")
 	}
 }
+
+func tenantQuery() biz.Query {
+	start := time.Unix(1700000000, 0).UTC()
+	return biz.Query{Target: target.Scope{Kind: target.TENANT, TenantID: "11111111-1111-4111-8111-111111111111"},
+		Codes: []string{biz.TenantCPU}, Start: start, End: start.Add(24 * time.Hour), Step: 5 * time.Minute}
+}
+
+// tenantProvider 构造单数据源（ClusterID 与租户 query 不一致，验证租户 target 的缺省解析）。
+func tenantProvider(t *testing.T, h http.HandlerFunc) *Prometheus {
+	t.Helper()
+	server := httptest.NewServer(h)
+	t.Cleanup(server.Close)
+	p, err := New([]Datasource{{ClusterID: "33333333-3333-4333-8333-333333333333", Address: server.URL}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(p.Close)
+	return p
+}
+
+func TestTenantExpressionsAndRelaxedBudget(t *testing.T) {
+	cases := []struct {
+		code         string
+		bodyContains []string
+		bodyAbsent   []string
+	}{
+		{biz.TenantCPU, []string{"sum by(ani_tenant_id)(ani_instance_cpu_usage_cores{ani_tenant_id=", "time() - timestamp(ani_instance_cpu_usage_cores{ani_tenant_id=", "<= 45"}, []string{"ani_instance_id=", "namespace="}},
+		{biz.TenantMemory, []string{"sum by(ani_tenant_id)(ani_instance_memory_working_set_bytes{ani_tenant_id=", "<= 45"}, []string{"pod_uid"}},
+		{biz.TenantGPU, []string{`sum(label_replace(volcano_vgpu_device_core_allocation_for_a_certain_pod, "pod", "$1", "podName", "(.*)") * on(pod) group_left(label_ani_io_tenant_id) kube_pod_labels{label_ani_io_tenant_id=`, `}) / 100`}, []string{"<= 45", "ani_instance_cpu_usage_cores"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.code, func(t *testing.T) {
+			m, ok := biz.Lookup(tc.code, target.TENANT)
+			if !ok {
+				t.Fatal("tenant metric not registered")
+			}
+			expr, err := Expression(tenantQuery().Target, m)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, want := range tc.bodyContains {
+				if !strings.Contains(expr, want) {
+					t.Fatalf("expression missing %q: %s", want, expr)
+				}
+			}
+			for _, banned := range tc.bodyAbsent {
+				if strings.Contains(expr, banned) {
+					t.Fatalf("expression must not contain %q: %s", banned, expr)
+				}
+			}
+			if strings.Count(expr, `"11111111-1111-4111-8111-111111111111"`) == 0 {
+				t.Fatalf("tenant identity not injected: %s", expr)
+			}
+		})
+	}
+	q := tenantQuery()
+	m, _ := biz.Lookup(biz.TenantCPU, target.TENANT)
+	p := tenantProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			t.Error(err)
+		}
+		if r.Form.Get("timeout") != "14s" {
+			t.Errorf("tenant timeout = %s, want 14s", r.Form.Get("timeout"))
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "success", "data": map[string]any{"resultType": "matrix", "result": []any{map[string]any{"metric": map[string]string{"ani_tenant_id": q.Target.TenantID}, "values": []any{[]any{1700000000, "1.5"}}}}}})
+	})
+	sources, err := p.Query(context.Background(), q, m)
+	if err != nil || len(sources) != 1 || sources[0].Samples[0].Value != 1.5 {
+		t.Fatalf("tenant cpu query: %+v %v", sources, err)
+	}
+}
+
+func TestTenantLabelsAcceptAggregationShapes(t *testing.T) {
+	q := tenantQuery()
+	accept := []map[string]string{
+		{"ani_tenant_id": q.Target.TenantID}, // sum by(ani_tenant_id)
+		{},                                   // GPU 归一无标签
+	}
+	m, _ := biz.Lookup(biz.TenantCPU, target.TENANT)
+	for _, labels := range accept {
+		if !validLabels(labels, q.Target, m) {
+			t.Fatalf("aggregated labels rejected: %v", labels)
+		}
+	}
+	reject := []map[string]string{
+		{"ani_tenant_id": "55555555-5555-4555-8555-555555555555"},
+		{"ani_tenant_id": q.Target.TenantID, "job": "extra"},
+		{"pod_uid": "44444444-4444-4444-8444-444444444444"},
+	}
+	for _, labels := range reject {
+		if validLabels(labels, q.Target, m) {
+			t.Fatalf("labels accepted: %v", labels)
+		}
+	}
+}
+
+func TestTenantQueryWithoutClusterResolvesSingleDatasource(t *testing.T) {
+	q := tenantQuery()
+	q.Target.ClusterID = ""
+	m, _ := biz.Lookup(biz.TenantCPU, target.TENANT)
+	p := tenantProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"status": "success", "data": map[string]any{"resultType": "matrix", "result": []any{}}})
+	})
+	sources, err := p.Query(context.Background(), q, m)
+	if err != nil || len(sources) != 0 {
+		t.Fatalf("single datasource fallback: %v %v", sources, err)
+	}
+}
