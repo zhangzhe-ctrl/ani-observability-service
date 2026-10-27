@@ -7,10 +7,13 @@ import (
 
 	"github.com/go-kratos/kratos/v3/middleware"
 	kratosgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
+	gpuapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/gpu/v1"
+	gpubiz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/gpu"
 	biz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/monitoring"
 	conf "github.com/zhangzhe-ctrl/ani-observability-service/internal/conf/v1"
 	data "github.com/zhangzhe-ctrl/ani-observability-service/internal/data/monitoring"
 	"github.com/zhangzhe-ctrl/ani-observability-service/internal/server"
+	gpuservice "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/gpu"
 	service "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/monitoring"
 )
 
@@ -37,5 +40,6 @@ func openMonitoring(bc *conf.Bootstrap, logger *slog.Logger, middlewares ...midd
 		cleanup()
 		return nil, nil, err
 	}
+	gpuapi.RegisterGpuMonitoringServiceServer(listener, gpuservice.New(gpubiz.New(provider, nil)))
 	return listener, cleanup, nil
 }

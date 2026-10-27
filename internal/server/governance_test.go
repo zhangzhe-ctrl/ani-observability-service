@@ -19,12 +19,15 @@ import (
 	"testing"
 	"time"
 
+	gpuapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/gpu/v1"
 	api "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1"
 	targetapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/target/v1"
+	gpubiz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/gpu"
 	biz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/monitoring"
 	conf "github.com/zhangzhe-ctrl/ani-observability-service/internal/conf/v1"
 	data "github.com/zhangzhe-ctrl/ani-observability-service/internal/data/monitoring"
 	server "github.com/zhangzhe-ctrl/ani-observability-service/internal/server"
+	gpuservice "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/gpu"
 	service "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/monitoring"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -201,6 +204,7 @@ func startGovernance(t *testing.T, ca *testCA) string {
 	if err != nil {
 		t.Fatal(err)
 	}
+	gpuapi.RegisterGpuMonitoringServiceServer(listener, gpuservice.New(gpubiz.New(provider, nil)))
 	endpoint, err := listener.Endpoint()
 	if err != nil {
 		t.Fatal(err)
@@ -305,4 +309,31 @@ func randomSerial(t *testing.T) *big.Int {
 		t.Fatal(err)
 	}
 	return n
+}
+
+func TestGpuExplicitPlatformAndTenantContexts(t *testing.T) {
+	ca := newTestCA(t)
+	address := startGovernance(t, ca)
+	connection := dialGovernance(t, address, ca.clientConfig(t, []string{"ani-governance"}))
+	client := gpuapi.NewGpuMonitoringServiceClient(connection)
+	req := &gpuapi.QueryGpuLatestRequest{Target: &gpuapi.GpuTarget{Kind: "PHYSICAL", IndexComplete: true, Scopes: []*gpuapi.GpuSourceScope{{ClusterId: "0fcdb8b1-22bf-4528-af59-82843dc88f21", NodeId: "node1", NodeUid: "node-uid", GpuUuid: "abc"}}}, MetricCodes: []string{"gpu.physical.memory_used_bytes"}}
+	platform := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-ani-context", "platform", "x-ani-actor", "governance:user:1", "x-ani-request-id", trustedRequestID))
+	response, err := client.QueryGpuLatest(platform, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.GetResult().GetSeries()[0].GetQuality().GetStatus() != "NO_DATA" {
+		t.Fatal(response)
+	}
+	if _, err := client.QueryGpuLatest(trustedContext(), req); status.Code(err) != codes.Unauthenticated {
+		t.Fatal("missing explicit context", err)
+	}
+	tenant := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-ani-context", "tenant", "x-ani-tenant-id", trustedTenant, "x-ani-actor", "governance:user:1", "x-ani-request-id", trustedRequestID))
+	if _, err := client.QueryGpuLatest(tenant, req); status.Code(err) != codes.PermissionDenied {
+		t.Fatal("tenant cannot read physical", err)
+	}
+	platformWithTenant := metadata.AppendToOutgoingContext(platform, "x-ani-tenant-id", trustedTenant)
+	if _, err := client.QueryGpuLatest(platformWithTenant, req); status.Code(err) != codes.PermissionDenied {
+		t.Fatal("fake platform tenant", err)
+	}
 }
