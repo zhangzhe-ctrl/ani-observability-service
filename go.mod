@@ -7,7 +7,7 @@ require (
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.1
+	github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.2
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.66.0
 	go.opentelemetry.io/otel/metric v1.45.0
