@@ -68,10 +68,6 @@ github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0t
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.2 h1:DjP+SVDb3DNqorIT7Yt1Q63X13/3gmOrVIUOQlh4fr4=
-github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.2/go.mod h1:a+WDRsjGC2HUmncHBgkHfUKaRfsfMqvFr+uJzJW2T4A=
-github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.3-0.20261027163043-5bd1913226e6 h1:jgsgWbHlXYir8GU0rJKcAldQdLX0jqQ27HTeNaTKGZU=
-github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.3-0.20261027163043-5bd1913226e6/go.mod h1:a+WDRsjGC2HUmncHBgkHfUKaRfsfMqvFr+uJzJW2T4A=
 github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.3-0.20261027163848-2889e1744f17 h1:OiFMGM9TsgDtBGnP6dXybsh0NaIzPms+04DrqMxY4eU=
 github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.3-0.20261027163848-2889e1744f17/go.mod h1:a+WDRsjGC2HUmncHBgkHfUKaRfsfMqvFr+uJzJW2T4A=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
