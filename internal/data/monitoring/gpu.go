@@ -68,7 +68,7 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 			if err != nil {
 				return nil, err
 			}
-			stamps, err := s.gpuRequest(ctx, q, m, "timestamp("+expr+")", start, end)
+			stamps, err := s.gpuRequest(ctx, q, m, gpuTimestampExpression(clusters[cluster], m), start, end)
 			if err != nil {
 				return nil, err
 			}
@@ -79,7 +79,7 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 				if e != nil {
 					return nil, e
 				}
-				processTimes, e := s.gpuRequest(ctx, q, m, "timestamp("+gpuProcessExpression(clusters[cluster])+")", start, end)
+				processTimes, e := s.gpuRequest(ctx, q, m, gpuProcessTimestampExpression(clusters[cluster]), start, end)
 				if e != nil {
 					return nil, e
 				}
@@ -224,6 +224,12 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 	return all, nil
 }
 func gpuExpression(scopes []gpu.Scope, m gpu.Metric) string {
+	return gpuMetricExpression(scopes, m, false)
+}
+func gpuTimestampExpression(scopes []gpu.Scope, m gpu.Metric) string {
+	return gpuMetricExpression(scopes, m, true)
+}
+func gpuMetricExpression(scopes []gpu.Scope, m gpu.Metric, sampleTime bool) string {
 	unique := map[string]bool{}
 	parts := []string{}
 	for _, s := range scopes {
@@ -254,6 +260,11 @@ func gpuExpression(scopes []gpu.Scope, m gpu.Metric) string {
 			}
 		}
 		part := m.Record + "{" + strings.Join(selectors, ",") + "}"
+		if sampleTime {
+			// Set operators evaluate at the query time. Read the original sample
+			// time from each selector before health filtering or source union.
+			part = "timestamp(" + part + ")"
+		}
 		if m.Profile == "nvml" && !m.Event {
 			profile := fmt.Sprintf(`ani_cluster_id=%s,ani_node_id=%s,ani_node_uid=%s,ani_gpu_source="nvml"`, strconv.Quote(s.ClusterID), strconv.Quote(s.NodeID), strconv.Quote(s.NodeUID))
 			health := `nvidia_smi_last_collect_success{` + profile + `}`
@@ -430,10 +441,19 @@ func gpuPoints(w wireSeries, latest bool, start, end time.Time, base time.Durati
 }
 
 func gpuProcessExpression(scopes []gpu.Scope) string {
+	return gpuExporterProcessExpression(scopes, false)
+}
+func gpuProcessTimestampExpression(scopes []gpu.Scope) string {
+	return gpuExporterProcessExpression(scopes, true)
+}
+func gpuExporterProcessExpression(scopes []gpu.Scope, sampleTime bool) string {
 	seen := map[string]bool{}
 	parts := []string{}
 	for _, s := range scopes {
 		selector := fmt.Sprintf(`process_start_time_seconds{ani_cluster_id=%s,ani_node_id=%s,ani_node_uid=%s,ani_gpu_source="nvml"}`, strconv.Quote(s.ClusterID), strconv.Quote(s.NodeID), strconv.Quote(s.NodeUID))
+		if sampleTime {
+			selector = "timestamp(" + selector + ")"
+		}
 		if !seen[selector] {
 			seen[selector] = true
 			parts = append(parts, selector)

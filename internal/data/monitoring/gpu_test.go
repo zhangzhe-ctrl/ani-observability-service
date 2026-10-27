@@ -26,7 +26,7 @@ func TestGpuPrometheusPreservesOriginalTimeAndPairs(t *testing.T) {
 			t.Errorf("missing source controls: %s", expr)
 		}
 		v := "17"
-		if strings.HasPrefix(expr, "timestamp(") {
+		if strings.Contains(expr, "timestamp(") {
 			v = fmt.Sprint(now.Unix() - 30)
 		}
 		fmt.Fprintf(w, `{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"__name__":"nvidia_smi_memory_used_bytes","ani_cluster_id":"f39bf6e2-f3ed-4191-ada3-caeebf86c220","ani_node_id":"node1","ani_node_uid":"node-uid","ani_gpu_source":"nvml","uuid":"abc","job":"gpu"},"values":[[%d,"%s"]]}]}}`, now.Unix(), v)
@@ -100,7 +100,7 @@ func TestGpuXidProcessCompanionUsesControlledExporterIdentity(t *testing.T) {
 			// present only on device metrics, never the exporter process family.
 			labels["source_unit"] = "count"
 		}
-		if strings.HasPrefix(expr, "timestamp(") {
+		if strings.Contains(expr, "timestamp(") {
 			delete(labels, "__name__")
 			value = float64(at.Unix())
 		}

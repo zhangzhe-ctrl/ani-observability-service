@@ -63,7 +63,7 @@ func TestDenseThirtyDaySixCardsFourMetrics(t *testing.T) {
 			w.WriteHeader(400)
 			return
 		}
-		paired := strings.HasPrefix(expr, "timestamp(")
+		paired := strings.Contains(expr, "timestamp(")
 		calls.Add(1)
 		writer := bufio.NewWriterSize(w, 64*1024)
 		defer writer.Flush()
