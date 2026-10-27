@@ -10,6 +10,7 @@
 *.so
 vendor/
 go.work
+go.work.sum
 bin/
 
 # Task-owned tools and caches.
