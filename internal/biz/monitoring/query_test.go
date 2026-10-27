@@ -74,7 +74,7 @@ func TestInvalidQueryNeverCallsProvider(t *testing.T) {
 	mutations := map[string]func(*Query){
 		"unknown": func(q *Query) { q.Codes = []string{"bad"} }, "duplicate": func(q *Query) { q.Codes = []string{CPU, CPU} }, "empty": func(q *Query) { q.Codes = nil },
 		"zero step": func(q *Query) { q.Step = 0 }, "small step": func(q *Query) { q.Step = 29 * time.Second }, "nonmultiple": func(q *Query) { q.Step = 31 * time.Second }, "large step": func(q *Query) { q.Step = 3630 * time.Second },
-		"reverse": func(q *Query) { q.End = q.Start.Add(-time.Second) }, "future": func(q *Query) { q.End = q.Start.Add(2 * time.Hour) }, "too long": func(q *Query) { q.Start = q.End.Add(-24*time.Hour - time.Second) }, "fractional": func(q *Query) { q.Start = q.Start.Add(time.Nanosecond) },
+		"reverse": func(q *Query) { q.End = q.Start.Add(-time.Second) }, "too long": func(q *Query) { q.Start = q.End.Add(-24*time.Hour - time.Second) }, "fractional": func(q *Query) { q.Start = q.Start.Add(time.Nanosecond) },
 		"bad tenant": func(q *Query) { q.Target.TenantID = "00000000-0000-0000-0000-000000000000" }, "bad namespace": func(q *Query) { q.Target.Namespace = "bad_name" }, "sidecar": func(q *Query) { q.Target.ContainerName = "sidecar" }, "kind": func(q *Query) { q.Target.Kind = 0 },
 	}
 	for name, mutate := range mutations {
@@ -88,6 +88,27 @@ func TestInvalidQueryNeverCallsProvider(t *testing.T) {
 			_, err := u.Execute(context.Background(), q)
 			reason(t, err, InvalidQuery)
 		})
+	}
+}
+
+func TestFutureEndAccepted(t *testing.T) {
+	q := validQuery()
+	clock := q.Start.Add(time.Hour)
+	q.End = clock.Add(2 * time.Hour)
+	if q.End.Sub(q.Start) > 24*time.Hour {
+		t.Fatal("fixture exceeds span limit")
+	}
+	calls := 0
+	u := NewUseCase(providerFunc(func(context.Context, Query, Metric) ([]Source, error) {
+		calls++
+		return nil, nil
+	}), func() time.Time { return clock })
+	result, err := u.Execute(context.Background(), q)
+	if err != nil {
+		t.Fatalf("future end rejected: %v", err)
+	}
+	if !result.End.Equal(q.End.UTC()) || calls != len(q.Codes) {
+		t.Fatalf("end=%v calls=%d", result.End, calls)
 	}
 }
 

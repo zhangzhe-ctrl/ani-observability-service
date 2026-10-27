@@ -79,7 +79,7 @@ func (u *UseCase) acquire(tenant string) (func(), error) {
 	}, nil
 }
 
-func (q Query) Validate(now time.Time) error {
+func (q Query) Validate(_ time.Time) error {
 	if err := q.Target.Validate(); err != nil {
 		return Fail(InvalidQuery, err)
 	}
@@ -98,7 +98,9 @@ func (q Query) Validate(now time.Time) error {
 	if q.Target.Kind == target.TENANT {
 		maxSpan, maxStep = 30*24*time.Hour, 4*time.Hour
 	}
-	if q.Start.Nanosecond() != 0 || q.End.Nanosecond() != 0 || q.End.Before(q.Start) || q.End.After(now) || q.End.Sub(q.Start) > maxSpan {
+	// 不再拒绝 end 晚于 now：前端按客户端时钟计算窗口并向上取整，秒级时钟漂移
+	// 会稳定越界。跨度、步长与点数上限仍然生效。
+	if q.Start.Nanosecond() != 0 || q.End.Nanosecond() != 0 || q.End.Before(q.Start) || q.End.Sub(q.Start) > maxSpan {
 		return Fail(InvalidQuery, errors.New("invalid query time window"))
 	}
 	if q.Step < 30*time.Second || q.Step > maxStep || q.Step%(30*time.Second) != 0 || q.End.Sub(q.Start)/q.Step+1 > 3000 {
