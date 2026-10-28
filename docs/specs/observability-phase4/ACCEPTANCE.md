@@ -10,7 +10,7 @@
 | 1 | scope 校验：租户分支 | PASS | `TestValidateTenantScope`（带/不带 ClusterID 接受；instance id、namespace、container、pod uid、零租户、坏 cluster 共 6 类拒绝） |
 | 2 | scope 校验：原 kind 无回归 | PASS | `TestValidateAcceptsBothKinds`、`TestValidateRejectsKindMismatch`（8 个子用例）原样通过 |
 | 3 | catalog：租户编码与 kind 隔离 | PASS | `TestTenantCatalogAndWindowLimits`：三个租户编码 record/单位正确；实例/训练编码在租户 kind 未登记；租户编码在实例/训练 kind 未登记 |
-| 4 | 表达式生成 | PASS | `TestTenantExpressionsAndRelaxedBudget`：CPU/内存含 `sum by(ani_tenant_id)` 与 45s 新鲜度守卫、无实例级 matcher；GPU 为完整 join 表达式、无新鲜度过滤；租户身份注入 |
+| 4 | 表达式生成 | PASS | `TestTenantExpressionsAndRelaxedBudget`：三条均为 `sum(...)` 外层 + 租户 pod 视图（三路 label + `max by (namespace, pod)`）；CPU/内存含 `<= 45` 新鲜度守卫，GPU 含 `<= 90` 与 `podnamespace`/`podname` 投影；旧 volcano 份额与 `/ 100` 已消失；租户身份注入 |
 | 5 | validLabels 租户分支 | PASS | `TestTenantLabelsAcceptAggregationShapes`：零标签与单租户标签接受；异租户标签、多标签、pod_uid 拒绝 |
 | 6 | 窗口校验：30d/4h 放宽 | PASS | 同 3：30d 档 2h step 通过；31d 跨度、4.5h step 拒绝；1d 档 5m step 通过（实例 kind 的 1h 上限不适用于租户） |
 | 7 | 窗口校验：实例/训练无回归 | PASS | `TestInvalidQueryNeverCallsProvider`（14 个子用例）原样通过 |

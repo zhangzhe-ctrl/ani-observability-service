@@ -1,19 +1,26 @@
 # 四期运维手册：租户级资源趋势
 
-## 1. 采集与规则：本期无新增
+## 1. 采集与规则：本期无新增 rule，但需一次 KSM 白名单扩容
 
 - **不新增 ServiceMonitor / 采集补丁**：volcano device-plugin 的
-  `ServiceMonitor ani-observability/ani-gpu-volcano-monitor`（15s）已在采，
-  三节点 target up，`metricRelabelings` keep `HostCoreUtilization | HostGPUMemoryUsage`，
-  并已注入 `ani_cluster_id`。
-- **不新增 PrometheusRule**：租户级 CPU/内存直接聚合一期
-  `ani-instance-metrics-v1` 组的 `ani_instance_cpu_usage_cores` /
-  `ani_instance_memory_working_set_bytes`（已投影 `ani_tenant_id`，12 条规则
-  `health=ok`）；GPU 的租户 join 固定写在 obs 代码里，不做预聚合。
-- GPU 指标实测口径（2026-10-27，kcn 新环境）：
-  `count(HostCoreUtilization)=6`（3 节点 × 2 卡，单位 percent）、
-  `HostGPUMemoryUsage` 单位 bytes、
-  `volcano_vgpu_device_core_allocation_for_a_certain_pod` 为 0–100 的 vGPU 份额。
+  `ServiceMonitor ani-observability/ani-gpu-volcano-monitor`（15s）仍在采，
+  三节点 target up。GPU 曲线已改为直查 HAMi
+  `vGPU_device_memory_usage_in_bytes`（30s，见 `deploy/gpu/hami-test-environment.json`
+  与 `docs/contracts/gpu-monitoring-v1.md`）。
+- **不新增 PrometheusRule**：三条租户曲线全部直查 cAdvisor / HAMi 原始指标，
+  不再引用 `ani_instance_*` 预聚合（其源头硬编码 `container="workspace"`，只覆盖容器实例）。
+- **KSM 白名单扩容一次**（2026-10-28 新增）：
+
+  ```
+  --metric-labels-allowlist=pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind,ani.kubercloud.com/tenant-id],namespaces=[ani.io/resource-tenant-id]
+  ```
+
+  补丁对 `deployments/observability/collection/patches/ksm-tenant-scope.patch.json`
+  与 `restore-ksm-tenant-scope.patch.json`。该参数是**单个参数**，只能整体 `replace`；
+  `test` 失败时先取当前对象逐字段核对，不删 test、不绕过。
+- GPU 指标实测口径（2026-10-28，kcn 新环境）：
+  HAMi `vGPU_device_memory_usage_in_bytes` 为容器级显存实际用量（bytes），
+  `podnamespace` / `podname` / `ctrname` / `vdeviceid` 为业务维度。
   **结论：不需要 DCGM。**
 
 ## 2. Prometheus 保留期与容量（2026-10-27 已调整）
@@ -39,24 +46,32 @@
 ```bash
 kubectl port-forward -n ani-observability svc/ani-metrics-prometheus 19098:9090 &
 
-# 设备级指标（无租户维度）
-curl -s -G 'http://127.0.0.1:19098/api/v1/query' --data-urlencode 'query=HostCoreUtilization'
-
-# per-pod vGPU 份额（namespace/pod 是 scheduler 自身的，业务 pod 名在 podName）
+# HAMi 容器级显存用量（podnamespace/podname 是业务维度，namespace 是 device-plugin 的）
 curl -s -G 'http://127.0.0.1:19098/api/v1/query' \
-  --data-urlencode 'query=volcano_vgpu_device_core_allocation_for_a_certain_pod'
+  --data-urlencode 'query=vGPU_device_memory_usage_in_bytes'
 
-# 租户级 GPU（obs 代码内固定表达式的等价形式）
+# 三路 label 是否落地（KSM 白名单扩容后）
+curl -s -G 'http://127.0.0.1:19098/api/v1/query' \
+  --data-urlencode 'query=count(kube_namespace_labels{label_ani_io_resource_tenant_id=~".+"})'
+curl -s -G 'http://127.0.0.1:19098/api/v1/query' \
+  --data-urlencode 'query=count(kube_pod_labels{label_ani_kubercloud_com_tenant_id=~".+"})'
+
+# 租户 pod 视图（obs 代码内固定表达式的等价形式）
+curl -s -G 'http://127.0.0.1:19098/api/v1/query' --data-urlencode 'query=max by (namespace, pod) (
+  kube_pod_labels{label_ani_io_tenant_id="<tenant_uuid>"}
+  or label_replace(kube_pod_labels{label_ani_kubercloud_com_tenant_id="<tenant_uuid>"},
+       "label_ani_io_tenant_id", "$1", "label_ani_kubercloud_com_tenant_id", "(.*)")
+  or (kube_pod_labels * on(namespace) group_left()
+        max by (namespace) (kube_namespace_labels{label_ani_io_resource_tenant_id="<tenant_uuid>"}))
+)'
+
+# 租户级 GPU 显存（obs 代码内固定表达式的等价形式）
 curl -s -G 'http://127.0.0.1:19098/api/v1/query' --data-urlencode 'query=sum(
-  label_replace(volcano_vgpu_device_core_allocation_for_a_certain_pod,
-    "pod", "$1", "podName", "(.*)")
-  * on(pod) group_left(label_ani_io_tenant_id)
-    kube_pod_labels{label_ani_io_tenant_id="<tenant_uuid>"}
-) / 100'
-
-# 租户级 CPU 对拍
-curl -s -G 'http://127.0.0.1:19098/api/v1/query' \
-  --data-urlencode 'query=sum(ani_instance_cpu_usage_cores{ani_tenant_id="<tenant_uuid>"})'
+  label_replace(label_replace(max by (podnamespace, podname, ctrname, vdeviceid) (
+    vGPU_device_memory_usage_in_bytes and (time() - timestamp(vGPU_device_memory_usage_in_bytes) <= 90)),
+    "namespace", "$1", "podnamespace", "(.*)"), "pod", "$1", "podname", "(.*)")
+  * on(namespace, pod) group_left() <租户 pod 视图>
+)'
 ```
 
 ## 4. 部署顺序与超时配置
