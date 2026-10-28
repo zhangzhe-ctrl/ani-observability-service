@@ -191,15 +191,15 @@ func TestTrainingCatalogAndKindIsolation(t *testing.T) {
 
 func TestTenantCatalogAndWindowLimits(t *testing.T) {
 	cpu, ok := Lookup(TenantCPU, target.TENANT)
-	if !ok || cpu.Record != "ani_instance_cpu_usage_cores" || cpu.Unit != "cores" {
+	if !ok || cpu.Record != "container_cpu_usage_seconds_total" || cpu.Unit != "cores" {
 		t.Fatalf("tenant cpu catalog wrong: %+v ok=%v", cpu, ok)
 	}
 	memory, ok := Lookup(TenantMemory, target.TENANT)
-	if !ok || memory.Record != "ani_instance_memory_working_set_bytes" || memory.Unit != "bytes" {
+	if !ok || memory.Record != "container_memory_working_set_bytes" || memory.Unit != "bytes" {
 		t.Fatalf("tenant memory catalog wrong: %+v ok=%v", memory, ok)
 	}
 	gpu, ok := Lookup(TenantGPU, target.TENANT)
-	if !ok || gpu.Unit != "cores" {
+	if !ok || gpu.Record != "vGPU_device_memory_usage_in_bytes" || gpu.Unit != "bytes" {
 		t.Fatalf("tenant gpu catalog wrong: %+v ok=%v", gpu, ok)
 	}
 	// kind 隔离：实例/训练编码在租户 kind 下未登记，租户编码在实例 kind 下未登记。

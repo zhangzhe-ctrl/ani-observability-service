@@ -310,9 +310,20 @@ func TestTenantExpressionsAndRelaxedBudget(t *testing.T) {
 		bodyContains []string
 		bodyAbsent   []string
 	}{
-		{biz.TenantCPU, []string{"sum by(ani_tenant_id)(ani_instance_cpu_usage_cores{ani_tenant_id=", "time() - timestamp(ani_instance_cpu_usage_cores{ani_tenant_id=", "<= 45"}, []string{"ani_instance_id=", "namespace="}},
-		{biz.TenantMemory, []string{"sum by(ani_tenant_id)(ani_instance_memory_working_set_bytes{ani_tenant_id=", "<= 45"}, []string{"pod_uid"}},
-		{biz.TenantGPU, []string{`sum(label_replace(volcano_vgpu_device_core_allocation_for_a_certain_pod, "pod", "$1", "podName", "(.*)") * on(pod) group_left(label_ani_io_tenant_id) kube_pod_labels{label_ani_io_tenant_id=`, `}) / 100`}, []string{"<= 45", "ani_instance_cpu_usage_cores"}},
+		{biz.TenantCPU,
+			[]string{`container_cpu_usage_seconds_total`, `<= 45`, `on(namespace, pod) group_left()`,
+				`label_ani_io_tenant_id`, `label_ani_kubercloud_com_tenant_id`,
+				`label_ani_io_resource_tenant_id`, `max by (namespace, pod)`},
+			[]string{`ani_instance_cpu_usage_cores`, `volcano_`}},
+		{biz.TenantMemory,
+			[]string{`container_memory_working_set_bytes`, `<= 45`, `on(namespace, pod) group_left()`,
+				`label_ani_io_tenant_id`, `max by (namespace, pod)`},
+			[]string{`ani_instance_memory_working_set_bytes`, `volcano_`}},
+		{biz.TenantGPU,
+			[]string{`vGPU_device_memory_usage_in_bytes`, `"namespace", "$1", "podnamespace", "(.*)"`,
+				`"pod", "$1", "podname", "(.*)"`, `<= 90`, `on(namespace, pod) group_left()`,
+				`max by (podnamespace, podname, ctrname, vdeviceid)`, `max by (namespace, pod)`},
+			[]string{`volcano_vgpu_device_core_allocation_for_a_certain_pod`, `/ 100`}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.code, func(t *testing.T) {
