@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package observability.usage.v1;
+
+import "google/protobuf/timestamp.proto";
+import "observability/gpu/v1/gpu.proto";
+
+option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/usage/v1;usagev1";
+
+// Trusted platform-only statistics. Gov resolves tenants and historical GPU ownership.
+service ResourceUsageService {
+  rpc QueryUsage(QueryUsageRequest) returns (QueryUsageResponse);
+}
+
+message TenantScope {
+  uint32 tenant_id = 1;
+  string resource_tenant_id = 2;
+  observability.gpu.v1.GpuTarget gpu_target = 3;
+  string gpu_unavailable_reason = 4;
+}
+
+message QueryUsageRequest {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+  repeated TenantScope tenants = 3;
+  repeated string cluster_ids = 4;
+  // gpu, cpu, memory. Statistics describe observed gauges, never cumulative hours.
+  repeated string metrics = 5;
+}
+
+message Quality {
+  // OK, PARTIAL, NO_DATA, UNAVAILABLE. Absent values never imply zero.
+  string status = 1;
+  repeated string reasons = 2;
+  optional double coverage = 3;
+  uint32 observed_points = 4;
+  uint32 expected_points = 5;
+  google.protobuf.Timestamp available_from = 6;
+}
+
+message UsagePoint {
+  google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Timestamp end = 2;
+  optional double value = 3;
+  optional double known_value = 4;
+  optional double peak = 5;
+}
+
+message MetricUsage {
+  string metric = 1;
+  // GiB for gpu/memory; cores for cpu.
+  string unit = 2;
+  optional double mean = 3;
+  // Maximum simultaneous display-grid value at response.step_seconds, not a
+  // sum of independent tenant peaks or a promise to capture every short spike.
+  optional double peak = 4;
+  optional double known_mean = 5;
+  optional double known_peak = 6;
+  google.protobuf.Timestamp peak_at = 7;
+  Quality quality = 8;
+  repeated UsagePoint points = 9;
+  optional uint64 active_tenant_count = 10;
+}
+
+message TenantUsage {
+  uint32 tenant_id = 1;
+  // Summary only. Single-tenant queries expose the curve in response.metrics.
+  repeated MetricUsage metrics = 2;
+}
+
+message QueryUsageResponse {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+  uint32 step_seconds = 3;
+  google.protobuf.Timestamp data_cutoff = 4;
+  repeated MetricUsage metrics = 5;
+  repeated TenantUsage tenants = 6;
+}
