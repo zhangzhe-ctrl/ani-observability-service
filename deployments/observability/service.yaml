@@ -11,3 +11,6 @@ spec:
     - name: grpc
       port: 19090
       targetPort: grpc
+    - name: admin
+      port: 19091
+      targetPort: admin
