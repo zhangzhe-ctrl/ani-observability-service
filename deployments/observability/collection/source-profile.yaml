@@ -39,11 +39,14 @@ ksm:
   previous_interval: "inherited 30s"
   intended_interval: 15s
   previous_allowlist: absent
-  intended_allowlist: "pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind]"
-  owner_label_names: [label_ani_io_tenant_id, label_ani_io_instance_id, label_ani_io_workload_kind]
+  intended_allowlist: "pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind,ani.kubercloud.com/tenant-id],namespaces=[ani.io/resource-tenant-id]"
+  owner_label_names: [label_ani_io_tenant_id, label_ani_io_instance_id, label_ani_io_workload_kind, label_ani_kubercloud_com_tenant_id]
   phase3_patch: patches/ksm-workload-phase3.patch.json
   phase3_restore_patch: patches/restore-ksm-workload-phase3.patch.json
   phase3_allowlist_exposure: "only Pods that actually carry ani.io/workload-kind emit label_ani_io_workload_kind"
+  tenant_scope_patch: patches/ksm-tenant-scope.patch.json
+  tenant_scope_restore_patch: patches/restore-ksm-tenant-scope.patch.json
+  tenant_scope_allowlist_exposure: "pods additionally expose ani.kubercloud.com/tenant-id (ani-system inference/model pods); namespaces expose ani.io/resource-tenant-id (training namespaces, whose pods carry no tenant label)"
   current_identity: "uid plus container_id=containerd://<64 lowercase hex>; running==1"
   applied_at: "2026-10-19T08:37:16Z"
 cadvisor:

@@ -82,6 +82,33 @@ transient helper series while they run.
 KSM rollout creates a 30-45s window without new samples and 45-90s of `NO_DATA`
 for both instance and training records. Schedule it away from active executions.
 
+## Phase 4 increment: tenant-scope resource trend (2026-10-28)
+
+The tenant-level trend codes no longer read the instance recording rules. All
+three curves now select the tenant's **entire workload set** from cAdvisor /
+HAMi and join it to a tenant Pod view built from three label routes:
+
+| Route | KSM source | Covered workloads |
+| --- | --- | --- |
+| ① | `kube_pod_labels{label_ani_io_tenant_id}` | container instances |
+| ② | `kube_pod_labels{label_ani_kubercloud_com_tenant_id}` | inference / model pods in `ani-system` |
+| ③ | `kube_namespace_labels{label_ani_io_resource_tenant_id}` | training namespaces (their Pods carry no tenant label) |
+
+Route ③ requires a second KSM patch pair
+(`ksm-tenant-scope.patch.json` / `restore-ksm-tenant-scope.patch.json`) that
+extends the same `--metric-labels-allowlist` argument; the phase 3 pair stays
+replayable because each pair covers exactly one state transition. Routes ① and ②
+are mutually exclusive; the three routes are merged with an outer
+`max by (namespace, pod)` because each carries a different `label_ani_*` set and
+`or` does not deduplicate.
+
+GPU switched from volcano vGPU share (`/ 100`, allocation) to
+`vGPU_device_memory_usage_in_bytes` (HAMi actual usage, bytes, 90s freshness).
+HAMi's own `namespace` is the device-plugin namespace, so `podnamespace` /
+`podname` are projected onto `namespace` / `pod` before joining; duplicate
+scrapes from the two ServiceMonitors are collapsed by
+`max by (podnamespace, podname, ctrname, vdeviceid)`.
+
 ## Verified baseline and field changes
 
 Prometheus `3.11.3`, Operator `0.90.1`, KSM `2.19.0`, Kubernetes `1.35.8`, and
