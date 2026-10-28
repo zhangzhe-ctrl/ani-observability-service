@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package observability.gpu.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/gpu/v1;gpuv1";
+
+// Separate GPU entrypoint; legacy monitoring scope rules are unchanged.
+service GpuMonitoringService {
+  rpc QueryGpuLatest(QueryGpuLatestRequest) returns (QueryGpuLatestResponse);
+  rpc QueryGpuRange(QueryGpuRangeRequest) returns (QueryGpuRangeResponse);
+}
+
+message UsageRef {
+  string tenant_id = 1;
+  string owner_service = 2;
+  string resource_id = 3;
+  string create_operation_id = 4;
+}
+
+message GpuSourceScope {
+  string cluster_id = 1;
+  // Controlled scrape node name, resolved from ACC node identity by Gov.
+  string node_id = 2;
+  string gpu_uuid = 3;
+  string namespace = 4;
+  string pod_name = 5;
+  string container_name = 6;
+  string vdevice_id = 7;
+  UsageRef usage_ref = 8;
+  google.protobuf.Timestamp valid_from = 9;
+  google.protobuf.Timestamp valid_to = 10;
+  google.protobuf.Timestamp evidence_at = 11;
+  // VERIFIED, OWNERSHIP_UNKNOWN, OWNERSHIP_AMBIGUOUS, or HISTORY_UNAVAILABLE.
+  string ownership_state = 12;
+  string resource_kind = 13;
+  string device_id = 14;
+  // Immutable node identity from ACC; controlled scrape profile must match.
+  string node_uid = 15;
+  bool candidate_complete = 16;
+  repeated string reasons = 17;
+}
+
+message GpuTarget {
+  // PHYSICAL, RESOURCE, TENANT. Platform is a trusted transport context, not a tenant.
+  string kind = 1;
+  string tenant_id = 2;
+  string resource_kind = 3;
+  string resource_id = 4;
+  repeated GpuSourceScope scopes = 5;
+  bool index_complete = 6;
+  google.protobuf.Timestamp history_available_from = 7;
+  repeated string included_resource_kinds = 8;
+  repeated string uncovered_resource_kinds = 9;
+  string scope_watermark = 10;
+}
+
+message QueryGpuLatestRequest {
+  GpuTarget target = 1;
+  repeated string metric_codes = 2;
+}
+
+message QueryGpuRangeRequest {
+  GpuTarget target = 1;
+  repeated string metric_codes = 2;
+  // Half-open interval [start,end); default display step is chosen by Obs.
+  google.protobuf.Timestamp start = 3;
+  google.protobuf.Timestamp end = 4;
+}
+
+message GpuQuality {
+  string status = 1;
+  repeated string reasons = 2;
+  uint32 complete_points = 3;
+  uint32 observed_points = 4;
+  uint32 expected_points = 5;
+  uint32 partial_points = 6;
+  uint32 empty_points = 7;
+  optional double coverage = 8;
+  uint32 observed_sources = 9;
+  optional uint32 expected_sources = 10;
+}
+
+message GpuPoint {
+  google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Timestamp end = 2;
+  optional double value = 3;
+  optional double peak = 4;
+  optional double known_value = 5;
+  optional double known_peak = 6;
+  GpuQuality quality = 7;
+  google.protobuf.Timestamp sample_time_min = 8;
+  google.protobuf.Timestamp sample_time_max = 9;
+}
+
+message GpuSeries {
+  string metric_code = 1;
+  string unit = 2;
+  string aggregation = 3;
+  uint32 base_resolution_seconds = 4;
+  repeated GpuPoint points = 5;
+  optional double mean = 6;
+  optional double peak = 7;
+  GpuQuality quality = 8;
+  google.protobuf.Timestamp metric_available_from = 9;
+  google.protobuf.Timestamp ownership_available_from = 10;
+  google.protobuf.Timestamp data_cutoff = 11;
+  // UNKNOWN unless explicit device capability evidence proves support/unsupported.
+  string capability = 12;
+  // Physical event-code dimension; absent for ordinary gauges.
+  string event_code = 13;
+  string semantics = 14;
+  repeated google.protobuf.Timestamp exporter_process_starts = 15;
+}
+
+message QueryGpuResponse {
+  google.protobuf.Timestamp query_time = 1;
+  google.protobuf.Timestamp start = 2;
+  google.protobuf.Timestamp end = 3;
+  uint32 effective_step_seconds = 4;
+  repeated GpuSeries series = 5;
+  bool index_complete = 6;
+  repeated string included_resource_kinds = 7;
+  repeated string uncovered_resource_kinds = 8;
+  string scope_watermark = 9;
+}
+
+message QueryGpuLatestResponse {
+  QueryGpuResponse result = 1;
+}
+
+message QueryGpuRangeResponse {
+  QueryGpuResponse result = 1;
+}

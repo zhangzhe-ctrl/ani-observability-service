@@ -8,9 +8,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v3/middleware"
 	kratosgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
+	gpuapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/gpu/v1"
 	api "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1"
 	"github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/target"
 	conf "github.com/zhangzhe-ctrl/ani-observability-service/internal/conf/v1"
@@ -53,7 +55,7 @@ func NewGovernanceServer(c *conf.Server_GRPC, g *conf.Governance, service api.Mo
 		return nil, fmt.Errorf("invalid governance client CA")
 	}
 	tlsConfig := &tls.Config{MinVersion: tls.VersionTLS13, Certificates: []tls.Certificate{pair}, ClientCAs: roots, ClientAuth: tls.RequireAndVerifyClientCert}
-	server := kratosgrpc.NewServer(kratosgrpc.Network(c.Network), kratosgrpc.Address(c.Addr), kratosgrpc.Timeout(c.Timeout.AsDuration()), kratosgrpc.Middleware(middlewares...), kratosgrpc.TLSConfig(tlsConfig), kratosgrpc.DisableReflection(), kratosgrpc.UnaryInterceptor(governanceIdentity), kratosgrpc.StreamInterceptor(func(any, grpc.ServerStream, *grpc.StreamServerInfo, grpc.StreamHandler) error {
+	server := kratosgrpc.NewServer(kratosgrpc.Network(c.Network), kratosgrpc.Address(c.Addr), kratosgrpc.Timeout(0), kratosgrpc.Middleware(middlewares...), kratosgrpc.TLSConfig(tlsConfig), kratosgrpc.DisableReflection(), kratosgrpc.UnaryInterceptor(governanceBudget(c.Timeout.AsDuration())), kratosgrpc.StreamInterceptor(func(any, grpc.ServerStream, *grpc.StreamServerInfo, grpc.StreamHandler) error {
 		return status.Error(codes.PermissionDenied, "streaming RPC is not allowed")
 	}))
 	api.RegisterMonitoringServiceServer(server, service)
@@ -61,7 +63,8 @@ func NewGovernanceServer(c *conf.Server_GRPC, g *conf.Governance, service api.Mo
 }
 
 func governanceIdentity(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-	if info.FullMethod != api.MonitoringService_QueryRange_FullMethodName && info.FullMethod != api.MonitoringService_QueryLatest_FullMethodName {
+	gpuMethod := info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuLatest_FullMethodName || info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuRange_FullMethodName
+	if !gpuMethod && info.FullMethod != api.MonitoringService_QueryRange_FullMethodName && info.FullMethod != api.MonitoringService_QueryLatest_FullMethodName {
 		return nil, status.Error(codes.PermissionDenied, "RPC is not allowed")
 	}
 	remote, ok := peer.FromContext(ctx)
@@ -85,7 +88,38 @@ func governanceIdentity(ctx context.Context, req any, info *grpc.UnaryServerInfo
 		return values[0]
 	}
 	tenant, actor, requestID := get("x-ani-tenant-id"), get("x-ani-actor"), get("x-ani-request-id")
-	if !target.ValidUUID(tenant) || !target.ValidUUID(requestID) || !validActor(actor) {
+	if !target.ValidUUID(requestID) || !validActor(actor) {
+		return nil, status.Error(codes.Unauthenticated, "invalid trusted request metadata")
+	}
+	if gpuMethod {
+		var t *gpuapi.GpuTarget
+		switch r := req.(type) {
+		case *gpuapi.QueryGpuLatestRequest:
+			t = r.GetTarget()
+		case *gpuapi.QueryGpuRangeRequest:
+			t = r.GetTarget()
+		}
+		if t == nil {
+			return nil, status.Error(codes.InvalidArgument, "GPU target required")
+		}
+		switch get("x-ani-context") {
+		case "platform":
+			if len(md.Get("x-ani-tenant-id")) != 0 {
+				return nil, status.Error(codes.PermissionDenied, "platform context cannot carry tenant")
+			}
+			if t.Kind != "PHYSICAL" && t.Kind != "TENANT" {
+				return nil, status.Error(codes.PermissionDenied, "platform GPU target is not allowed")
+			}
+		case "tenant":
+			if !target.ValidUUID(tenant) || tenant != t.TenantId || t.Kind == "PHYSICAL" {
+				return nil, status.Error(codes.PermissionDenied, "GPU tenant context mismatch")
+			}
+		default:
+			return nil, status.Error(codes.Unauthenticated, "explicit GPU context required")
+		}
+		return handler(ctx, req)
+	}
+	if !target.ValidUUID(tenant) {
 		return nil, status.Error(codes.Unauthenticated, "invalid trusted request metadata")
 	}
 	var targetTenant string
@@ -110,4 +144,21 @@ func validActor(actor string) bool {
 	}
 	id, err := strconv.ParseUint(strings.TrimPrefix(actor, prefix), 10, 32)
 	return err == nil && id != 0 && actor == prefix+strconv.FormatUint(id, 10)
+}
+
+// Kratos's listener-wide deadline cannot express GPU's independent 30s batch.
+// Preserve the configured legacy timeout and select the GPU budget by method.
+func governanceBudget(legacy time.Duration) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+		budget := legacy
+		if info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuLatest_FullMethodName || info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuRange_FullMethodName {
+			budget = 30 * time.Second
+		}
+		if budget > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, budget)
+			defer cancel()
+		}
+		return governanceIdentity(ctx, req, info, handler)
+	}
 }

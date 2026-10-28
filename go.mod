@@ -1,13 +1,13 @@
 module github.com/zhangzhe-ctrl/ani-observability-service
 
-go 1.26.9
+go 1.26.10
 
 require (
 	github.com/go-kratos/kratos/contrib/otel/v3 v3.0.0-20260515082355-1ddb58e407c5
 	github.com/go-kratos/kratos/v3 v3.0.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.24.1
-	github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.2
+	github.com/zhangzhe-ctrl/ani-observability-service/api v0.1.3-0.20261027163848-2889e1744f17
 	go.opentelemetry.io/otel v1.45.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.66.0
 	go.opentelemetry.io/otel/metric v1.45.0
