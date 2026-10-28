@@ -2,6 +2,7 @@ package usage
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
@@ -121,5 +122,94 @@ func TestUsageRejectsOversizedOrDuplicateTrustedScope(t *testing.T) {
 	_, e := New(nil, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
 	if e == nil {
 		t.Fatal("duplicate tenant UUID accepted")
+	}
+}
+
+func TestUsageBoundsExpensiveSourceEvaluationGrid(t *testing.T) {
+	for _, test := range []struct{ span, step time.Duration }{{24 * time.Hour, 5 * time.Minute}, {7 * 24 * time.Hour, 30 * time.Minute}, {30 * 24 * time.Hour, 2 * time.Hour}} {
+		t.Run(test.span.String(), func(t *testing.T) {
+			q := sampleQuery()
+			q.Tenants = q.Tenants[:1]
+			q.Metrics = []string{"cpu"}
+			q.End = q.Start.Add(test.span)
+			reader := podsPeer(func(_ context.Context, in PodQuery) (PodResult, error) {
+				if in.Step != test.step || in.End.Sub(in.Start)/in.Step > 400 {
+					t.Errorf("expensive source evaluations not bounded: %s", in.Step)
+				}
+				rows := []PodPoint{}
+				for at := in.Start; at.Before(in.End); at = at.Add(in.Step) {
+					rows = append(rows, PodPoint{Timestamp: at, Value: pointer(1), Expected: pointer(1), Observed: pointer(1), Inventory: pointer(1), Conflicts: pointer(0), Ownership: pointer(1)})
+				}
+				return PodResult{resourceA: {"cpu": rows}}, nil
+			})
+			r, e := New(nil, reader, func() time.Time { return q.End }).Execute(context.Background(), q)
+			if e != nil {
+				t.Fatal(e)
+			}
+			if r.Step != test.step || len(r.Metrics[0].Points) > 400 || r.Metrics[0].Mean == nil || *r.Metrics[0].Mean != 1 {
+				t.Fatalf("bounded source flow failed: %+v", r.Metrics[0])
+			}
+		})
+	}
+}
+
+func TestCoarsenedGPUPreservesSparseKnownObservationsAndTheirWeight(t *testing.T) {
+	q := sampleQuery()
+	q.Tenants = q.Tenants[:1]
+	q.End = q.Start.Add(24 * time.Hour)
+	reader := gpuPeer(func(_ context.Context, in gpu.Query) (*gpu.Result, error) {
+		rows := []gpu.Point{}
+		for at := in.Start; at.Before(in.End); at = at.Add(30 * time.Second) {
+			i := int(at.Sub(in.Start) / (30 * time.Second))
+			p := gpu.Point{Timestamp: at, End: at.Add(30 * time.Second), Quality: gpu.Quality{Status: "NO_DATA"}}
+			if i == 1 {
+				p.KnownValue = pointer(3 * (1 << 30))
+				p.Quality.Status = "PARTIAL"
+			}
+			if i == 21 || i == 22 {
+				p.KnownValue = pointer(1 << 30)
+				p.Quality.Status = "PARTIAL"
+			}
+			rows = append(rows, p)
+		}
+		return &gpu.Result{Step: 30 * time.Second, Series: []gpu.Series{{Points: rows}}}, nil
+	})
+	r, e := New(reader, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if e != nil {
+		t.Fatal(e)
+	}
+	m := r.Metrics[0]
+	if len(m.Points) != 288 || m.Mean != nil || m.KnownMean == nil || math.Abs(*m.KnownMean-5.0/3) > 1e-9 || m.Points[0].Known == nil || *m.Points[0].Known != 3 || m.Points[1].Known != nil {
+		t.Fatalf("sparse GPU history was lost, zero filled or reweighted: %+v", m)
+	}
+}
+
+func TestCoarsenedGPUSumsNativeGridBeforeProjectingTenants(t *testing.T) {
+	q := sampleQuery()
+	q.End = q.Start.Add(24 * time.Hour)
+	reader := gpuPeer(func(_ context.Context, in gpu.Query) (*gpu.Result, error) {
+		index, value := 1, float64(3)
+		if in.Target.TenantID == resourceB {
+			index = 2
+			value = 5
+		}
+		rows := []gpu.Point{}
+		for at := in.Start; at.Before(in.End); at = at.Add(30 * time.Second) {
+			p := gpu.Point{Timestamp: at, End: at.Add(30 * time.Second), Quality: gpu.Quality{Status: "NO_DATA"}}
+			if int(at.Sub(in.Start)/(30*time.Second)) == index {
+				p.KnownValue = pointer(value * (1 << 30))
+				p.Quality.Status = "PARTIAL"
+			}
+			rows = append(rows, p)
+		}
+		return &gpu.Result{Step: 30 * time.Second, Series: []gpu.Series{{Points: rows}}}, nil
+	})
+	r, e := New(reader, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if e != nil {
+		t.Fatal(e)
+	}
+	m := r.Metrics[0]
+	if m.Mean != nil || m.KnownMean == nil || *m.KnownMean != 4 || m.KnownPeak == nil || *m.KnownPeak != 4 || m.Points[0].Known == nil || *m.Points[0].Known != 4 {
+		t.Fatalf("independently timed tenant buckets were added together: %+v", m)
 	}
 }

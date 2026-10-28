@@ -34,6 +34,9 @@ type Quality struct {
 type Point struct {
 	Timestamp, End     time.Time
 	Value, Known, Peak *float64
+	// KnownDuration preserves sparse observation weight when GPU display buckets
+	// are coarsened; missing sub-buckets never acquire a zero or full duration.
+	KnownDuration time.Duration
 }
 type Metric struct {
 	Name, Unit                       string
@@ -147,10 +150,14 @@ func (q Query) validate(now time.Time) (time.Duration, error) {
 		}
 		seen[m] = true
 	}
+	// Bound expensive owner/inventory joins to roughly 300-400 evaluation points.
+	// This changes only the new usage statistics, not the GPU monitoring contract.
 	step := 30 * time.Second
 	if q.End.Sub(q.Start) > 7*24*time.Hour {
-		step = 15 * time.Minute
+		step = 2 * time.Hour
 	} else if q.End.Sub(q.Start) > 24*time.Hour {
+		step = 30 * time.Minute
+	} else if q.End.Sub(q.Start) > 3*time.Hour {
 		step = 5 * time.Minute
 	}
 	n := int((q.End.Sub(q.Start) + step - 1) / step)
@@ -220,7 +227,7 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 						return
 					}
 					t := q.Tenants[i]
-					m, e := u.queryGPU(batch, q, t, step)
+					m, e := u.queryGPU(batch, q, t)
 					if e != nil {
 						mu.Lock()
 						if gpuErr == nil {
@@ -297,7 +304,7 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 		for _, m := range q.Metrics {
 			var metric Metric
 			if m == "gpu" {
-				metric = gpuRows[i]
+				metric = projectGPU(q, gpuRows[i], step)
 			} else {
 				metric = podMetric(q, t, m, step, podRows, clusterErrors)
 			}
@@ -305,6 +312,13 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 		}
 	}
 	for mi, name := range q.Metrics {
+		if name == "gpu" {
+			// Sum tenants on the original shared GPU grid before coarsening. This
+			// retains sparse observations without adding independently timed peaks.
+			native := platformMetric(q, name, gpuGrid(q), gpuRows)
+			out.Metrics = append(out.Metrics, projectGPU(q, native, step))
+			continue
+		}
 		rows := make([]Metric, len(out.Tenants))
 		for i := range out.Tenants {
 			rows[i] = out.Tenants[i].Metrics[mi]
@@ -341,7 +355,10 @@ func scaled(v *float64, divisor float64) *float64 {
 	}
 	return pointer(*v / divisor)
 }
-func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant, step time.Duration) (Metric, error) {
+func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant) (Metric, error) {
+	// Formal GPU queries keep their native read grid. A coarse instant-query
+	// step would discard short-lived workloads between display ticks.
+	step := gpuGrid(q)
 	m := newMetric(q, "gpu", step)
 	if t.GPUUnavailable != "" {
 		m.Quality.Status = "UNAVAILABLE"
@@ -398,6 +415,59 @@ func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant, step time.Dur
 	}
 	finish(&m)
 	return m, nil
+}
+
+func gpuGrid(q Query) time.Duration {
+	// These are the existing formal GPU response grids, checked against the
+	// actual response in queryGPU. No existing GPU query behavior is changed.
+	if q.End.Sub(q.Start) > 7*24*time.Hour {
+		return 15 * time.Minute
+	}
+	if q.End.Sub(q.Start) > 24*time.Hour {
+		return 5 * time.Minute
+	}
+	return 30 * time.Second
+}
+
+func projectGPU(q Query, source Metric, step time.Duration) Metric {
+	m := newMetric(q, "gpu", step)
+	m.Quality.Status = source.Quality.Status
+	m.Quality.Reasons = append([]string{}, source.Quality.Reasons...)
+	m.Quality.AvailableFrom = source.Quality.AvailableFrom
+	m.ActiveTenants = source.ActiveTenants
+	values, known := make([]float64, len(m.Points)), make([]float64, len(m.Points))
+	completeDuration, knownDuration := make([]time.Duration, len(m.Points)), make([]time.Duration, len(m.Points))
+	for _, p := range source.Points {
+		i := int(p.Timestamp.Sub(q.Start) / step)
+		if i < 0 || i >= len(m.Points) {
+			continue
+		}
+		duration := p.End.Sub(p.Timestamp)
+		if p.Value != nil {
+			values[i] += *p.Value * duration.Seconds()
+			completeDuration[i] += duration
+		}
+		if p.Known != nil {
+			observed := p.KnownDuration
+			if observed <= 0 {
+				observed = duration
+			}
+			known[i] += *p.Known * observed.Seconds()
+			knownDuration[i] += observed
+		}
+	}
+	for i := range m.Points {
+		duration := m.Points[i].End.Sub(m.Points[i].Timestamp)
+		if completeDuration[i] == duration {
+			m.Points[i].Value = pointer(values[i] / duration.Seconds())
+		}
+		if knownDuration[i] > 0 {
+			m.Points[i].Known = pointer(known[i] / knownDuration[i].Seconds())
+			m.Points[i].KnownDuration = knownDuration[i]
+		}
+	}
+	finish(&m)
+	return m
 }
 
 func podMetric(q Query, t Tenant, name string, step time.Duration, clusters map[string]PodResult, failures map[string]bool) Metric {
@@ -554,8 +624,12 @@ func finish(m *Metric) {
 		}
 		if p.Known != nil && !math.IsNaN(*p.Known) && !math.IsInf(*p.Known, 0) {
 			observed++
-			knownTotal += *p.Known * weight
-			knownWeight += weight
+			observedWeight := weight
+			if p.KnownDuration > 0 {
+				observedWeight = p.KnownDuration.Seconds()
+			}
+			knownTotal += *p.Known * observedWeight
+			knownWeight += observedWeight
 			if knownPeak == nil || *p.Known > *knownPeak {
 				knownPeak = pointer(*p.Known)
 				peakAt = p.Timestamp
