@@ -83,8 +83,8 @@ func (q Query) Validate(_ time.Time) error {
 	if err := q.Target.Validate(); err != nil {
 		return Fail(InvalidQuery, err)
 	}
-	if len(q.Codes) < 1 || len(q.Codes) > 4 {
-		return Fail(InvalidQuery, errors.New("one to four metrics required"))
+	if len(q.Codes) < 1 || len(q.Codes) > 6 {
+		return Fail(InvalidQuery, errors.New("one to six metrics required"))
 	}
 	seen := make(map[string]bool)
 	for _, code := range q.Codes {

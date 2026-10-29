@@ -1,0 +1,17 @@
+[
+  {
+    "op": "test",
+    "path": "/metadata/uid",
+    "value": "REPLACE_WITH_DEPLOYMENT_UID"
+  },
+  {
+    "op": "test",
+    "path": "/spec/template/spec/containers/0/args/2",
+    "value": "--metric-labels-allowlist=pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind,ani.kubercloud.com/tenant-id],namespaces=[ani.io/resource-tenant-id]"
+  },
+  {
+    "op": "replace",
+    "path": "/spec/template/spec/containers/0/args/2",
+    "value": "--metric-labels-allowlist=pods=[ani.io/tenant-id,ani.io/instance-id,ani.io/workload-kind,ani.kubercloud.com/tenant-id,vm.ani.io/vm-id],namespaces=[ani.io/resource-tenant-id]"
+  }
+]

@@ -119,9 +119,16 @@ func TestMetricCountLimitAndNetworkCatalog(t *testing.T) {
 			t.Fatalf("network catalog entry wrong: %+v ok=%v", m, ok)
 		}
 	}
+	for code, unit := range map[string]string{GPUUtilization: "percent", GPUMemoryUsage: "bytes"} {
+		m, ok := Lookup(code, target.ContainerInstance)
+		if !ok || m.Unit != unit || m.Record == "" {
+			t.Fatalf("gpu catalog entry wrong: %+v ok=%v", m, ok)
+		}
+	}
 	three := []string{CPU, Memory, NetworkReceive}
 	four := []string{CPU, Memory, NetworkReceive, NetworkTransmit}
-	for _, codes := range [][]string{three, four} {
+	six := []string{CPU, Memory, NetworkReceive, NetworkTransmit, GPUUtilization, GPUMemoryUsage}
+	for _, codes := range [][]string{three, four, six} {
 		q := validQuery()
 		q.Codes = codes
 		u := NewUseCase(providerFunc(func(_ context.Context, _ Query, _ Metric) ([]Source, error) {
@@ -141,13 +148,43 @@ func TestMetricCountLimitAndNetworkCatalog(t *testing.T) {
 		}
 	}
 	q := validQuery()
-	q.Codes = []string{CPU, Memory, NetworkReceive, NetworkTransmit, CPU}
+	q.Codes = []string{CPU, Memory, NetworkReceive, NetworkTransmit, GPUUtilization, GPUMemoryUsage, CPU}
 	u := NewUseCase(providerFunc(func(context.Context, Query, Metric) ([]Source, error) {
-		t.Fatal("five-code query reached provider")
+		t.Fatal("seven-code query reached provider")
 		return nil, nil
 	}), func() time.Time { return q.End })
 	_, err := u.Execute(context.Background(), q)
 	reason(t, err, InvalidQuery)
+}
+
+func TestVMCatalog(t *testing.T) {
+	records := map[string]string{
+		CPU:             "ani_vm_cpu_usage_cores",
+		Memory:          "ani_vm_memory_working_set_bytes",
+		NetworkReceive:  "ani_vm_network_receive_bytes_per_second",
+		NetworkTransmit: "ani_vm_network_transmit_bytes_per_second",
+		GPUUtilization:  "ani_vm_gpu_utilization_percent",
+		GPUMemoryUsage:  "ani_vm_gpu_memory_usage_bytes",
+	}
+	for code, record := range records {
+		m, ok := Lookup(code, target.VM)
+		if !ok || m.Record != record || m.Unit == "" {
+			t.Fatalf("vm catalog entry wrong: %+v ok=%v", m, ok)
+		}
+	}
+	if _, ok := Lookup(TenantCPU, target.VM); ok {
+		t.Fatal("vm kind must not register tenant codes")
+	}
+	q := validQuery()
+	q.Target = target.Scope{Kind: target.VM, TenantID: "11111111-1111-4111-8111-111111111111",
+		InstanceID: "22222222-2222-4222-8222-222222222222", ClusterID: "33333333-3333-4333-8333-333333333333",
+		Namespace: "tenant-64c5c35a-f554-432c-b4bc-7b4f36f08420", ContainerName: "compute"}
+	q.Codes = []string{CPU, Memory, NetworkReceive, NetworkTransmit, GPUUtilization, GPUMemoryUsage}
+	u := NewUseCase(providerFunc(func(_ context.Context, _ Query, _ Metric) ([]Source, error) { return nil, nil }), func() time.Time { return q.End })
+	result, err := u.Execute(context.Background(), q)
+	if err != nil || len(result.Series) != 6 {
+		t.Fatalf("vm query err=%v series=%d", err, len(result.Series))
+	}
 }
 
 func trainingQuery() Query {

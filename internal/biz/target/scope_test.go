@@ -15,6 +15,12 @@ func trainingScope() Scope {
 		PodUID: "44444444-4444-4444-8444-444444444444"}
 }
 
+func vmScope() Scope {
+	return Scope{Kind: VM, TenantID: "11111111-1111-4111-8111-111111111111",
+		InstanceID: "22222222-2222-4222-8222-222222222222", ClusterID: "33333333-3333-4333-8333-333333333333",
+		Namespace: "tenant-64c5c35a-f554-432c-b4bc-7b4f36f08420", ContainerName: "compute"}
+}
+
 func TestValidateAcceptsBothKinds(t *testing.T) {
 	if err := validScope().Validate(); err != nil {
 		t.Fatalf("instance scope rejected: %v", err)
@@ -26,6 +32,31 @@ func TestValidateAcceptsBothKinds(t *testing.T) {
 	step.ContainerName = "main"
 	if err := step.Validate(); err != nil {
 		t.Fatalf("training step container rejected: %v", err)
+	}
+	if err := vmScope().Validate(); err != nil {
+		t.Fatalf("vm scope rejected: %v", err)
+	}
+}
+
+func TestValidateVMScope(t *testing.T) {
+	rejections := []struct {
+		name   string
+		mutate func(*Scope)
+	}{
+		{"workspace container", func(s *Scope) { s.ContainerName = "workspace" }},
+		{"pod uid", func(s *Scope) { s.PodUID = "44444444-4444-4444-8444-444444444444" }},
+		{"bad instance", func(s *Scope) { s.InstanceID = "not-a-uuid" }},
+		{"bad cluster", func(s *Scope) { s.ClusterID = "not-a-uuid" }},
+		{"bad namespace", func(s *Scope) { s.Namespace = "Tenant_Upper" }},
+	}
+	for _, tc := range rejections {
+		t.Run(tc.name, func(t *testing.T) {
+			s := vmScope()
+			tc.mutate(&s)
+			if err := s.Validate(); err == nil {
+				t.Fatalf("%s was accepted", tc.name)
+			}
+		})
 	}
 }
 

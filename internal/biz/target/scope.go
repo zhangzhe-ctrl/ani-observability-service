@@ -13,6 +13,9 @@ const (
 	TrainingExecution = 2
 	// TENANT 是租户级聚合 target：只携带租户身份，不做实例级精确匹配。
 	TENANT = 3
+	// VM 是 KubeVirt 云主机实例：复用实例指标的 HTTP 契约，容器名固定 compute。
+	// 该值尚未登记到 observability target proto 枚举，Gov 以 int32 4 发送。
+	VM = 4
 )
 
 var namespacePattern = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
@@ -26,7 +29,7 @@ type Scope struct {
 	ClusterID     string
 	Namespace     string
 	ContainerName string
-	// PodUID 仅 TRAINING_EXECUTION 使用；CONTAINER_INSTANCE 必须留空。
+	// PodUID 仅 TRAINING_EXECUTION 使用；CONTAINER_INSTANCE / VM 必须留空。
 	PodUID string
 }
 
@@ -46,7 +49,7 @@ func (s Scope) Validate() error {
 			return fmt.Errorf("instance fields are not allowed for the tenant target")
 		}
 		return nil
-	case ContainerInstance, TrainingExecution:
+	case ContainerInstance, TrainingExecution, VM:
 	default:
 		return fmt.Errorf("invalid target kind")
 	}
@@ -61,6 +64,10 @@ func (s Scope) Validate() error {
 	case ContainerInstance:
 		if s.ContainerName != "workspace" || s.PodUID != "" {
 			return fmt.Errorf("invalid container or pod for the instance target")
+		}
+	case VM:
+		if s.ContainerName != "compute" || s.PodUID != "" {
+			return fmt.Errorf("invalid container or pod for the vm target")
 		}
 	case TrainingExecution:
 		if !ValidUUID(s.PodUID) {

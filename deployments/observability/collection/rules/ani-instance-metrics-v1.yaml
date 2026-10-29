@@ -61,6 +61,14 @@
           {
             "record": "ani_instance_network_transmit_bytes_per_second",
             "expr": "sum by(ani_cluster_id,ani_tenant_id,ani_instance_id,namespace,pod_uid,runtime_container_id,container) ((((ani:instance:network_transmit_source and (timestamp(ani:instance:network_transmit_source) == time())) and on(ani_cluster_id,namespace,pod,pod_uid) (count by(ani_cluster_id,namespace,pod,pod_uid) ((ani:instance:network_transmit_source and (timestamp(ani:instance:network_transmit_source) == time()))) == 1))) * on(ani_cluster_id,namespace,pod,pod_uid) group_left(ani_tenant_id,ani_instance_id,runtime_container_id,container) (ani:instance:binding and (timestamp(ani:instance:binding) == time())))\n"
+          },
+          {
+            "record": "ani_instance_gpu_utilization_percent",
+            "expr": "avg by (ani_cluster_id,ani_tenant_id,ani_instance_id,namespace,pod_uid,runtime_container_id,container) (label_replace(label_replace(label_replace(max by (ani_cluster_id,podnamespace,podname,ctrname,vdeviceid,deviceuuid) (Device_utilization_desc_of_container and (time() - timestamp(Device_utilization_desc_of_container) <= 90)), \"namespace\", \"$1\", \"podnamespace\", \"(.*)\"), \"pod\", \"$1\", \"podname\", \"(.*)\"), \"container\", \"$1\", \"ctrname\", \"(.*)\") * on (ani_cluster_id,namespace,pod,container) group_left(ani_tenant_id,ani_instance_id,pod_uid,runtime_container_id) (ani:instance:binding and (timestamp(ani:instance:binding) == time())))\n"
+          },
+          {
+            "record": "ani_instance_gpu_memory_usage_bytes",
+            "expr": "sum by (ani_cluster_id,ani_tenant_id,ani_instance_id,namespace,pod_uid,runtime_container_id,container) (label_replace(label_replace(label_replace(max by (ani_cluster_id,podnamespace,podname,ctrname,vdeviceid,deviceuuid) (vGPU_device_memory_usage_in_bytes and (time() - timestamp(vGPU_device_memory_usage_in_bytes) <= 90)), \"namespace\", \"$1\", \"podnamespace\", \"(.*)\"), \"pod\", \"$1\", \"podname\", \"(.*)\"), \"container\", \"$1\", \"ctrname\", \"(.*)\") * on (ani_cluster_id,namespace,pod,container) group_left(ani_tenant_id,ani_instance_id,pod_uid,runtime_container_id) (ani:instance:binding and (timestamp(ani:instance:binding) == time())))\n"
           }
         ]
       }
