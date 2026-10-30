@@ -14,6 +14,7 @@ import (
 	kratosgrpc "github.com/go-kratos/kratos/v3/transport/grpc"
 	gpuapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/gpu/v1"
 	api "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1"
+	usageapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/usage/v1"
 	"github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/target"
 	conf "github.com/zhangzhe-ctrl/ani-observability-service/internal/conf/v1"
 	"google.golang.org/grpc"
@@ -64,7 +65,8 @@ func NewGovernanceServer(c *conf.Server_GRPC, g *conf.Governance, service api.Mo
 
 func governanceIdentity(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	gpuMethod := info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuLatest_FullMethodName || info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuRange_FullMethodName
-	if !gpuMethod && info.FullMethod != api.MonitoringService_QueryRange_FullMethodName && info.FullMethod != api.MonitoringService_QueryLatest_FullMethodName {
+	usageMethod := info.FullMethod == usageapi.ResourceUsageService_QueryUsage_FullMethodName
+	if !usageMethod && !gpuMethod && info.FullMethod != api.MonitoringService_QueryRange_FullMethodName && info.FullMethod != api.MonitoringService_QueryLatest_FullMethodName {
 		return nil, status.Error(codes.PermissionDenied, "RPC is not allowed")
 	}
 	remote, ok := peer.FromContext(ctx)
@@ -90,6 +92,15 @@ func governanceIdentity(ctx context.Context, req any, info *grpc.UnaryServerInfo
 	tenant, actor, requestID := get("x-ani-tenant-id"), get("x-ani-actor"), get("x-ani-request-id")
 	if !target.ValidUUID(requestID) || !validActor(actor) {
 		return nil, status.Error(codes.Unauthenticated, "invalid trusted request metadata")
+	}
+	if usageMethod {
+		if get("x-ani-context") != "platform" || len(md.Get("x-ani-tenant-id")) != 0 {
+			return nil, status.Error(codes.PermissionDenied, "resource usage requires platform context without tenant metadata")
+		}
+		if _, ok := req.(*usageapi.QueryUsageRequest); !ok {
+			return nil, status.Error(codes.InvalidArgument, "invalid resource usage request")
+		}
+		return handler(ctx, req)
 	}
 	if gpuMethod {
 		var t *gpuapi.GpuTarget
@@ -151,6 +162,9 @@ func validActor(actor string) bool {
 func governanceBudget(legacy time.Duration) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		budget := legacy
+		if info.FullMethod == usageapi.ResourceUsageService_QueryUsage_FullMethodName {
+			budget = 45 * time.Second
+		}
 		if info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuLatest_FullMethodName || info.FullMethod == gpuapi.GpuMonitoringService_QueryGpuRange_FullMethodName {
 			budget = 30 * time.Second
 		}

@@ -22,13 +22,16 @@ import (
 	gpuapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/gpu/v1"
 	api "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1"
 	targetapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/target/v1"
+	usageapi "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/usage/v1"
 	gpubiz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/gpu"
 	biz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/monitoring"
+	usagebiz "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/usage"
 	conf "github.com/zhangzhe-ctrl/ani-observability-service/internal/conf/v1"
 	data "github.com/zhangzhe-ctrl/ani-observability-service/internal/data/monitoring"
 	server "github.com/zhangzhe-ctrl/ani-observability-service/internal/server"
 	gpuservice "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/gpu"
 	service "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/monitoring"
+	usageservice "github.com/zhangzhe-ctrl/ani-observability-service/internal/service/usage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -205,6 +208,7 @@ func startGovernance(t *testing.T, ca *testCA) string {
 		t.Fatal(err)
 	}
 	gpuapi.RegisterGpuMonitoringServiceServer(listener, gpuservice.New(gpubiz.New(provider, nil)))
+	usageapi.RegisterResourceUsageServiceServer(listener, usageservice.New(usagebiz.New(gpubiz.New(provider, nil), provider, nil)))
 	endpoint, err := listener.Endpoint()
 	if err != nil {
 		t.Fatal(err)
@@ -335,5 +339,31 @@ func TestGpuExplicitPlatformAndTenantContexts(t *testing.T) {
 	platformWithTenant := metadata.AppendToOutgoingContext(platform, "x-ani-tenant-id", trustedTenant)
 	if _, err := client.QueryGpuLatest(platformWithTenant, req); status.Code(err) != codes.PermissionDenied {
 		t.Fatal("fake platform tenant", err)
+	}
+}
+
+func TestResourceUsageRequiresPlatformTLSContextAndNoTenantHeader(t *testing.T) {
+	ca := newTestCA(t)
+	address := startGovernance(t, ca)
+	connection := dialGovernance(t, address, ca.clientConfig(t, []string{"ani-governance"}))
+	client := usageapi.NewResourceUsageServiceClient(connection)
+	end := time.Now().UTC().Truncate(time.Second).Add(-time.Minute)
+	request := &usageapi.QueryUsageRequest{Start: timestamppb.New(end.Add(-time.Minute)), End: timestamppb.New(end), ClusterIds: []string{"0fcdb8b1-22bf-4528-af59-82843dc88f21"}, Metrics: []string{"gpu"}, Tenants: []*usageapi.TenantScope{{TenantId: 1, ResourceTenantId: trustedTenant, GpuUnavailableReason: "HISTORY_UNAVAILABLE"}}}
+	platform := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-ani-context", "platform", "x-ani-actor", "governance:user:1", "x-ani-request-id", trustedRequestID))
+	result, err := client.QueryUsage(platform, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Metrics) != 1 || result.Metrics[0].Mean != nil || result.Tenants[0].Metrics[0].Quality.Status != "UNAVAILABLE" {
+		t.Fatalf("missing trusted observation fabricated value: %v", result)
+	}
+	for _, ctx := range []context.Context{trustedContext(), metadata.AppendToOutgoingContext(platform, "x-ani-tenant-id", trustedTenant), metadata.AppendToOutgoingContext(platform, "x-ani-tenant-id", "")} {
+		if _, err := client.QueryUsage(ctx, request); status.Code(err) != codes.PermissionDenied {
+			t.Fatalf("tenant or forged platform context reached usage RPC: %v", err)
+		}
+	}
+	wrong := dialGovernance(t, address, ca.clientConfig(t, []string{"ani-resource-service"}))
+	if _, err := usageapi.NewResourceUsageServiceClient(wrong).QueryUsage(platform, request); status.Code(err) != codes.PermissionDenied {
+		t.Fatalf("non-Gov peer reached usage RPC: %v", err)
 	}
 }
