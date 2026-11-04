@@ -24,7 +24,7 @@ func (f podsPeer) QueryUsagePods(ctx context.Context, q PodQuery) (PodResult, er
 }
 func sampleQuery() Query {
 	start := time.Date(2026, 10, 28, 1, 0, 0, 0, time.UTC)
-	return Query{Start: start, End: start.Add(time.Minute), Clusters: []string{cluster}, Metrics: []string{"gpu"}, Tenants: []Tenant{{ID: 1, ResourceID: resourceA, GPU: gpu.Target{Kind: "TENANT", TenantID: resourceA, IndexComplete: true}}, {ID: 2, ResourceID: resourceB, GPU: gpu.Target{Kind: "TENANT", TenantID: resourceB, IndexComplete: true}}}}
+	return Query{Start: start, End: start.Add(time.Minute), Clusters: []string{cluster}, Metrics: []string{"gpu"}, Tenants: []Tenant{{ID: 1, ResourceID: resourceA, GPU: gpu.Target{Kind: "TENANT", TenantID: resourceA}}, {ID: 2, ResourceID: resourceB, GPU: gpu.Target{Kind: "TENANT", TenantID: resourceB}}}}
 }
 
 func TestPlatformPeakUsesSimultaneousGridNotIndependentPeaks(t *testing.T) {
@@ -91,28 +91,38 @@ func TestCPURequiresInventoryAndContainerCoverageOnEveryCluster(t *testing.T) {
 	}
 }
 
-func TestConfirmedEmptyHistoryAndUnknownHistoryDiffer(t *testing.T) {
+func TestMissingGPUSamplesNeverBecomeMeasuredZero(t *testing.T) {
 	q := sampleQuery()
 	q.Tenants = q.Tenants[:1]
-	q.Tenants[0].GPU.HistoryAvailableFrom = q.Start
-	r, e := New(nil, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
-	if e != nil {
-		t.Fatal(e)
+	reader := gpuPeer(func(_ context.Context, in gpu.Query) (*gpu.Result, error) {
+		if len(in.ClusterIDs) != 1 || in.ClusterIDs[0] != cluster || in.Budget == nil {
+			t.Error("trusted cluster subset and batch budget were not forwarded")
+		}
+		points := []gpu.Point{}
+		for at := in.Start; at.Before(in.End); at = at.Add(30 * time.Second) {
+			points = append(points, gpu.Point{Timestamp: at, End: at.Add(30 * time.Second), Quality: gpu.Quality{Status: "NO_DATA", Expected: 1}})
+		}
+		return &gpu.Result{Step: 30 * time.Second, Series: []gpu.Series{{Points: points}}}, nil
+	})
+	r, err := New(reader, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if r.Metrics[0].Mean == nil || *r.Metrics[0].Mean != 0 || r.Metrics[0].Quality.Status != "OK" {
-		t.Fatal("complete empty inventory must be measured zero")
+	if r.Metrics[0].Mean != nil || r.Metrics[0].KnownMean != nil || r.Metrics[0].Quality.Status != "NO_DATA" {
+		t.Fatal("absent samples fabricated zero", r.Metrics[0])
 	}
-	q.Tenants[0].GPU.IndexComplete = false
-	q.Tenants[0].GPUUnavailable = "HISTORY_UNAVAILABLE"
-	r, e = New(nil, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
-	if e != nil {
-		t.Fatal(e)
+	q.Tenants[0].GPUUnavailable = "GPU_SOURCE_UNAVAILABLE"
+	r, err = New(nil, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if r.Metrics[0].Mean != nil || r.Metrics[0].KnownMean != nil {
-		t.Fatal("unknown inventory fabricated zero")
+	if r.Metrics[0].Mean != nil || r.Metrics[0].KnownMean != nil || r.Metrics[0].Quality.Status != "UNAVAILABLE" {
+		t.Fatal("unavailable source fabricated zero or became NO_DATA", r.Metrics[0])
 	}
-	if r.Metrics[0].Quality.Status != "UNAVAILABLE" {
-		t.Fatal("unavailable dependencies must not become platform NO_DATA")
+	q.Tenants = nil
+	r, err = New(nil, nil, func() time.Time { return q.End }).Execute(context.Background(), q)
+	if err != nil || r.Metrics[0].Mean != nil || r.Metrics[0].KnownMean != nil || r.Metrics[0].Quality.Status != "NO_DATA" {
+		t.Fatal("an empty tenant list is not a measured GPU zero", r, err)
 	}
 }
 

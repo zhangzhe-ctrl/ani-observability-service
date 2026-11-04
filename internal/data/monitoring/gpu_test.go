@@ -37,7 +37,7 @@ func TestGpuPrometheusPreservesOriginalTimeAndPairs(t *testing.T) {
 		t.Fatal(e)
 	}
 	defer p.Close()
-	q := gpu.Query{Target: gpu.Target{Kind: "PHYSICAL", IndexComplete: true, Scopes: []gpu.Scope{{ClusterID: "f39bf6e2-f3ed-4191-ada3-caeebf86c220", NodeID: "node1", NodeUID: "node-uid", GPUUUID: "GPU-ABC"}}}, Start: now, End: now.Add(15 * time.Second)}
+	q := gpu.Query{Target: gpu.Target{Kind: "PHYSICAL", Scopes: []gpu.Scope{{ClusterID: "f39bf6e2-f3ed-4191-ada3-caeebf86c220", NodeID: "node1", NodeUID: "node-uid", GPUUUID: "GPU-ABC"}}}, Start: now, End: now.Add(15 * time.Second)}
 	m, _ := gpu.Lookup("gpu.physical.memory_used_bytes")
 	s, e := p.QueryGPU(context.Background(), q, m)
 	if e != nil {
@@ -121,5 +121,87 @@ func TestGpuXidProcessCompanionUsesControlledExporterIdentity(t *testing.T) {
 	}
 	if calls != 4 || len(result) != 1 || result[0].Dimension != "79" || len(result[0].Samples) != 1 || !result[0].Samples[0].ProcessStart.Equal(processStart) {
 		t.Fatalf("process companion mismatch: calls=%d result=%+v", calls, result)
+	}
+}
+
+func TestBusinessGPUUsesRecordedIdentityAndActualRecordingTime(t *testing.T) {
+	at := time.Date(2026, 11, 4, 0, 0, 0, 0, time.UTC)
+	labels := businessGPULabels()
+	ref := gpu.UsageRef{TenantID: labels["ani_tenant_id"], OwnerService: labels["owner_service"], ResourceID: labels["resource_id"], CreateOperationID: labels["create_operation_id"]}
+	target := gpu.Target{Kind: "RESOURCE", TenantID: ref.TenantID, ResourceKind: "inference", ResourceID: ref.ResourceID, UsageRef: &ref}
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if err := r.ParseForm(); err != nil {
+			t.Error(err)
+		}
+		expr := r.Form.Get("query")
+		for _, fragment := range []string{"ani_gpu_resource_memory_used_bytes{", `ani_gpu_source="hami"`, `ani_tenant_id="` + ref.TenantID + `"`, `owner_service="` + ref.OwnerService + `"`, `resource_id="` + ref.ResourceID + `"`, `create_operation_id="` + ref.CreateOperationID + `"`} {
+			if !strings.Contains(expr, fragment) {
+				t.Errorf("missing direct identity selector %q in %s", fragment, expr)
+			}
+		}
+		if strings.Contains(expr, "vGPU_device_") {
+			t.Error("business query must not fall back to unlabeled raw metrics")
+		}
+		value := "0"
+		metric := make(map[string]string, len(labels)+1)
+		for k, v := range labels {
+			metric[k] = v
+		}
+		if strings.HasPrefix(expr, "timestamp(") {
+			value = fmt.Sprint(at.Unix() - 20)
+		} else {
+			metric["__name__"] = "ani_gpu_resource_memory_used_bytes"
+		}
+		encoded, _ := json.Marshal(metric)
+		fmt.Fprintf(w, `{"status":"success","data":{"resultType":"matrix","result":[{"metric":%s,"values":[[%d,"%s"]]}]}}`, encoded, at.Unix(), value)
+	}))
+	defer srv.Close()
+	p, err := New([]Datasource{{ClusterID: labels["ani_cluster_id"], Address: srv.URL}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer p.Close()
+	m, _ := gpu.Lookup("gpu.resource.memory_used_bytes")
+	q := gpu.Query{Target: target, Start: at, End: at.Add(30 * time.Second), Budget: &gpu.Budget{}}
+	result, err := p.QueryGPU(context.Background(), q, m)
+	if err != nil || calls != 2 || len(result) != 1 || len(result[0].Samples) != 1 {
+		t.Fatal(calls, result, err)
+	}
+	if result[0].Samples[0].Value != 0 || !result[0].Samples[0].SampleTime.Equal(at.Add(-20*time.Second)) || result[0].Scope.PodUID != labels["pod_uid"] || result[0].Scope.Usage != ref {
+		t.Fatal("record identity, observed zero or actual sample time lost", result)
+	}
+}
+
+func TestBusinessGPURejectsUntrustedReturnedLabels(t *testing.T) {
+	labels := businessGPULabels()
+	ref := gpu.UsageRef{TenantID: labels["ani_tenant_id"], OwnerService: labels["owner_service"], ResourceID: labels["resource_id"], CreateOperationID: labels["create_operation_id"]}
+	target := gpu.Target{Kind: "RESOURCE", TenantID: ref.TenantID, ResourceKind: "inference", ResourceID: ref.ResourceID, UsageRef: &ref}
+	for _, field := range []string{"ani_cluster_id", "ani_tenant_id", "owner_service", "resource_id", "create_operation_id", "resource_kind", "pod_uid", "ani_node_uid"} {
+		t.Run(field, func(t *testing.T) {
+			changed := businessGPULabels()
+			changed[field] = ""
+			if _, _, err := gpuBusinessIdentity(changed, labels["ani_cluster_id"], target); err == nil {
+				t.Fatal("missing or mismatched source identity accepted")
+			}
+		})
+	}
+	labels["deviceuuid"] = "GPU-" + strings.ToUpper(labels["deviceuuid"])
+	if _, _, err := gpuBusinessIdentity(labels, labels["ani_cluster_id"], target); err == nil {
+		t.Fatal("noncanonical UUID must be fixed in the controlled scrape configuration")
+	}
+}
+
+func businessGPULabels() map[string]string {
+	return map[string]string{
+		"ani_cluster_id": "f39bf6e2-f3ed-4191-ada3-caeebf86c220",
+		"ani_node_id":    "node1", "ani_node_uid": "node-uid", "ani_gpu_source": "hami",
+		"deviceuuid": "01234567-89ab-cdef-0123-456789abcdef", "vdeviceid": "0",
+		"podnamespace": "ns", "podname": "pod-a", "ctrname": "main",
+		"pod_uid":       "30000000-0000-0000-0000-000000000001",
+		"ani_tenant_id": "7ef3ded1-a63f-4ad8-8fe1-cf987a562534", "owner_service": "ani-inference",
+		"resource_id": "10000000-0000-0000-0000-000000000001", "create_operation_id": "20000000-0000-0000-0000-000000000001",
+		"resource_kind": "inference",
 	}
 }

@@ -45,9 +45,9 @@ func (s *Service) execute(ctx context.Context, q biz.Query) (*api.QueryGpuRespon
 	if err != nil {
 		return nil, rpcError(err)
 	}
-	out := &api.QueryGpuResponse{QueryTime: ts(result.QueryTime), Start: ts(result.Start), End: ts(result.End), EffectiveStepSeconds: uint32(result.Step / time.Second), IndexComplete: result.Target.IndexComplete, IncludedResourceKinds: result.Target.IncludedKinds, UncoveredResourceKinds: result.Target.UncoveredKinds, ScopeWatermark: result.Target.Watermark}
+	out := &api.QueryGpuResponse{QueryTime: ts(result.QueryTime), Start: ts(result.Start), End: ts(result.End), EffectiveStepSeconds: uint32(result.Step / time.Second), IndexComplete: result.IndexComplete, IncludedResourceKinds: result.IncludedKinds, UncoveredResourceKinds: []string{}}
 	for _, v := range result.Series {
-		row := &api.GpuSeries{MetricCode: v.Metric.Code, Unit: v.Metric.Unit, Aggregation: v.Metric.Aggregation, BaseResolutionSeconds: uint32(v.Metric.Base / time.Second), Mean: v.Mean, Peak: v.Peak, Quality: quality(v.Quality), MetricAvailableFrom: ts(v.AvailableFrom), OwnershipAvailableFrom: ts(v.OwnershipFrom), DataCutoff: ts(v.Cutoff), Capability: "UNKNOWN", EventCode: v.EventCode, Semantics: v.Semantics}
+		row := &api.GpuSeries{MetricCode: v.Metric.Code, Unit: v.Metric.Unit, Aggregation: v.Metric.Aggregation, BaseResolutionSeconds: uint32(v.Metric.Base / time.Second), Mean: v.Mean, Peak: v.Peak, Quality: quality(v.Quality), MetricAvailableFrom: ts(v.AvailableFrom), DataCutoff: ts(v.Cutoff), Capability: "UNKNOWN", EventCode: v.EventCode, Semantics: v.Semantics}
 		if v.Quality.Observed > 0 {
 			row.Capability = "SUPPORTED"
 		}
@@ -73,29 +73,24 @@ func ts(t time.Time) *timestamppb.Timestamp {
 	}
 	return timestamppb.New(t)
 }
-func at(t *timestamppb.Timestamp) time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.AsTime()
-}
 func target(t *api.GpuTarget) biz.Target {
 	if t == nil {
 		return biz.Target{}
 	}
-	out := biz.Target{Kind: t.Kind, TenantID: t.TenantId, ResourceKind: t.ResourceKind, ResourceID: t.ResourceId, IndexComplete: t.IndexComplete, HistoryAvailableFrom: at(t.HistoryAvailableFrom), IncludedKinds: t.IncludedResourceKinds, UncoveredKinds: t.UncoveredResourceKinds, Watermark: t.ScopeWatermark}
+	out := biz.Target{Kind: t.Kind, TenantID: t.TenantId, ResourceKind: t.ResourceKind, ResourceID: t.ResourceId}
+	if t.UsageRef != nil {
+		out.UsageRef = &biz.UsageRef{TenantID: t.UsageRef.TenantId, OwnerService: t.UsageRef.OwnerService, ResourceID: t.UsageRef.ResourceId, CreateOperationID: t.UsageRef.CreateOperationId}
+	}
 	for _, s := range t.Scopes {
 		if s == nil {
+			out.Scopes = append(out.Scopes, biz.Scope{})
 			continue
 		}
-		v := biz.Scope{ClusterID: s.ClusterId, NodeID: s.NodeId, NodeUID: s.NodeUid, GPUUUID: s.GpuUuid, Namespace: s.Namespace, PodName: s.PodName, ContainerName: s.ContainerName, VDeviceID: s.VdeviceId, ValidFrom: at(s.ValidFrom), ValidTo: at(s.ValidTo), EvidenceAt: at(s.EvidenceAt), OwnershipState: s.OwnershipState, ResourceKind: s.ResourceKind, DeviceID: s.DeviceId, CandidateComplete: s.CandidateComplete, Reasons: s.Reasons}
-		if s.UsageRef != nil {
-			v.Usage = biz.UsageRef{TenantID: s.UsageRef.TenantId, OwnerService: s.UsageRef.OwnerService, ResourceID: s.UsageRef.ResourceId, CreateOperationID: s.UsageRef.CreateOperationId}
-		}
-		out.Scopes = append(out.Scopes, v)
+		out.Scopes = append(out.Scopes, biz.Scope{ClusterID: s.ClusterId, NodeID: s.NodeId, NodeUID: s.NodeUid, GPUUUID: s.GpuUuid, DeviceID: s.DeviceId})
 	}
 	return out
 }
+
 func rpcError(err error) error {
 	if errors.Is(err, context.Canceled) {
 		return status.Error(codes.Canceled, "GPU_QUERY_CANCELED")

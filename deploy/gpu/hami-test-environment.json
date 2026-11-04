@@ -86,6 +86,22 @@
             "regex": "node3",
             "targetLabel": "ani_node_uid",
             "replacement": "5e736bcd-c06d-4713-a831-be9adc567e97"
+          },
+          {
+            "action": "replace",
+            "sourceLabels": [
+              "deviceuuid"
+            ],
+            "regex": "(?i:GPU-)?(.+)",
+            "targetLabel": "deviceuuid",
+            "replacement": "$1"
+          },
+          {
+            "action": "lowercase",
+            "sourceLabels": [
+              "deviceuuid"
+            ],
+            "targetLabel": "deviceuuid"
           }
         ]
       }

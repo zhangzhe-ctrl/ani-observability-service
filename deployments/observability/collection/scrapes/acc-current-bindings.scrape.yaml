@@ -1,0 +1,20 @@
+# Template for the existing Prometheus scrape configuration / additional scrape configs.
+# The deployment operator MUST replace this literal target with the verified
+# existing ACC admin metrics host:port. Prometheus does not expand this variable.
+# Reuse /metrics; do not create another endpoint, Service, or public listener.
+scrape_configs:
+  - job_name: ani-acc-current-bindings
+    scrape_interval: 15s
+    scrape_timeout: 5s
+    metrics_path: /metrics
+    scheme: http
+    honor_labels: true
+    static_configs:
+      - targets:
+          - '${ACC_EXISTING_ADMIN_METRICS_TARGET}'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: ani_acc_gpu_binding_info
+        action: keep
+# Do not set or replace ani_cluster_id, ani_node_id, or ani_node_uid here.
+# An ACC instance can export current bindings from multiple managed clusters.

@@ -1,5 +1,7 @@
 # ani-observability-service
 
+当前独立 GPU API 与 GPU 用量总览采用带完整业务身份的 Prometheus 记录；实现、质量字段及同一切换窗口见 [当前绑定监控](docs/gpu-current-bindings.md)。该增量的规则和采集模板尚未部署，测试与验证交由下一执行环节。下文的一期合同描述保留为原实例指标路径。
+
 ANI 容器实例 `workspace` 的 CPU、内存范围及最新值查询服务。完整链路为
 Gov 鉴权 → Res 持久化可信范围 → Observability → Prometheus → Gov DTO。
 根模块与同仓独立 API 子模块均通过正式发布依赖构建，不需要模板仓库或本地 replace。

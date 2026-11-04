@@ -124,7 +124,7 @@ func TestDenseThirtyDaySixCardsFourMetrics(t *testing.T) {
 	}
 	defer provider.Close()
 	svc := service.New(biz.New(provider, func() time.Time { return end }))
-	target := &api.GpuTarget{Kind: "PHYSICAL", IndexComplete: true}
+	target := &api.GpuTarget{Kind: "PHYSICAL"}
 	for card := 0; card < 6; card++ {
 		target.Scopes = append(target.Scopes, &api.GpuSourceScope{ClusterId: cluster, NodeId: fmt.Sprintf("node%d", card/2+1), NodeUid: fmt.Sprintf("node-uid-%d", card/2+1), GpuUuid: fmt.Sprintf("GPU-00000000-0000-0000-0000-%012d", card)})
 	}

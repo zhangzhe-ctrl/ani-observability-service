@@ -9,13 +9,13 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	gpu "github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/gpu"
+	"github.com/zhangzhe-ctrl/ani-observability-service/internal/biz/target"
 )
 
 // GPU has an independent execution semaphore and response limit. Legacy limits
@@ -31,8 +31,24 @@ type gpuWireSample struct {
 
 func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([]gpu.Source, error) {
 	clusters := map[string][]gpu.Scope{}
-	for _, s := range q.Target.Scopes {
-		clusters[s.ClusterID] = append(clusters[s.ClusterID], s)
+	if q.Target.Kind == "PHYSICAL" {
+		for _, s := range q.Target.Scopes {
+			clusters[s.ClusterID] = append(clusters[s.ClusterID], s)
+		}
+	} else if len(q.ClusterIDs) > 0 {
+		for _, cluster := range q.ClusterIDs {
+			clusters[cluster] = nil
+		}
+	} else {
+		for cluster := range p.sources {
+			clusters[cluster] = nil
+		}
+	}
+	if len(clusters) > gpu.MaxManagedClusters {
+		return nil, gpu.Fail("GPU_BUDGET_EXCEEDED", errors.New("more than 16 managed clusters"))
+	}
+	if q.Target.Kind != "PHYSICAL" && len(clusters) == 0 {
+		return nil, gpu.Fail("GPU_SOURCE_NOT_CONFIGURED", errors.New("no configured datasource"))
 	}
 	all := []gpu.Source{}
 	processed := 0
@@ -48,6 +64,17 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 			return nil, gpu.Fail("GPU_SOURCE_NOT_CONFIGURED", errors.New("no configured datasource"))
 		}
 		expr := gpuExpression(clusters[cluster], m)
+		stampExpr := gpuTimestampExpression(clusters[cluster], m)
+		identity := func(labels map[string]string) (string, gpu.Scope, error) {
+			return gpuIdentity(labels, cluster, m, clusters[cluster])
+		}
+		if m.Profile == "hami" {
+			expr = gpuBusinessExpression(cluster, q.Target, m, false)
+			stampExpr = gpuBusinessExpression(cluster, q.Target, m, true)
+			identity = func(labels map[string]string) (string, gpu.Scope, error) {
+				return gpuBusinessIdentity(labels, cluster, q.Target)
+			}
+		}
 		first := q.Start
 		if !q.Latest {
 			base := int64(m.Base / time.Second)
@@ -68,7 +95,7 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 			if err != nil {
 				return nil, err
 			}
-			stamps, err := s.gpuRequest(ctx, q, m, gpuTimestampExpression(clusters[cluster], m), start, end)
+			stamps, err := s.gpuRequest(ctx, q, m, stampExpr, start, end)
 			if err != nil {
 				return nil, err
 			}
@@ -138,12 +165,12 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 			}
 			paired := map[string]map[int64]float64{}
 			for _, wire := range stamps {
-				identity, _, err := gpuIdentity(wire.Metric, cluster, m, clusters[cluster])
+				keyIdentity, _, err := identity(wire.Metric)
 				if err != nil {
 					return nil, err
 				}
 				path := gpuPath(wire.Metric)
-				key := identity + "\x00" + path
+				key := keyIdentity + "\x00" + path
 				if paired[key] == nil {
 					paired[key] = map[int64]float64{}
 				}
@@ -158,7 +185,7 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 					}
 				}
 				for _, pt := range points {
-					if old, exists := paired[key][pt.at.Unix()]; exists && old != pt.value {
+					if old, exists := paired[key][pt.at.Unix()]; m.Profile == "nvml" && exists && old != pt.value {
 						return nil, gpu.Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("conflicting timestamp pair"))
 					}
 					paired[key][pt.at.Unix()] = pt.value
@@ -168,13 +195,13 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 				if wire.Metric["__name__"] != m.Record {
 					return nil, gpu.Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("unexpected GPU metric name"))
 				}
-				identity, scope, err := gpuIdentity(wire.Metric, cluster, m, clusters[cluster])
+				keyIdentity, scope, err := identity(wire.Metric)
 				if err != nil {
 					return nil, err
 				}
-				unique[identity] = true
+				unique[keyIdentity] = true
 				if q.Budget != nil {
-					if err := q.Budget.ObserveSource(identity); err != nil {
+					if err := q.Budget.ObserveSource(keyIdentity); err != nil {
 						return nil, err
 					}
 				}
@@ -194,17 +221,17 @@ func (p *Prometheus) QueryGPU(ctx context.Context, q gpu.Query, m gpu.Metric) ([
 				if processed > 12000000 {
 					return nil, gpu.Fail("GPU_BUDGET_EXCEEDED", errors.New("sample budget exceeded"))
 				}
-				source := gpu.Source{Key: identity, Scope: scope, Dimension: wire.Metric["xid"]}
+				source := gpu.Source{Key: keyIdentity, Scope: scope, Dimension: wire.Metric["xid"]}
 				if m.Event {
 					if _, e := strconv.ParseUint(source.Dimension, 10, 32); e != nil {
 						return nil, gpu.Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("invalid Xid event code"))
 					}
 				}
-				pair := paired[identity+"\x00"+gpuPath(wire.Metric)]
+				pair := paired[keyIdentity+"\x00"+gpuPath(wire.Metric)]
 				for _, pt := range points {
 					stamp, ok := pair[pt.at.Unix()]
 					if !ok || math.IsNaN(stamp) || math.IsInf(stamp, 0) {
-						return nil, gpu.Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("missing original sample timestamp"))
+						return nil, gpu.Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("missing actual sample timestamp"))
 					}
 					sec, frac := math.Modf(stamp)
 					processStart := processStarts[gpuProcessPath(wire.Metric)][pt.at.Unix()]
@@ -234,17 +261,7 @@ func gpuMetricExpression(scopes []gpu.Scope, m gpu.Metric, sampleTime bool) stri
 	parts := []string{}
 	for _, s := range scopes {
 		fields := map[string]string{"ani_cluster_id": s.ClusterID, "ani_node_id": s.NodeID, "ani_node_uid": s.NodeUID, "ani_gpu_source": m.Profile}
-		if m.Profile == "nvml" {
-			fields["uuid"] = gpu.NormalizeUUID(s.GPUUUID)
-		} else {
-			fields["podnamespace"] = s.Namespace
-			fields["podname"] = s.PodName
-			fields["ctrname"] = s.ContainerName
-			fields["deviceuuid"] = s.GPUUUID
-			if s.VDeviceID != "" {
-				fields["vdeviceid"] = s.VDeviceID
-			}
-		}
+		fields["uuid"] = gpu.NormalizeUUID(s.GPUUUID)
 		keys := []string{}
 		for k := range fields {
 			keys = append(keys, k)
@@ -252,12 +269,7 @@ func gpuMetricExpression(scopes []gpu.Scope, m gpu.Metric, sampleTime bool) stri
 		sort.Strings(keys)
 		selectors := []string{}
 		for _, k := range keys {
-			v := fields[k]
-			if k == "deviceuuid" {
-				selectors = append(selectors, k+"=~"+strconv.Quote("(?i)(GPU-)?"+regexp.QuoteMeta(gpu.NormalizeUUID(v))))
-			} else {
-				selectors = append(selectors, k+"="+strconv.Quote(v))
-			}
+			selectors = append(selectors, k+"="+strconv.Quote(fields[k]))
 		}
 		part := m.Record + "{" + strings.Join(selectors, ",") + "}"
 		if sampleTime {
@@ -278,6 +290,34 @@ func gpuMetricExpression(scopes []gpu.Scope, m gpu.Metric, sampleTime bool) stri
 	}
 	sort.Strings(parts)
 	return strings.Join(parts, " or ")
+}
+func gpuBusinessExpression(cluster string, t gpu.Target, m gpu.Metric, sampleTime bool) string {
+	fields := map[string]string{
+		"ani_cluster_id": cluster,
+		"ani_gpu_source": "hami",
+		"ani_tenant_id":  t.TenantID,
+	}
+	if t.Kind == "RESOURCE" && t.UsageRef != nil {
+		fields["owner_service"] = t.UsageRef.OwnerService
+		fields["resource_id"] = t.UsageRef.ResourceID
+		fields["create_operation_id"] = t.UsageRef.CreateOperationID
+	}
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	selectors := make([]string, 0, len(keys))
+	for _, key := range keys {
+		selectors = append(selectors, key+"="+strconv.Quote(fields[key]))
+	}
+	expression := m.Record + "{" + strings.Join(selectors, ",") + "}"
+	if sampleTime {
+		// query_range timestamps are evaluation times. Read the recording-rule
+		// sample timestamp separately for ordinary freshness and response metadata.
+		return "timestamp(" + expression + ")"
+	}
+	return expression
 }
 func (s *source) gpuRequest(parent context.Context, q gpu.Query, m gpu.Metric, expr string, start, end time.Time) ([]wireSeries, error) {
 	select {
@@ -356,15 +396,7 @@ func gpuIdentity(labels map[string]string, cluster string, m gpu.Metric, scopes 
 		return fail()
 	}
 	s := gpu.Scope{ClusterID: cluster, NodeID: labels["ani_node_id"], NodeUID: labels["ani_node_uid"]}
-	if m.Profile == "nvml" {
-		s.GPUUUID = gpu.NormalizeUUID(labels["uuid"])
-	} else {
-		s.GPUUUID = gpu.NormalizeUUID(labels["deviceuuid"])
-		s.Namespace = labels["podnamespace"]
-		s.PodName = labels["podname"]
-		s.ContainerName = labels["ctrname"]
-		s.VDeviceID = labels["vdeviceid"]
-	}
+	s.GPUUUID = gpu.NormalizeUUID(labels["uuid"])
 	if s.GPUUUID == "" {
 		return fail()
 	}
@@ -373,16 +405,40 @@ func gpuIdentity(labels map[string]string, cluster string, m gpu.Metric, scopes 
 		if allowed.NodeID != s.NodeID || allowed.NodeUID != s.NodeUID || gpu.NormalizeUUID(allowed.GPUUUID) != s.GPUUUID {
 			continue
 		}
-		if m.Profile == "hami" && (allowed.Namespace != s.Namespace || allowed.PodName != s.PodName || allowed.ContainerName != s.ContainerName || (allowed.VDeviceID != "" && allowed.VDeviceID != s.VDeviceID)) {
-			continue
-		}
 		found = true
 		break
 	}
 	if !found {
 		return fail()
 	}
-	return gpu.SourceKey(s, m.Profile == "nvml"), s, nil
+	return gpu.SourceKey(s, true), s, nil
+}
+func gpuBusinessIdentity(labels map[string]string, cluster string, t gpu.Target) (string, gpu.Scope, error) {
+	s := gpu.Scope{
+		ClusterID:     labels["ani_cluster_id"],
+		NodeID:        labels["ani_node_id"],
+		NodeUID:       labels["ani_node_uid"],
+		GPUUUID:       gpu.NormalizeUUID(labels["deviceuuid"]),
+		Namespace:     labels["podnamespace"],
+		PodName:       labels["podname"],
+		PodUID:        labels["pod_uid"],
+		ContainerName: labels["ctrname"],
+		VDeviceID:     labels["vdeviceid"],
+		ResourceKind:  labels["resource_kind"],
+		Usage: gpu.UsageRef{
+			TenantID:          labels["ani_tenant_id"],
+			OwnerService:      labels["owner_service"],
+			ResourceID:        labels["resource_id"],
+			CreateOperationID: labels["create_operation_id"],
+		},
+	}
+	if s.ClusterID != cluster || labels["ani_gpu_source"] != "hami" ||
+		s.NodeID == "" || s.NodeUID == "" || s.GPUUUID == "" ||
+		s.GPUUUID != labels["deviceuuid"] || s.Namespace == "" || s.PodName == "" ||
+		!target.ValidUUID(s.PodUID) || s.ContainerName == "" || !t.MatchesUsage(s.Usage, s.ResourceKind) {
+		return "", gpu.Scope{}, gpu.Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("unexpected business record labels"))
+	}
+	return gpu.SourceKey(s, false), s, nil
 }
 func gpuPath(labels map[string]string) string {
 	keys := []string{}

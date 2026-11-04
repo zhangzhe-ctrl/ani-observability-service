@@ -128,6 +128,9 @@ func governanceIdentity(ctx context.Context, req any, info *grpc.UnaryServerInfo
 		default:
 			return nil, status.Error(codes.Unauthenticated, "explicit GPU context required")
 		}
+		if t.UsageRef != nil && t.UsageRef.TenantId != t.TenantId {
+			return nil, status.Error(codes.PermissionDenied, "GPU usage tenant context mismatch")
+		}
 		return handler(ctx, req)
 	}
 	if !target.ValidUUID(tenant) {

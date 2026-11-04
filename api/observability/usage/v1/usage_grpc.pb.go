@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Trusted platform-only statistics. Gov resolves tenants and historical GPU ownership.
+// Trusted platform-only statistics. Gov authorizes tenant business identities.
 type ResourceUsageServiceClient interface {
 	QueryUsage(ctx context.Context, in *QueryUsageRequest, opts ...grpc.CallOption) (*QueryUsageResponse, error)
 }
@@ -53,7 +53,7 @@ func (c *resourceUsageServiceClient) QueryUsage(ctx context.Context, in *QueryUs
 // All implementations must embed UnimplementedResourceUsageServiceServer
 // for forward compatibility.
 //
-// Trusted platform-only statistics. Gov resolves tenants and historical GPU ownership.
+// Trusted platform-only statistics. Gov authorizes tenant business identities.
 type ResourceUsageServiceServer interface {
 	QueryUsage(context.Context, *QueryUsageRequest) (*QueryUsageResponse, error)
 	mustEmbedUnimplementedResourceUsageServiceServer()

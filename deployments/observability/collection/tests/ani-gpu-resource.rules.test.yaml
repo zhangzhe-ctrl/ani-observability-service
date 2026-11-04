@@ -1,0 +1,136 @@
+{
+  "rule_files": [
+    "../rules/ani-gpu-resource.rules.yaml"
+  ],
+  "evaluation_interval": "30s",
+  "tests": [
+    {
+      "name": "canonical scrape max preserves both vdevice slots and the full business identity",
+      "interval": "30s",
+      "input_series": [
+        {
+          "series": "vGPU_device_memory_usage_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"hami-a\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"0\"}",
+          "values": "40 40"
+        },
+        {
+          "series": "vGPU_device_memory_usage_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"hami-b\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"0\"}",
+          "values": "60 60"
+        },
+        {
+          "series": "vGPU_device_memory_usage_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"hami-a\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"1\"}",
+          "values": "20 20"
+        },
+        {
+          "series": "vGPU_device_memory_limit_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"hami-a\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"0\"}",
+          "values": "100 100"
+        },
+        {
+          "series": "vGPU_device_memory_limit_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"hami-a\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"1\"}",
+          "values": "50 50"
+        },
+        {
+          "series": "ani_acc_gpu_binding_info{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"acc-a\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\"}",
+          "values": "1 1"
+        },
+        {
+          "series": "ani_acc_gpu_binding_info{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",job=\"acc-b\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\"}",
+          "values": "1 1"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_gpu_resource_memory_used_bytes",
+          "eval_time": "30s",
+          "exp_samples": [
+            {
+              "labels": "ani_gpu_resource_memory_used_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\",vdeviceid=\"0\"}",
+              "value": 60
+            },
+            {
+              "labels": "ani_gpu_resource_memory_used_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\",vdeviceid=\"1\"}",
+              "value": 20
+            }
+          ]
+        },
+        {
+          "expr": "ani_gpu_resource_memory_limit_bytes",
+          "eval_time": "30s",
+          "exp_samples": [
+            {
+              "labels": "ani_gpu_resource_memory_limit_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\",vdeviceid=\"0\"}",
+              "value": 100
+            },
+            {
+              "labels": "ani_gpu_resource_memory_limit_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\",vdeviceid=\"1\"}",
+              "value": 50
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "observed zero is retained",
+      "interval": "30s",
+      "input_series": [
+        {
+          "series": "vGPU_device_memory_usage_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"0\"}",
+          "values": "0 0"
+        },
+        {
+          "series": "ani_acc_gpu_binding_info{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\"}",
+          "values": "1 1"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_gpu_resource_memory_used_bytes",
+          "eval_time": "30s",
+          "exp_samples": [
+            {
+              "labels": "ani_gpu_resource_memory_used_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\",vdeviceid=\"0\"}",
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "raw metric without a current mapping is absent, never zero filled",
+      "interval": "30s",
+      "input_series": [
+        {
+          "series": "vGPU_device_memory_usage_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"0\"}",
+          "values": "7 7"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_gpu_resource_memory_used_bytes",
+          "eval_time": "30s",
+          "exp_samples": []
+        }
+      ]
+    },
+    {
+      "name": "ordinary ninety second freshness expires both inputs",
+      "interval": "30s",
+      "input_series": [
+        {
+          "series": "vGPU_device_memory_usage_in_bytes{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_gpu_source=\"hami\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",podname=\"worker-a\",podnamespace=\"tenant-ns\",vdeviceid=\"0\"}",
+          "values": "7"
+        },
+        {
+          "series": "ani_acc_gpu_binding_info{ani_cluster_id=\"f39bf6e2-f3ed-4191-ada3-caeebf86c220\",ani_node_id=\"node1\",ani_node_uid=\"b8c6525d-6d03-4ab9-a2ea-97753f0fca67\",ani_tenant_id=\"7ef3ded1-a63f-4ad8-8fe1-cf987a562534\",create_operation_id=\"20000000-0000-0000-0000-000000000001\",ctrname=\"main\",deviceuuid=\"01234567-89ab-cdef-0123-456789abcdef\",owner_service=\"ani-inference\",pod_uid=\"30000000-0000-0000-0000-000000000001\",podname=\"worker-a\",podnamespace=\"tenant-ns\",resource_id=\"10000000-0000-0000-0000-000000000001\",resource_kind=\"inference\"}",
+          "values": "1"
+        }
+      ],
+      "promql_expr_test": [
+        {
+          "expr": "ani_gpu_resource_memory_used_bytes",
+          "eval_time": "2m",
+          "exp_samples": []
+        }
+      ]
+    }
+  ]
+}

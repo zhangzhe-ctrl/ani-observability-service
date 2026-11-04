@@ -1,5 +1,11 @@
 # Manual instance collection
 
+## Dedicated business GPU records (pending deployment)
+
+The current-ledger GPU change adds `rules/ani-gpu-resource.rules.yaml` and its Operator wrapper `rules/ani-gpu-resource-metrics.yaml`. It does not replace the existing instance, training, VM, or legacy tenant trend rules described below. The dedicated GPU API and GPU usage overview now use the two new records with identity labels supplied by ACC's existing `/metrics` endpoint. The full input, quality, and cutover contract is in [gpu-current-bindings.md](../../../docs/gpu-current-bindings.md).
+
+The existing HAMi ServiceMonitor in `deploy/gpu/hami-test-environment.json` gains UUID normalization. The 15s ACC scrape template is `scrapes/acc-current-bindings.scrape.yaml`; its existing admin host:port must be resolved and rendered by the deployment operator. No actual ACC target address or Service selector has been verified in this task, and the template must not be applied unchanged. The new fixtures are in `tests/ani-gpu-resource.rules.test.yaml`; they were written but not run. No configuration in this increment was applied to a cluster.
+
 The current collection profile was read from the approved `172.16.101.10–12`
 cluster. The three minimal collector patches were applied at
 `2026-10-19T08:37:16Z`. One KSM and three cAdvisor targets are up at 15s, and real

@@ -2,6 +2,7 @@ package gpu
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -10,10 +11,21 @@ import (
 var epoch = time.Date(2026, 10, 27, 0, 0, 0, 0, time.UTC)
 
 func fixture() Query {
-	return Query{Target: Target{Kind: "TENANT", TenantID: "7ef3ded1-a63f-4ad8-8fe1-cf987a562534", IndexComplete: true, Scopes: []Scope{scope("p1", "r1"), scope("p2", "r2")}}, Codes: []string{"gpu.resource.memory_used_bytes"}, Start: epoch, End: epoch.Add(time.Minute), Step: 30 * time.Second}
+	return Query{Target: Target{Kind: "TENANT", TenantID: "7ef3ded1-a63f-4ad8-8fe1-cf987a562534"}, Codes: []string{"gpu.resource.memory_used_bytes"}, Start: epoch, End: epoch.Add(time.Minute), Step: 30 * time.Second}
 }
 func scope(pod, res string) Scope {
-	return Scope{ClusterID: "f39bf6e2-f3ed-4191-ada3-caeebf86c220", NodeID: "node1", NodeUID: "node-uid", GPUUUID: "GPU-ABC", Namespace: "ns", PodName: pod, ContainerName: "main", VDeviceID: "0", Usage: UsageRef{"7ef3ded1-a63f-4ad8-8fe1-cf987a562534", "ani-inference", res, "original-create"}, OwnershipState: "VERIFIED", CandidateComplete: true}
+	resourceID := "10000000-0000-0000-0000-000000000001"
+	if res == "r2" {
+		resourceID = "10000000-0000-0000-0000-000000000002"
+	}
+	podUID := "30000000-0000-0000-0000-000000000001"
+	if pod == "p2" {
+		podUID = "30000000-0000-0000-0000-000000000002"
+	}
+	return Scope{ClusterID: "f39bf6e2-f3ed-4191-ada3-caeebf86c220", NodeID: "node1", NodeUID: "node-uid", GPUUUID: "abc", Namespace: "ns", PodName: pod, PodUID: podUID, ContainerName: "main", VDeviceID: "0", ResourceKind: "inference", Usage: UsageRef{"7ef3ded1-a63f-4ad8-8fe1-cf987a562534", "ani-inference", resourceID, "20000000-0000-0000-0000-000000000001"}}
+}
+func physicalScope() Scope {
+	return Scope{ClusterID: "f39bf6e2-f3ed-4191-ada3-caeebf86c220", NodeID: "node1", NodeUID: "node-uid", GPUUUID: "GPU-ABC"}
 }
 func source(s Scope, values ...float64) Source {
 	o := Source{Scope: s, Key: SourceKey(s, false)}
@@ -26,174 +38,180 @@ func source(s Scope, values ...float64) Source {
 func TestSimultaneousSumAndWeightedSummary(t *testing.T) {
 	q := fixture()
 	m, _ := Lookup(q.Codes[0])
-	s, err := Aggregate(q, m, []Source{source(q.Target.Scopes[0], 100, 0), source(q.Target.Scopes[1], 0, 100)})
+	s, err := Aggregate(q, m, []Source{source(scope("p1", "r1"), 100, 0), source(scope("p2", "r2"), 0, 100)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s.Peak == nil || *s.Peak != 100 || *s.Mean != 100 {
-		t.Fatalf("simultaneous sum: %+v", s)
-	}
-	if s.Quality.Complete != 2 {
-		t.Fatal(s.Quality)
+	if s.Peak == nil || *s.Peak != 100 || s.Mean == nil || *s.Mean != 100 || s.Quality.Complete != 2 || s.Quality.ExpectedSources != nil {
+		t.Fatalf("returned sample aggregation: %+v", s)
 	}
 }
 func TestWideBucketKeepsPeakAndBaseGrid(t *testing.T) {
 	q := fixture()
 	q.End = epoch.Add(15 * time.Minute)
 	q.Step = 15 * time.Minute
-	q.Target.Scopes = q.Target.Scopes[:1]
 	m, _ := Lookup(q.Codes[0])
 	v := make([]float64, 30)
 	v[7] = 900
-	s, _ := Aggregate(q, m, []Source{source(q.Target.Scopes[0], v...)})
-	if s.Peak == nil || *s.Peak != 900 || *s.Mean != 30 || *s.Points[0].Peak != 900 {
-		t.Fatal(s)
+	s, err := Aggregate(q, m, []Source{source(scope("p1", "r1"), v...)})
+	if err != nil || s.Peak == nil || *s.Peak != 900 || s.Mean == nil || *s.Mean != 30 || s.Points[0].Peak == nil || *s.Points[0].Peak != 900 {
+		t.Fatal(s, err)
 	}
 }
 func TestKnownPartialNeverEntersCompleteSummary(t *testing.T) {
 	q := fixture()
+	q.Step = time.Minute
 	m, _ := Lookup(q.Codes[0])
-	s, _ := Aggregate(q, m, []Source{source(q.Target.Scopes[0], 5, 7)})
-	if s.Mean != nil || s.Peak != nil || s.Points[0].Value != nil || s.Points[0].KnownValue == nil || *s.Points[0].KnownValue != 5 || s.Quality.Status != "PARTIAL" || s.Quality.Partial != 2 {
-		t.Fatal(s)
+	s, err := Aggregate(q, m, []Source{source(scope("p1", "r1"), 5)})
+	if err != nil || s.Mean != nil || s.Peak != nil || s.Points[0].Value != nil || s.Points[0].KnownValue == nil || *s.Points[0].KnownValue != 5 || s.Quality.Status != "PARTIAL" || s.Quality.Complete != 1 || s.Quality.Empty != 1 {
+		t.Fatal(s, err)
 	}
 }
 func TestOriginalTimeFreshnessAndValidZero(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = q.Target.Scopes[:1]
 	m, _ := Lookup(q.Codes[0])
-	src := source(q.Target.Scopes[0], 0, 0)
+	src := source(scope("p1", "r1"), 0, 0)
 	src.Samples[1].SampleTime = epoch.Add(-2 * time.Minute)
-	s, _ := Aggregate(q, m, []Source{src})
-	if s.Quality.Complete != 1 || s.Mean == nil || *s.Mean != 0 || s.Points[1].Value != nil {
-		t.Fatal(s)
+	s, err := Aggregate(q, m, []Source{src})
+	if err != nil || s.Quality.Complete != 1 || s.Mean != nil || s.Points[0].Value == nil || *s.Points[0].Value != 0 || s.Points[1].Value != nil {
+		t.Fatal(s, err)
 	}
 }
-func TestBindingDuplicateAndConflictingScrape(t *testing.T) {
+func TestCanonicalBusinessDuplicateUsesMaximum(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = []Scope{q.Target.Scopes[0], q.Target.Scopes[0]}
 	m, _ := Lookup(q.Codes[0])
-	src := source(q.Target.Scopes[0], 10, 20)
-	s, _ := Aggregate(q, m, []Source{src, src})
-	if *s.Mean != 15 {
-		t.Fatal(s)
-	}
-	src.Samples[0].Value = 999
-	s, _ = Aggregate(q, m, []Source{source(q.Target.Scopes[0], 10, 20), src})
-	if s.Points[0].Value != nil || s.Quality.Complete != 1 {
-		t.Fatal(s)
+	a := source(scope("p1", "r1"), 10, 20)
+	b := source(scope("p1", "r1"), 30, 20)
+	s, err := Aggregate(q, m, []Source{a, b})
+	if err != nil || s.Mean == nil || *s.Mean != 25 || s.Quality.Complete != 2 {
+		t.Fatal(s, err)
 	}
 }
-func TestOwnershipReuseNeverSwitchesByTime(t *testing.T) {
+func TestResourceRequiresFullUsageIdentity(t *testing.T) {
 	q := fixture()
-	old := q.Target.Scopes[0]
-	next := old
-	next.Usage.ResourceID = "different"
-	old.ValidTo = epoch
-	next.ValidFrom = epoch
-	q.Target.Scopes = []Scope{old, next}
+	identity := scope("p1", "r1").Usage
+	q.Target = Target{Kind: "RESOURCE", TenantID: identity.TenantID, ResourceID: identity.ResourceID, ResourceKind: "inference", UsageRef: &identity}
+	next := scope("p1", "r1")
+	next.Usage.CreateOperationID = "20000000-0000-0000-0000-000000000002"
 	m, _ := Lookup(q.Codes[0])
-	s, _ := Aggregate(q, m, []Source{source(next, 10, 20)})
-	if s.Quality.Observed != 0 || s.Mean != nil {
-		t.Fatal(s)
+	if _, err := Aggregate(q, m, []Source{source(next, 10, 20)}); err == nil {
+		t.Fatal("different create operation must not enter a resource query")
+	}
+	q.Target.UsageRef = nil
+	if err := q.Validate(epoch.Add(time.Hour)); err == nil {
+		t.Fatal("resource query must carry the complete usage reference")
 	}
 }
-func TestNoGridAndNoHistoryNoFabricatedZero(t *testing.T) {
+func TestNoGridOrSamplesNeverFabricatesZero(t *testing.T) {
 	q := fixture()
 	q.Start = epoch.Add(time.Second)
 	q.End = epoch.Add(2 * time.Second)
 	m, _ := Lookup(q.Codes[0])
-	s, _ := Aggregate(q, m, nil)
-	if s.Quality.Expected != 0 || s.Quality.Coverage != nil || s.Quality.Status != "NO_DATA" {
-		t.Fatal(s)
+	s, err := Aggregate(q, m, nil)
+	if err != nil || s.Quality.Expected != 0 || s.Quality.Coverage != nil || s.Quality.Status != "NO_DATA" {
+		t.Fatal(s, err)
 	}
 	q.Start = epoch
 	q.End = epoch.Add(time.Minute)
-	q.Target.Scopes = nil
-	s, _ = Aggregate(q, m, nil)
-	if s.Mean != nil || s.Quality.Status != "NO_DATA" {
-		t.Fatal(s)
+	s, err = Aggregate(q, m, nil)
+	if err != nil || s.Mean != nil || s.Quality.Status != "NO_DATA" || s.Points[0].Value != nil || s.Points[0].KnownValue != nil {
+		t.Fatal(s, err)
 	}
 }
-func TestSourceVdeviceWildcardDoesNotCollapse(t *testing.T) {
+func TestVdeviceSlotsRemainIndependent(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = q.Target.Scopes[:1]
-	q.Target.Scopes[0].VDeviceID = ""
-	a := q.Target.Scopes[0]
-	a.VDeviceID = "0"
+	a := scope("p1", "r1")
 	b := a
 	b.VDeviceID = "1"
 	m, _ := Lookup(q.Codes[0])
-	s, e := Aggregate(q, m, []Source{source(a, 10, 10), source(b, 20, 20)})
-	if e != nil || s.Mean == nil || *s.Mean != 30 {
-		t.Fatal(s, e)
+	s, err := Aggregate(q, m, []Source{source(a, 10, 10), source(b, 20, 20)})
+	if err != nil || s.Mean == nil || *s.Mean != 30 {
+		t.Fatal(s, err)
 	}
 }
-
-type fakeProvider struct{ q Query }
-
-func (p *fakeProvider) QueryGPU(context.Context, Query, Metric) ([]Source, error) { return nil, nil }
+func TestPodReplacementUsesRecordedIdentityWithoutHistoricalLifetimes(t *testing.T) {
+	q := fixture()
+	old := scope("p1", "r1")
+	replacement := old
+	replacement.PodUID = "30000000-0000-0000-0000-000000000002"
+	a := source(old, 10)
+	b := source(replacement, 0, 20)
+	b.Samples = b.Samples[1:]
+	m, _ := Lookup(q.Codes[0])
+	s, err := Aggregate(q, m, []Source{a, b})
+	if err != nil || s.Mean == nil || *s.Mean != 15 || s.Quality.Status != "OK" || s.Quality.ObservedSources != 2 {
+		t.Fatal(s, err)
+	}
+}
 func TestThirtyDayBudgetAndStrictLegacySeparation(t *testing.T) {
 	q := fixture()
 	q.Start = epoch.Add(-30 * 24 * time.Hour)
 	q.End = epoch
-	q.Target.Scopes = q.Target.Scopes[:1]
-	if e := q.Validate(epoch); e != nil {
-		t.Fatal(e)
+	if err := q.Validate(epoch); err != nil {
+		t.Fatal(err)
 	}
 	if q.Step != 15*time.Minute {
 		t.Fatal(q.Step)
 	}
-	for i := 0; i < 128; i++ {
-		s := scope("p"+string(rune(i)), "r")
-		q.Target.Scopes = append(q.Target.Scopes, s)
+	q.Target.Scopes = []Scope{physicalScope()}
+	if err := q.Validate(epoch); err == nil {
+		t.Fatal("business queries must reject old scopes")
 	}
-	if e := q.Validate(epoch); e == nil {
-		t.Fatal("expected sample budget")
+	q = fixture()
+	for i := 0; i < 17; i++ {
+		q.ClusterIDs = append(q.ClusterIDs, fmt.Sprintf("40000000-0000-0000-0000-%012d", i+1))
+	}
+	if err := q.Validate(epoch.Add(time.Hour)); err == nil {
+		t.Fatal("more than 16 managed clusters must fail")
 	}
 	q = fixture()
 	q.Codes = []string{"gpu.physical.utilization_ratio"}
-	if e := q.Validate(epoch.Add(time.Hour)); e == nil {
-		t.Fatal("physical utilization cannot enter tenant query")
+	if err := q.Validate(epoch.Add(time.Hour)); err == nil {
+		t.Fatal("physical utilization cannot enter a tenant query")
 	}
 }
-
-func TestPreIndexGapsDoNotNullPostIndexCompleteSamples(t *testing.T) {
+func TestPreRecordingGapsDoNotInventHistoryOrHideLaterSamples(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = q.Target.Scopes[:1]
-	q.Target.IndexComplete = false
-	q.Target.HistoryAvailableFrom = epoch.Add(30 * time.Second)
-	q.Target.Scopes[0].CandidateComplete = true
+	src := source(scope("p1", "r1"), 10, 20)
+	src.Samples = src.Samples[1:]
 	m, _ := Lookup(q.Codes[0])
-	s, e := Aggregate(q, m, []Source{source(q.Target.Scopes[0], 10, 20)})
-	if e != nil || s.Points[0].Value != nil || s.Points[1].Value == nil || *s.Points[1].Value != 20 || s.Mean == nil || *s.Mean != 20 {
-		t.Fatal(s, e)
+	s, err := Aggregate(q, m, []Source{src})
+	if err != nil || s.Points[0].Value != nil || s.Points[1].Value == nil || *s.Points[1].Value != 20 || s.Mean != nil || !s.AvailableFrom.Equal(epoch.Add(30*time.Second)) {
+		t.Fatal(s, err)
+	}
+}
+func TestPhysicalConflictingScrapesRemainUnknown(t *testing.T) {
+	q := fixture()
+	q.Target = Target{Kind: "PHYSICAL", Scopes: []Scope{physicalScope()}}
+	m, _ := Lookup("gpu.physical.memory_used_bytes")
+	a := Source{Scope: physicalScope(), Key: SourceKey(physicalScope(), true), Samples: []Sample{{Timestamp: epoch, SampleTime: epoch, Value: 10}}}
+	b := Source{Scope: physicalScope(), Key: SourceKey(physicalScope(), true), Samples: []Sample{{Timestamp: epoch, SampleTime: epoch, Value: 20}}}
+	s, err := Aggregate(q, m, []Source{a, b})
+	if err != nil || s.Points[0].Value != nil || s.Quality.Complete != 0 {
+		t.Fatal(s, err)
 	}
 }
 func TestXidSnapshotsPreserveFirstEventAndProcessBoundaries(t *testing.T) {
 	q := fixture()
-	q.Target.Kind = "PHYSICAL"
-	q.Target.TenantID = ""
-	q.Target.Scopes = q.Target.Scopes[:1]
-	q.Step = 30 * time.Second
+	q.Target = Target{Kind: "PHYSICAL", Scopes: []Scope{physicalScope()}}
 	m, _ := Lookup("gpu.physical.xid_errors_total")
 	s := q.Target.Scopes[0]
 	src := Source{Key: SourceKey(s, true), Scope: s, Dimension: "79", Samples: []Sample{{Timestamp: epoch, SampleTime: epoch, Value: 1, ProcessStart: epoch.Add(-time.Hour)}, {Timestamp: epoch.Add(15 * time.Second), SampleTime: epoch.Add(15 * time.Second), Value: 1, ProcessStart: epoch.Add(10 * time.Second)}}}
-	out, e := Aggregate(q, m, []Source{src})
-	if e != nil || out.Mean != nil || out.Peak != nil || len(out.ProcessStarts) != 2 || out.Points[0].Peak != nil || out.Points[0].Value == nil || *out.Points[0].Value != 1 {
-		t.Fatal(out, e)
+	out, err := Aggregate(q, m, []Source{src})
+	if err != nil || out.Mean != nil || out.Peak != nil || len(out.ProcessStarts) != 2 || out.Points[0].Peak != nil || out.Points[0].Value == nil || *out.Points[0].Value != 1 {
+		t.Fatal(out, err)
 	}
 }
 func TestThirtyDayFullBaseGridKeepsShortPeak(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = q.Target.Scopes[:1]
 	q.Start = epoch.Add(-30 * 24 * time.Hour)
 	q.End = epoch
-	if e := q.Validate(epoch); e != nil {
-		t.Fatal(e)
+	if err := q.Validate(epoch); err != nil {
+		t.Fatal(err)
 	}
 	m, _ := Lookup(q.Codes[0])
-	src := Source{Key: SourceKey(q.Target.Scopes[0], false), Scope: q.Target.Scopes[0]}
+	s := scope("p1", "r1")
+	src := Source{Key: SourceKey(s, false), Scope: s}
 	for at := q.Start; at.Before(q.End); at = at.Add(30 * time.Second) {
 		v := float64(1)
 		if at.Equal(q.Start.Add(15*24*time.Hour + 7*30*time.Second)) {
@@ -201,30 +219,28 @@ func TestThirtyDayFullBaseGridKeepsShortPeak(t *testing.T) {
 		}
 		src.Samples = append(src.Samples, Sample{Timestamp: at, SampleTime: at, Value: v})
 	}
-	s, e := Aggregate(q, m, []Source{src})
-	if e != nil || len(s.Points) != 2880 || s.Quality.Expected != 86400 || s.Quality.Complete != 86400 || s.Peak == nil || *s.Peak != 999 {
-		t.Fatal(len(s.Points), s.Quality, s.Peak, e)
+	out, err := Aggregate(q, m, []Source{src})
+	if err != nil || len(out.Points) != 2880 || out.Quality.Expected != 86400 || out.Quality.Complete != 86400 || out.Peak == nil || *out.Peak != 999 {
+		t.Fatal(len(out.Points), out.Quality, out.Peak, err)
 	}
 }
 func TestProcessedBudgetIncludesCompanionValues(t *testing.T) {
 	b := &Budget{}
-	if e := b.Count(12000000); e != nil {
-		t.Fatal(e)
+	if err := b.Count(12000000); err != nil {
+		t.Fatal(err)
 	}
-	if e := b.Count(1); e == nil {
+	if err := b.Count(1); err == nil {
 		t.Fatal("budget must reject an additional timestamp or quality value")
 	}
 }
-func TestOwnershipIsMatchedAtOriginalSampleTime(t *testing.T) {
+func TestRecentRecordingSampleDoesNotNeedHistoricalOwnershipTime(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = q.Target.Scopes[:1]
-	q.Target.Scopes[0].ValidFrom = epoch
-	src := source(q.Target.Scopes[0], 5, 7)
+	src := source(scope("p1", "r1"), 5, 7)
 	src.Samples[0].SampleTime = epoch.Add(-time.Second)
 	m, _ := Lookup(q.Codes[0])
-	s, e := Aggregate(q, m, []Source{src})
-	if e != nil || s.Points[0].Value != nil || s.Points[1].Value == nil {
-		t.Fatal(s, e)
+	s, err := Aggregate(q, m, []Source{src})
+	if err != nil || s.Points[0].Value == nil || s.Points[1].Value == nil || s.Mean == nil || *s.Mean != 6 {
+		t.Fatal(s, err)
 	}
 }
 
@@ -275,10 +291,9 @@ func (p *denseGridProvider) QueryGPU(_ context.Context, q Query, m Metric) ([]So
 }
 func TestChunkFoldingMatchesWholeEpochGridWithUnalignedStart(t *testing.T) {
 	q := fixture()
-	q.Target.Scopes = q.Target.Scopes[:1]
 	q.Start = epoch.Add(7 * time.Second)
 	q.End = q.Start.Add(7*24*time.Hour + 45*time.Second)
-	p := &denseGridProvider{scope: q.Target.Scopes[0], origin: q.Start}
+	p := &denseGridProvider{scope: scope("p1", "r1"), origin: q.Start}
 	result, e := New(p, func() time.Time { return q.End }).Execute(context.Background(), q)
 	if e != nil {
 		t.Fatal(e)
@@ -305,9 +320,7 @@ func TestChunkFoldingMatchesWholeEpochGridWithUnalignedStart(t *testing.T) {
 }
 func TestChunkFoldingPreservesLateAndDisappearingXidDimensions(t *testing.T) {
 	q := fixture()
-	q.Target.Kind = "PHYSICAL"
-	q.Target.TenantID = ""
-	q.Target.Scopes = q.Target.Scopes[:1]
+	q.Target = Target{Kind: "PHYSICAL", Scopes: []Scope{physicalScope()}}
 	q.Codes = []string{"gpu.physical.xid_errors_total"}
 	q.Start = epoch
 	q.End = q.Start.Add(13 * time.Hour)
