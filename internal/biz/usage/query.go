@@ -105,7 +105,7 @@ func (q Query) validate(now time.Time) (time.Duration, error) {
 	if q.Start.Nanosecond() != 0 || q.End.Nanosecond() != 0 || !q.End.After(q.Start) || q.End.Sub(q.Start) > 30*24*time.Hour || q.Start.Before(now.Add(-30*24*time.Hour-time.Minute)) || q.End.After(now) {
 		return 0, Fail("USAGE_INVALID_QUERY", "recent 30 day range required")
 	}
-	if len(q.Tenants) > 128 || len(q.Clusters) < 1 || len(q.Clusters) > 16 || len(q.Metrics) < 1 || len(q.Metrics) > 3 {
+	if len(q.Tenants) > 128 || len(q.Clusters) < 1 || len(q.Clusters) > gpu.MaxManagedClusters || len(q.Metrics) < 1 || len(q.Metrics) > 3 {
 		return 0, Fail("USAGE_BUDGET_EXCEEDED", "tenant, cluster or metric budget exceeded")
 	}
 	clusters := map[string]bool{}
@@ -121,7 +121,6 @@ func (q Query) validate(now time.Time) (time.Duration, error) {
 	}
 	ids := map[uint32]bool{}
 	resources := map[string]bool{}
-	sources := map[string]bool{}
 	for _, t := range q.Tenants {
 		if t.ID == 0 || ids[t.ID] || !target.ValidUUID(t.ResourceID) || resources[t.ResourceID] {
 			return 0, Fail("USAGE_INVALID_QUERY", "invalid or duplicate tenant")
@@ -129,19 +128,10 @@ func (q Query) validate(now time.Time) (time.Duration, error) {
 		ids[t.ID] = true
 		resources[t.ResourceID] = true
 		if gpuRequested && t.GPUUnavailable == "" {
-			if t.GPU.Kind != "TENANT" || t.GPU.TenantID != t.ResourceID {
+			if t.GPU.Kind != "TENANT" || t.GPU.TenantID != t.ResourceID || t.GPU.Validate() != nil {
 				return 0, Fail("USAGE_INVALID_QUERY", "trusted tenant GPU target required")
 			}
-			for _, s := range t.GPU.Scopes {
-				if !clusters[s.ClusterID] {
-					return 0, Fail("USAGE_INVALID_QUERY", "GPU scope outside trusted cluster set")
-				}
-				sources[gpu.SourceKey(s, false)] = true
-			}
 		}
-	}
-	if len(sources) > 128 {
-		return 0, Fail("USAGE_BUDGET_EXCEEDED", "128 independent GPU sources exceeded")
 	}
 	seen := map[string]bool{}
 	for _, m := range q.Metrics {
@@ -168,7 +158,9 @@ func (q Query) validate(now time.Time) (time.Duration, error) {
 	if gpuRequested {
 		podMetrics--
 	}
-	values := int64(q.End.Sub(q.Start)/(30*time.Second)+1) * int64(len(sources)) * 2
+	// GPU source/sample budgets are charged against actual returned records,
+	// shared across this batch. No workload inventory is enumerated in advance.
+	values := int64(0)
 	if podMetrics > 0 {
 		values += int64(n) * int64(len(q.Tenants)) * int64(len(q.Clusters)) * int64(2*podMetrics+4)
 	}
@@ -211,6 +203,16 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 	gpuRows := make([]Metric, len(q.Tenants))
 	var gpuErr error
 	if hasGPU {
+		gpuBudget := &gpu.Budget{}
+		// Reserve the existing pod-query budget so GPU and CPU/memory values
+		// share the request's 12 million value ceiling.
+		evaluations := int((q.End.Sub(q.Start) + step - 1) / step)
+		if len(podMetrics) > 0 {
+			reserved := evaluations * len(q.Tenants) * len(q.Clusters) * (2*len(podMetrics) + 4)
+			if err := gpuBudget.Count(reserved); err != nil {
+				return nil, Fail("USAGE_BUDGET_EXCEEDED", "12 million processed sample budget exceeded")
+			}
+		}
 		jobs := make(chan int, len(q.Tenants))
 		for i := range q.Tenants {
 			jobs <- i
@@ -227,7 +229,7 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 						return
 					}
 					t := q.Tenants[i]
-					m, e := u.queryGPU(batch, q, t)
+					m, e := u.queryGPU(batch, q, t, gpuBudget)
 					if e != nil {
 						mu.Lock()
 						if gpuErr == nil {
@@ -355,7 +357,7 @@ func scaled(v *float64, divisor float64) *float64 {
 	}
 	return pointer(*v / divisor)
 }
-func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant) (Metric, error) {
+func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant, budget *gpu.Budget) (Metric, error) {
 	// Formal GPU queries keep their native read grid. A coarse instant-query
 	// step would discard short-lived workloads between display ticks.
 	step := gpuGrid(q)
@@ -366,19 +368,10 @@ func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant) (Metric, erro
 		finish(&m)
 		return m, nil
 	}
-	// An empty complete historical inventory is the only non-sample zero proof.
-	if len(t.GPU.Scopes) == 0 && t.GPU.IndexComplete && !t.GPU.HistoryAvailableFrom.IsZero() && !q.Start.Before(t.GPU.HistoryAvailableFrom) && len(t.GPU.UncoveredKinds) == 0 {
-		for i := range m.Points {
-			m.Points[i].Value = pointer(0)
-			m.Points[i].Known = pointer(0)
-		}
-		finish(&m)
-		return m, nil
-	}
 	if u.gpu == nil {
 		return m, Fail("USAGE_SOURCE_UNAVAILABLE", "GPU reader unavailable")
 	}
-	r, e := u.gpu.Execute(ctx, gpu.Query{Target: t.GPU, Codes: []string{"gpu.resource.memory_used_bytes"}, Start: q.Start, End: q.End})
+	r, e := u.gpu.Execute(ctx, gpu.Query{Target: t.GPU, ClusterIDs: q.Clusters, Codes: []string{"gpu.resource.memory_used_bytes"}, Start: q.Start, End: q.End, Budget: budget})
 	if e != nil {
 		var f *gpu.Failure
 		if errors.As(e, &f) && (f.Reason == "GPU_BUDGET_EXCEEDED" || f.Reason == "GPU_CONCURRENCY_LIMIT") {
@@ -398,9 +391,6 @@ func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant) (Metric, erro
 	s := r.Series[0]
 	m.Quality.Reasons = append(m.Quality.Reasons, s.Quality.Reasons...)
 	m.Quality.AvailableFrom = s.AvailableFrom
-	if s.OwnershipFrom.After(m.Quality.AvailableFrom) {
-		m.Quality.AvailableFrom = s.OwnershipFrom
-	}
 	for i, p := range s.Points {
 		if !p.Timestamp.Equal(m.Points[i].Timestamp) {
 			return m, Fail("USAGE_SOURCE_RESPONSE_INVALID", "GPU timestamp mismatch")
@@ -411,6 +401,10 @@ func (u *UseCase) queryGPU(ctx context.Context, q Query, t Tenant) (Metric, erro
 		m.Points[i].Known = scaled(p.KnownValue, 1<<30)
 		if m.Points[i].Known == nil {
 			m.Points[i].Known = m.Points[i].Value
+		}
+		if m.Points[i].Known != nil && p.Quality.Expected > 0 {
+			duration := m.Points[i].End.Sub(m.Points[i].Timestamp)
+			m.Points[i].KnownDuration = time.Duration(int64(duration) * int64(p.Quality.Observed) / int64(p.Quality.Expected))
 		}
 	}
 	finish(&m)
@@ -538,7 +532,7 @@ func platformMetric(q Query, name string, step time.Duration, rows []Metric) Met
 	m := newMetric(q, name, step)
 	reasons := map[string]bool{}
 	active := uint64(0)
-	allComplete := true
+	allComplete := len(rows) > 0 || name != "gpu"
 	allUnavailable := len(rows) > 0
 	for _, r := range rows {
 		allUnavailable = allUnavailable && r.Quality.Status == "UNAVAILABLE"
@@ -578,8 +572,8 @@ func platformMetric(q Query, name string, step time.Duration, rows []Metric) Met
 			}
 		}
 		if len(rows) == 0 {
-			complete = true
-			hasKnown = true
+			complete = name != "gpu"
+			hasKnown = name != "gpu"
 		}
 		if complete {
 			m.Points[i].Value = pointer(sum)

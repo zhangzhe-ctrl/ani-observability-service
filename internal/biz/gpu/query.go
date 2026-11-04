@@ -16,23 +16,23 @@ import (
 
 type UsageRef struct{ TenantID, OwnerService, ResourceID, CreateOperationID string }
 type Scope struct {
-	ClusterID, NodeID, NodeUID, GPUUUID, Namespace, PodName, ContainerName, VDeviceID string
-	Usage                                                                             UsageRef
-	ValidFrom, ValidTo, EvidenceAt                                                    time.Time
-	OwnershipState, ResourceKind, DeviceID                                            string
-	CandidateComplete                                                                 bool
-	Reasons                                                                           []string
+	ClusterID, NodeID, NodeUID, GPUUUID, DeviceID string
+	// Business source identity comes from recorded Prometheus labels, never from
+	// a caller-supplied historical scope.
+	Namespace, PodName, PodUID, ContainerName, VDeviceID, ResourceKind string
+	Usage                                                              UsageRef
 }
 type Target struct {
-	Kind, TenantID, ResourceKind, ResourceID, Watermark string
-	Scopes                                              []Scope
-	IndexComplete                                       bool
-	HistoryAvailableFrom                                time.Time
-	IncludedKinds, UncoveredKinds                       []string
+	Kind, TenantID, ResourceKind, ResourceID string
+	Scopes                                   []Scope
+	UsageRef                                 *UsageRef
 }
 type Query struct {
-	Target     Target
-	Codes      []string
+	Target Target
+	Codes  []string
+	// Internal trusted cluster subset for QueryUsage. Empty means all configured
+	// sources for a business query; physical queries derive it from Scopes.
+	ClusterIDs []string
 	Start, End time.Time
 	Latest     bool
 	Step       time.Duration
@@ -67,19 +67,23 @@ type Point struct {
 	Quality                              Quality
 }
 type Series struct {
-	Metric                               Metric
-	Points                               []Point
-	Mean, Peak                           *float64
-	Quality                              Quality
-	AvailableFrom, OwnershipFrom, Cutoff time.Time
-	EventCode, Semantics                 string
-	ProcessStarts                        []time.Time
+	Metric                Metric
+	Points                []Point
+	Mean, Peak            *float64
+	Quality               Quality
+	AvailableFrom, Cutoff time.Time
+	EventCode, Semantics  string
+	ProcessStarts         []time.Time
+	ResourceKinds         []string
+	sourceKeys            map[string]bool
 }
 type Result struct {
 	QueryTime, Start, End time.Time
 	Step                  time.Duration
 	Target                Target
 	Series                []Series
+	IndexComplete         bool
+	IncludedKinds         []string
 }
 type Provider interface {
 	QueryGPU(context.Context, Query, Metric) ([]Source, error)
@@ -120,6 +124,8 @@ func Fail(reason string, err error) error { return &Failure{reason, err} }
 
 var catalog = map[string]Metric{}
 
+const MaxManagedClusters = 16
+
 func init() {
 	for _, m := range []Metric{
 		{"gpu.physical.utilization_ratio", "nvidia_smi_utilization_gpu_ratio", "ratio", "nvml", "mean", 15 * time.Second, 15 * time.Second, true, true, false, false},
@@ -127,8 +133,8 @@ func init() {
 		{"gpu.physical.memory_total_bytes", "nvidia_smi_memory_total_bytes", "bytes", "nvml", "sum", 15 * time.Second, 15 * time.Second, true, false, false, false},
 		{"gpu.physical.temperature_celsius", "nvidia_smi_temperature_gpu", "celsius", "nvml", "mean", 15 * time.Second, 15 * time.Second, false, false, false, false},
 		{"gpu.physical.power_instant_watts", "nvidia_smi_power_draw_instant_watts", "watts", "nvml", "sum", 15 * time.Second, 15 * time.Second, true, false, false, false},
-		{"gpu.resource.memory_used_bytes", "vGPU_device_memory_usage_in_bytes", "bytes", "hami", "sum", 30 * time.Second, 30 * time.Second, true, false, false, false},
-		{"gpu.resource.memory_limit_bytes", "vGPU_device_memory_limit_in_bytes", "bytes", "hami", "sum", 30 * time.Second, 30 * time.Second, true, false, false, false},
+		{"gpu.resource.memory_used_bytes", "ani_gpu_resource_memory_used_bytes", "bytes", "hami", "sum", 30 * time.Second, 30 * time.Second, true, false, false, false},
+		{"gpu.resource.memory_limit_bytes", "ani_gpu_resource_memory_limit_bytes", "bytes", "hami", "sum", 30 * time.Second, 30 * time.Second, true, false, false, false},
 	} {
 		catalog[m.Code] = m
 	}
@@ -160,26 +166,82 @@ func NormalizeUUID(s string) string {
 func SourceKey(s Scope, physical bool) string {
 	parts := []string{s.ClusterID, s.NodeID, s.NodeUID, NormalizeUUID(s.GPUUUID)}
 	if !physical {
-		parts = append(parts, s.Namespace, s.PodName, s.ContainerName, s.VDeviceID)
+		parts = append(parts, s.Namespace, s.PodName, s.PodUID, s.ContainerName, s.VDeviceID, UsageKey(s))
 	}
 	return strings.Join(parts, "\x00")
 }
 func UsageKey(s Scope) string {
 	return strings.Join([]string{s.Usage.TenantID, s.Usage.OwnerService, s.Usage.ResourceID, s.Usage.CreateOperationID}, "\x00")
 }
-func (q *Query) Validate(now time.Time) error {
+func ResourceKind(owner string) string {
+	switch owner {
+	case "ani-resource-service":
+		return "container"
+	case "ani-inference":
+		return "inference"
+	case "ani-modeldev-service":
+		return "modeldev_execution"
+	default:
+		return ""
+	}
+}
+func (r UsageRef) Valid() bool {
+	return target.ValidUUID(r.TenantID) && target.ValidUUID(r.ResourceID) &&
+		target.ValidUUID(r.CreateOperationID) && ResourceKind(r.OwnerService) != ""
+}
+func (t Target) MatchesUsage(ref UsageRef, kind string) bool {
+	if !ref.Valid() || ref.TenantID != t.TenantID || ResourceKind(ref.OwnerService) != kind {
+		return false
+	}
+	return t.Kind == "TENANT" || t.Kind == "RESOURCE" && t.UsageRef != nil &&
+		*t.UsageRef == ref && t.ResourceKind == kind
+}
+func (t Target) Validate() error {
 	invalid := func(s string) error { return Fail("GPU_INVALID_QUERY", errors.New(s)) }
-	if q.Target.Kind != "PHYSICAL" && q.Target.Kind != "TENANT" && q.Target.Kind != "RESOURCE" {
+	if t.Kind != "PHYSICAL" && t.Kind != "TENANT" && t.Kind != "RESOURCE" {
 		return invalid("unknown GPU target")
 	}
-	if q.Target.Kind != "PHYSICAL" && !target.ValidUUID(q.Target.TenantID) {
+	if t.Kind == "PHYSICAL" {
+		if t.TenantID != "" || t.UsageRef != nil || t.ResourceKind != "" || t.ResourceID != "" {
+			return invalid("physical target cannot carry a business identity")
+		}
+		return nil
+	}
+	if !target.ValidUUID(t.TenantID) {
 		return invalid("valid tenant required")
 	}
-	if q.Target.Kind == "PHYSICAL" && q.Target.TenantID != "" {
-		return invalid("physical target cannot carry tenant")
+	if len(t.Scopes) != 0 {
+		return invalid("business targets cannot carry physical or historical scopes")
 	}
-	if q.Target.Kind == "RESOURCE" && (q.Target.ResourceKind == "" || q.Target.ResourceID == "") {
-		return invalid("resource identity required")
+	if t.Kind == "TENANT" {
+		if t.UsageRef != nil || t.ResourceKind != "" || t.ResourceID != "" {
+			return invalid("tenant target cannot carry a resource identity")
+		}
+		return nil
+	}
+	if t.UsageRef == nil || !t.UsageRef.Valid() || t.UsageRef.TenantID != t.TenantID ||
+		t.UsageRef.ResourceID != t.ResourceID || ResourceKind(t.UsageRef.OwnerService) != t.ResourceKind {
+		return invalid("complete matching resource usage identity required")
+	}
+	return nil
+}
+func (q *Query) Validate(now time.Time) error {
+	invalid := func(s string) error { return Fail("GPU_INVALID_QUERY", errors.New(s)) }
+	if err := q.Target.Validate(); err != nil {
+		return err
+	}
+	clusters := map[string]bool{}
+	for _, cluster := range q.ClusterIDs {
+		if !target.ValidUUID(cluster) || clusters[cluster] {
+			return invalid("invalid or duplicate cluster")
+		}
+		clusters[cluster] = true
+	}
+	if len(clusters) > MaxManagedClusters {
+		return Fail("GPU_BUDGET_EXCEEDED", errors.New("more than 16 managed clusters"))
+	}
+	if q.Target.Kind == "PHYSICAL" && len(q.ClusterIDs) != 0 {
+		return invalid("physical clusters are selected by physical scopes")
 	}
 	if q.Start.Nanosecond() != 0 || q.End.Nanosecond() != 0 || q.End.Before(q.Start) || (!q.Latest && !q.End.After(q.Start)) || q.End.Sub(q.Start) > 30*24*time.Hour || q.Start.Before(now.Add(-30*24*time.Hour-time.Minute)) || q.End.After(now) {
 		return invalid("range must be within recent 30 days")
@@ -193,18 +255,11 @@ func (q *Query) Validate(now time.Time) error {
 		if !target.ValidUUID(s.ClusterID) || s.NodeID == "" || s.NodeUID == "" || NormalizeUUID(s.GPUUUID) == "" {
 			return invalid("trusted cluster, node and GPU identity required")
 		}
-		if !s.ValidTo.IsZero() && !s.ValidFrom.IsZero() && s.ValidTo.Before(s.ValidFrom) {
-			return invalid("invalid ownership interval")
-		}
-		if q.Target.Kind != "PHYSICAL" {
-			if s.Namespace == "" || s.PodName == "" || s.ContainerName == "" || s.Usage.TenantID != q.Target.TenantID || s.Usage.OwnerService == "" || s.Usage.ResourceID == "" || s.Usage.CreateOperationID == "" {
-				return invalid("complete trusted resource scope required")
-			}
-			if q.Target.Kind == "RESOURCE" && (s.Usage.ResourceID != q.Target.ResourceID || s.ResourceKind != q.Target.ResourceKind) {
-				return invalid("resource scope mismatch")
-			}
-		}
-		sources[SourceKey(s, q.Target.Kind == "PHYSICAL")] = true
+		clusters[s.ClusterID] = true
+		sources[SourceKey(s, true)] = true
+	}
+	if len(clusters) > MaxManagedClusters {
+		return Fail("GPU_BUDGET_EXCEEDED", errors.New("more than 16 managed clusters"))
 	}
 	if len(sources) > 128 {
 		return Fail("GPU_BUDGET_EXCEEDED", errors.New("more than 128 independent sources"))
@@ -289,7 +344,9 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 	}()
 	batch, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	q.Budget = &Budget{}
+	if q.Budget == nil {
+		q.Budget = &Budget{}
+	}
 	out := &Result{QueryTime: now, Start: q.Start, End: q.End, Step: q.Step, Target: q.Target, Series: nil}
 	type item struct {
 		i   int
@@ -320,6 +377,27 @@ func (u *UseCase) Execute(ctx context.Context, q Query) (*Result, error) {
 	for _, rows := range ordered {
 		out.Series = append(out.Series, rows...)
 	}
+	out.IndexComplete = len(out.Series) > 0
+	kinds := map[string]bool{}
+	returned := map[string]bool{}
+	for _, series := range out.Series {
+		returned[series.Metric.Code] = true
+		if series.Quality.Expected == 0 || series.Quality.Complete != series.Quality.Expected || series.Quality.Observed == 0 {
+			out.IndexComplete = false
+		}
+		for _, kind := range series.ResourceKinds {
+			kinds[kind] = true
+		}
+	}
+	for _, code := range q.Codes {
+		if !returned[code] {
+			out.IndexComplete = false
+		}
+	}
+	for kind := range kinds {
+		out.IncludedKinds = append(out.IncludedKinds, kind)
+	}
+	sort.Strings(out.IncludedKinds)
 	if len(out.Series) > 12 || len(out.Series)*int((q.End.Sub(q.Start)+q.Step-1)/q.Step) > 12000 {
 		return nil, Fail("GPU_BUDGET_EXCEEDED", errors.New("event dimension curve/bucket budget exceeded"))
 	}
@@ -462,7 +540,15 @@ func foldSeries(a, b Series) Series {
 	a.Quality.Expected += b.Quality.Expected
 	a.Quality.Partial += b.Quality.Partial
 	a.Quality.Empty += b.Quality.Empty
-	if b.Quality.ObservedSources > a.Quality.ObservedSources {
+	if a.Metric.Profile == "hami" {
+		if a.sourceKeys == nil {
+			a.sourceKeys = map[string]bool{}
+		}
+		for key := range b.sourceKeys {
+			a.sourceKeys[key] = true
+		}
+		a.Quality.ObservedSources = uint32(len(a.sourceKeys))
+	} else if b.Quality.ObservedSources > a.Quality.ObservedSources {
 		a.Quality.ObservedSources = b.Quality.ObservedSources
 	}
 	if a.Quality.ExpectedSources == nil || b.Quality.ExpectedSources == nil {
@@ -494,6 +580,21 @@ func foldSeries(a, b Series) Series {
 		v := float64(a.Quality.Complete) / float64(a.Quality.Expected)
 		a.Quality.Coverage = &v
 	}
+	if a.Metric.Profile == "hami" && a.Quality.Complete != a.Quality.Expected {
+		a.Mean, a.Peak = nil, nil
+	}
+	kinds := map[string]bool{}
+	for _, kind := range a.ResourceKinds {
+		kinds[kind] = true
+	}
+	for _, kind := range b.ResourceKinds {
+		kinds[kind] = true
+	}
+	a.ResourceKinds = nil
+	for kind := range kinds {
+		a.ResourceKinds = append(a.ResourceKinds, kind)
+	}
+	sort.Strings(a.ResourceKinds)
 	starts := map[int64]bool{}
 	for _, v := range a.ProcessStarts {
 		starts[v.UnixNano()] = true
@@ -509,62 +610,47 @@ func foldSeries(a, b Series) Series {
 }
 
 func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
-	out := Series{Metric: m, OwnershipFrom: q.Target.HistoryAvailableFrom, Semantics: "gauge_base_grid"}
+	physical := m.Profile == "nvml"
+	out := Series{Metric: m, Semantics: "gauge_base_grid"}
+	if !physical {
+		out.Semantics = "recorded_gauge_base_grid; coverage describes returned samples, not the workload inventory"
+	}
 	if m.Snapshot {
 		out.Semantics = "cumulative_or_state_snapshot; no interval count or gauge mean"
 	}
 	if m.Event {
 		out.Semantics = "events observed since exporter process start; first event creates series; received event time is not hardware occurrence time"
 	}
-	// Group historical bindings by original source; a raw sample is counted once.
-	scopes := map[string][]Scope{}
+	scopes := map[string]Scope{}
 	for _, s := range q.Target.Scopes {
-		k := SourceKey(s, m.Profile == "nvml")
-		scopes[k] = append(scopes[k], s)
+		scopes[SourceKey(s, true)] = s
 	}
 	if len(scopes) > 128 {
 		return out, Fail("GPU_BUDGET_EXCEEDED", errors.New("source budget exceeded"))
 	}
-	// Missing vdevice metadata is a selector wildcard; retain each returned vdevice
-	// as an independent source, rather than collapsing replicas or virtual slots.
-	for _, src := range sources {
-		if _, ok := scopes[src.Key]; ok {
-			continue
-		}
-		for key, candidates := range scopes {
-			if m.Profile == "hami" && len(candidates) > 0 && candidates[0].VDeviceID == "" {
-				base := src.Scope
-				base.VDeviceID = ""
-				if SourceKey(base, false) == key {
-					scopes[src.Key] = append([]Scope(nil), candidates...)
-				}
-			}
-		}
-	}
-	for key, candidates := range scopes {
-		if m.Profile == "hami" && len(candidates) > 0 && candidates[0].VDeviceID == "" {
-			expanded := false
-			for _, src := range sources {
-				base := src.Scope
-				base.VDeviceID = ""
-				if src.Key != key && SourceKey(base, false) == key {
-					expanded = true
-				}
-			}
-			if expanded {
-				delete(scopes, key)
-			}
-		}
-	}
-	if len(scopes) > 128 {
-		return out, Fail("GPU_BUDGET_EXCEEDED", errors.New("expanded source budget exceeded"))
-	}
 	raw := map[string]map[int64][]Sample{}
-	count := 0
+	kinds := map[string]bool{}
 	processes := map[int64]bool{}
+	count := 0
 	for _, s := range sources {
-		if _, ok := scopes[s.Key]; !ok {
-			return out, Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("unexpected source identity"))
+		if s.Key != SourceKey(s.Scope, physical) {
+			return out, Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("invalid source identity"))
+		}
+		if physical {
+			if _, ok := scopes[s.Key]; !ok {
+				return out, Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("unexpected physical source identity"))
+			}
+		} else {
+			if !q.Target.MatchesUsage(s.Scope.Usage, s.Scope.ResourceKind) {
+				return out, Fail("GPU_SOURCE_RESPONSE_INVALID", errors.New("unexpected business source identity"))
+			}
+			scopes[s.Key] = s.Scope
+			if len(s.Samples) > 0 {
+				kinds[s.Scope.ResourceKind] = true
+			}
+		}
+		if len(scopes) > 128 {
+			return out, Fail("GPU_BUDGET_EXCEEDED", errors.New("source budget exceeded"))
 		}
 		if raw[s.Key] == nil {
 			raw[s.Key] = map[int64][]Sample{}
@@ -595,85 +681,25 @@ func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
 	acc := make([]bucket, buckets)
 	for i := range acc {
 		acc[i].reasons = map[string]bool{}
-		acc[i].sourcesKnown = true
+		acc[i].sourcesKnown = physical
 	}
-	total := bucket{reasons: map[string]bool{}, sourcesKnown: true}
+	total := bucket{reasons: map[string]bool{}, sourcesKnown: physical}
 	for t := first; q.Latest || t.Before(q.End); t = t.Add(m.Base) {
 		bi := 0
 		if !q.Latest {
 			bi = int(t.Sub(q.Start) / q.Step)
 		}
-		a := &acc[bi]
-		knownAt := q.Target.IndexComplete
-		if !knownAt && !q.Target.HistoryAvailableFrom.IsZero() && !t.Before(q.Target.HistoryAvailableFrom) {
-			knownAt = true
-			for _, s := range q.Target.Scopes {
-				if (!s.ValidFrom.IsZero() && t.Before(s.ValidFrom)) || (!s.ValidTo.IsZero() && !t.Before(s.ValidTo)) {
-					continue
-				}
-				if !s.CandidateComplete {
-					knownAt = false
-				}
-			}
-		}
-		g := grid{complete: knownAt, expectedKnown: knownAt, reasons: map[string]bool{}}
-		if !q.Target.HistoryAvailableFrom.IsZero() && t.Before(q.Target.HistoryAvailableFrom) {
-			g.complete = false
-			g.reasons["HISTORY_UNAVAILABLE"] = true
-		}
-		if !knownAt {
-			g.reasons["HISTORY_UNAVAILABLE"] = true
-		}
-		if len(q.Target.UncoveredKinds) > 0 {
-			g.complete = false
-			g.expectedKnown = false
-			g.reasons["RESOURCE_TYPE_UNCOVERED"] = true
-		}
-		for key, candidates := range scopes {
-			active := []Scope{}
-			for _, s := range candidates {
-				if (!s.ValidFrom.IsZero() && t.Before(s.ValidFrom)) || (!s.ValidTo.IsZero() && !t.Before(s.ValidTo)) {
-					continue
-				}
-				active = append(active, s)
-			}
-			if len(active) == 0 {
+		g := grid{complete: true, expectedKnown: physical, reasons: map[string]bool{}}
+		for key := range scopes {
+			points := raw[key][t.Unix()]
+			// A recorded business source may exist for only part of the window.
+			// No historical inventory is inferred from another timestamp.
+			if !physical && len(points) == 0 {
 				continue
 			}
 			g.expected++
 			reason := ""
-			usage := ""
-			for _, s := range active {
-				if m.Profile != "nvml" {
-					if !s.CandidateComplete {
-						reason = "OWNERSHIP_UNKNOWN"
-					}
-					if s.OwnershipState != "VERIFIED" {
-						reason = s.OwnershipState
-						if reason == "" {
-							reason = "OWNERSHIP_UNKNOWN"
-						}
-					}
-					k := UsageKey(s)
-					if usage != "" && usage != k {
-						reason = "OWNERSHIP_AMBIGUOUS"
-					}
-					usage = k
-				}
-			}
-			// A historical cross-resource conflict remains unsafe even outside a business interval.
-			if m.Profile != "nvml" {
-				allUsage := ""
-				for _, s := range candidates {
-					k := UsageKey(s)
-					if allUsage != "" && k != allUsage {
-						reason = "OWNERSHIP_AMBIGUOUS"
-					}
-					allUsage = k
-				}
-			}
-			points := raw[key][t.Unix()]
-			if reason == "" && len(points) == 0 {
+			if len(points) == 0 {
 				reason = "SCRAPE_UNAVAILABLE"
 			}
 			var value float64
@@ -682,28 +708,19 @@ func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
 				if p.SampleTime.After(t) || t.Sub(p.SampleTime) > 3*m.Period {
 					reason = "STALE_SAMPLE"
 				}
-				if m.Profile == "hami" {
-					matched := false
-					for _, candidate := range candidates {
-						if candidate.OwnershipState != "VERIFIED" || !candidate.CandidateComplete || (!candidate.ValidFrom.IsZero() && p.SampleTime.Before(candidate.ValidFrom)) || (!candidate.ValidTo.IsZero() && !p.SampleTime.Before(candidate.ValidTo)) {
-							continue
-						}
-						if UsageKey(candidate) == usage {
-							matched = true
-						}
-					}
-					if !matched {
-						reason = "HISTORY_UNAVAILABLE"
-					}
-				}
 				if math.IsNaN(p.Value) || math.IsInf(p.Value, 0) || (m.Nonnegative && p.Value < 0) || (m.Ratio && p.Value > 1) {
 					reason = "INVALID_VALUE"
 				}
-				if j > 0 && (p.Value != value || !p.SampleTime.Equal(st)) {
-					reason = "SOURCE_CONFLICT"
+				if physical {
+					if j > 0 && (p.Value != value || !p.SampleTime.Equal(st)) {
+						reason = "SOURCE_CONFLICT"
+					}
+					value, st = p.Value, p.SampleTime
+				} else if j == 0 || p.Value > value {
+					// Recording rules already canonicalize duplicate scrapes. Do not
+					// rebuild the old per-sample value/timestamp equality proof.
+					value, st = p.Value, p.SampleTime
 				}
-				value = p.Value
-				st = p.SampleTime
 			}
 			if reason != "" {
 				g.complete = false
@@ -719,6 +736,10 @@ func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
 				}
 			}
 			g.observed++
+			if !physical {
+				acc[bi].observeSource(key)
+				total.observeSource(key)
+			}
 			if m.Event && m.Unit == "unix_seconds" {
 				if g.observed == 1 || value > g.value {
 					g.value = value
@@ -729,14 +750,16 @@ func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
 			g.min = minTime(g.min, st)
 			g.max = maxTime(g.max, st)
 		}
-		if g.expected == 0 {
+		if g.observed == 0 {
 			g.complete = false
-			g.reasons["HISTORY_UNAVAILABLE"] = true
+			if len(g.reasons) == 0 {
+				g.reasons["SCRAPE_UNAVAILABLE"] = true
+			}
 		}
 		if m.Aggregation == "mean" && g.observed > 0 {
 			g.value /= float64(g.observed)
 		}
-		a.add(g)
+		acc[bi].add(g)
 		total.add(g)
 		if q.Latest {
 			break
@@ -750,7 +773,11 @@ func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
 		} else if end.After(q.End) {
 			end = q.End
 		}
-		out.Points = append(out.Points, Point{Timestamp: start, End: end, Value: a.mean(), Peak: a.peak(), KnownValue: a.knownMean(), KnownPeak: a.knownPeak(), Quality: a.quality(len(q.Target.UncoveredKinds) == 0), SampleMin: a.min, SampleMax: a.max})
+		point := Point{Timestamp: start, End: end, KnownValue: a.knownMean(), KnownPeak: a.knownPeak(), Quality: a.quality(physical), SampleMin: a.min, SampleMax: a.max}
+		if physical || a.complete == a.expected {
+			point.Value, point.Peak = a.mean(), a.peak()
+		}
+		out.Points = append(out.Points, point)
 	}
 	if m.Snapshot {
 		for i, a := range acc {
@@ -768,26 +795,30 @@ func Aggregate(q Query, m Metric, sources []Source) (Series, error) {
 				p.KnownValue = &v
 			}
 		}
-	} else {
-		out.Mean = total.mean()
-		out.Peak = total.peak()
+	} else if physical || total.complete == total.expected {
+		out.Mean, out.Peak = total.mean(), total.peak()
 	}
 	for sec := range processes {
 		out.ProcessStarts = append(out.ProcessStarts, time.Unix(sec, 0).UTC())
 	}
 	sort.Slice(out.ProcessStarts, func(i, j int) bool { return out.ProcessStarts[i].Before(out.ProcessStarts[j]) })
-	out.Quality = total.quality(len(q.Target.UncoveredKinds) == 0)
+	for kind := range kinds {
+		out.ResourceKinds = append(out.ResourceKinds, kind)
+	}
+	sort.Strings(out.ResourceKinds)
+	out.Quality = total.quality(physical)
+	out.sourceKeys = total.sourceKeys
 	out.AvailableFrom = total.min
 	out.Cutoff = total.max
 	return out, nil
 }
 
 type grid struct {
-	complete, zero, expectedKnown bool
-	expected, observed            uint32
-	value                         float64
-	min, max                      time.Time
-	reasons                       map[string]bool
+	complete, expectedKnown bool
+	expected, observed      uint32
+	value                   float64
+	min, max                time.Time
+	reasons                 map[string]bool
 }
 type bucket struct {
 	expected, complete, observed, partial                 uint32
@@ -796,6 +827,14 @@ type bucket struct {
 	min, max                                              time.Time
 	reasons                                               map[string]bool
 	sourcesKnown                                          bool
+	sourceKeys                                            map[string]bool
+}
+
+func (b *bucket) observeSource(key string) {
+	if b.sourceKeys == nil {
+		b.sourceKeys = map[string]bool{}
+	}
+	b.sourceKeys[key] = true
 }
 
 func (b *bucket) add(g grid) {
@@ -812,7 +851,7 @@ func (b *bucket) add(g grid) {
 	for k := range g.reasons {
 		b.reasons[k] = true
 	}
-	has := g.observed > 0 || g.zero
+	has := g.observed > 0
 	if has {
 		b.observed++
 		b.knownSum += g.value
@@ -864,6 +903,9 @@ func (b bucket) knownPeak() *float64 {
 }
 func (b bucket) quality(known bool) Quality {
 	q := Quality{Status: "NO_DATA", Complete: b.complete, Observed: b.observed, Expected: b.expected, Partial: b.partial, Empty: b.expected - b.observed, ObservedSources: b.maxSources}
+	if !known {
+		q.ObservedSources = uint32(len(b.sourceKeys))
+	}
 	if b.observed > 0 {
 		q.Status = "PARTIAL"
 		if b.complete == b.expected {

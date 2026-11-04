@@ -1,0 +1,29 @@
+{
+  "apiVersion": "monitoring.coreos.com/v1",
+  "kind": "PrometheusRule",
+  "metadata": {
+    "name": "ani-gpu-resource",
+    "namespace": "ani-observability",
+    "labels": {
+      "release": "ani-metrics"
+    }
+  },
+  "spec": {
+    "groups": [
+      {
+        "name": "ani-gpu-resource",
+        "interval": "30s",
+        "rules": [
+          {
+            "record": "ani_gpu_resource_memory_used_bytes",
+            "expr": "max by (\n  ani_cluster_id, ani_node_id, ani_node_uid, ani_gpu_source,\n  podnamespace, podname, ctrname, deviceuuid, vdeviceid\n) (\n  vGPU_device_memory_usage_in_bytes{ani_gpu_source=\"hami\"}\n  and\n  (time() - timestamp(vGPU_device_memory_usage_in_bytes{ani_gpu_source=\"hami\"}) <= 90)\n  and\n  (time() - timestamp(vGPU_device_memory_usage_in_bytes{ani_gpu_source=\"hami\"}) >= 0)\n)\n* on (\n  ani_cluster_id, ani_node_id, ani_node_uid,\n  podnamespace, podname, ctrname, deviceuuid\n)\ngroup_left (\n  pod_uid, ani_tenant_id, owner_service,\n  resource_id, create_operation_id, resource_kind\n)\nmax by (\n  ani_cluster_id, ani_node_id, ani_node_uid,\n  podnamespace, podname, ctrname, deviceuuid,\n  pod_uid, ani_tenant_id, owner_service,\n  resource_id, create_operation_id, resource_kind\n) (\n  ani_acc_gpu_binding_info\n  and (time() - timestamp(ani_acc_gpu_binding_info) <= 90)\n  and (time() - timestamp(ani_acc_gpu_binding_info) >= 0)\n)\n"
+          },
+          {
+            "record": "ani_gpu_resource_memory_limit_bytes",
+            "expr": "max by (\n  ani_cluster_id, ani_node_id, ani_node_uid, ani_gpu_source,\n  podnamespace, podname, ctrname, deviceuuid, vdeviceid\n) (\n  vGPU_device_memory_limit_in_bytes{ani_gpu_source=\"hami\"}\n  and\n  (time() - timestamp(vGPU_device_memory_limit_in_bytes{ani_gpu_source=\"hami\"}) <= 90)\n  and\n  (time() - timestamp(vGPU_device_memory_limit_in_bytes{ani_gpu_source=\"hami\"}) >= 0)\n)\n* on (\n  ani_cluster_id, ani_node_id, ani_node_uid,\n  podnamespace, podname, ctrname, deviceuuid\n)\ngroup_left (\n  pod_uid, ani_tenant_id, owner_service,\n  resource_id, create_operation_id, resource_kind\n)\nmax by (\n  ani_cluster_id, ani_node_id, ani_node_uid,\n  podnamespace, podname, ctrname, deviceuuid,\n  pod_uid, ani_tenant_id, owner_service,\n  resource_id, create_operation_id, resource_kind\n) (\n  ani_acc_gpu_binding_info\n  and (time() - timestamp(ani_acc_gpu_binding_info) <= 90)\n  and (time() - timestamp(ani_acc_gpu_binding_info) >= 0)\n)\n"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -64,31 +64,25 @@ func target(t *gpuapi.GpuTarget) gpu.Target {
 	if t == nil {
 		return gpu.Target{}
 	}
-	out := gpu.Target{Kind: t.Kind, TenantID: t.TenantId, ResourceKind: t.ResourceKind, ResourceID: t.ResourceId, IndexComplete: t.IndexComplete, HistoryAvailableFrom: at(t.HistoryAvailableFrom), IncludedKinds: t.IncludedResourceKinds, UncoveredKinds: t.UncoveredResourceKinds, Watermark: t.ScopeWatermark}
+	out := gpu.Target{Kind: t.Kind, TenantID: t.TenantId, ResourceKind: t.ResourceKind, ResourceID: t.ResourceId}
+	if t.UsageRef != nil {
+		out.UsageRef = &gpu.UsageRef{TenantID: t.UsageRef.TenantId, OwnerService: t.UsageRef.OwnerService, ResourceID: t.UsageRef.ResourceId, CreateOperationID: t.UsageRef.CreateOperationId}
+	}
 	for _, s := range t.Scopes {
 		if s == nil {
-			out.IndexComplete = false
+			out.Scopes = append(out.Scopes, gpu.Scope{})
 			continue
 		}
-		v := gpu.Scope{ClusterID: s.ClusterId, NodeID: s.NodeId, NodeUID: s.NodeUid, GPUUUID: s.GpuUuid, Namespace: s.Namespace, PodName: s.PodName, ContainerName: s.ContainerName, VDeviceID: s.VdeviceId, ValidFrom: at(s.ValidFrom), ValidTo: at(s.ValidTo), EvidenceAt: at(s.EvidenceAt), OwnershipState: s.OwnershipState, ResourceKind: s.ResourceKind, DeviceID: s.DeviceId, CandidateComplete: s.CandidateComplete, Reasons: s.Reasons}
-		if s.UsageRef != nil {
-			v.Usage = gpu.UsageRef{TenantID: s.UsageRef.TenantId, OwnerService: s.UsageRef.OwnerService, ResourceID: s.UsageRef.ResourceId, CreateOperationID: s.UsageRef.CreateOperationId}
-		}
-		out.Scopes = append(out.Scopes, v)
+		out.Scopes = append(out.Scopes, gpu.Scope{ClusterID: s.ClusterId, NodeID: s.NodeId, NodeUID: s.NodeUid, GPUUUID: s.GpuUuid, DeviceID: s.DeviceId})
 	}
 	return out
 }
+
 func ts(t time.Time) *timestamppb.Timestamp {
 	if t.IsZero() {
 		return nil
 	}
 	return timestamppb.New(t)
-}
-func at(t *timestamppb.Timestamp) time.Time {
-	if t == nil {
-		return time.Time{}
-	}
-	return t.AsTime()
 }
 func rpcError(err error) error {
 	reason := "USAGE_QUERY_FAILED"

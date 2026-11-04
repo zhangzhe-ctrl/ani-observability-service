@@ -1,3 +1,5 @@
+# The recorded PASS/deployment facts below describe the earlier instance/training profiles.
+# The new dedicated business GPU path has its own pending status at the end.
 profile: linux-containerd-systemd-v1
 status: rules_loaded_real_resource_instance_three_cycle_verification_passed
 cluster_id: 0fcdb8b1-22bf-4528-af59-82843dc88f21
@@ -149,3 +151,45 @@ evidence:
     pod_uid: 7ea9b16e-c89b-4e6c-b548-d13040b606e5
     runtime_container_id: 2fe184cb4af92095e9087a47bc8f20ea3e2944916a34bdc6df044355084f7d60
     container: workspace
+
+business_gpu_current_bindings:
+  status: source_only_not_tested_or_applied
+  contract: ../../../docs/gpu-current-bindings.md
+  managed_clusters: configured_observability_datasources_maximum_16
+  binding_metric: ani_acc_gpu_binding_info
+  binding_label_count: 13
+  acc_scrape:
+    template: scrapes/acc-current-bindings.scrape.yaml
+    interval: 15s
+    target: '${ACC_EXISTING_ADMIN_METRICS_TARGET}'
+    target_status: operator_required_existing_admin_host_and_port_not_verified
+    listener_note: "Checked-in ACC default is 127.0.0.1:19091; deployment must verify existing internal listener, Service/route and network policy. No new Service or public endpoint."
+    preserve_metric_identity: [ani_cluster_id, ani_node_id, ani_node_uid]
+  hami:
+    existing_profile: ../../../deploy/gpu/hami-test-environment.json
+    source_selector: 'ani_gpu_source="hami"'
+    uuid_normalization: "deviceuuid: remove optional GPU- prefix, then lowercase"
+    preserve_vdeviceid: true
+    duplicate_scrape_reduction: max_by_fixed_source_identity
+  rules:
+    raw: rules/ani-gpu-resource.rules.yaml
+    operator_wrapper: rules/ani-gpu-resource-metrics.yaml
+    group: ani-gpu-resource
+    interval: 30s
+    input_freshness: 90s
+    records: [ani_gpu_resource_memory_used_bytes, ani_gpu_resource_memory_limit_bytes]
+    sample_time: actual_recording_rule_sample_time
+    existing_instance_rules: unchanged
+    fixture: tests/ani-gpu-resource.rules.test.yaml
+    validation: not_run
+  cutover:
+    mode: one_window_no_old_new_acc_writers_in_parallel
+    order: "prepare configurations/binaries; stop old Gov/Obs entrypoints and ACC writers/agent; schema 9; start new ACC/Gov/Obs and rules; record actual T0"
+    t0_first_labeled_sample: null
+    acceptance: pending_next_agent
+    pre_t0_history: no_backfill_NO_DATA_or_PARTIAL
+  retention:
+    policy: preserve_existing_no_automatic_extension
+    observed_value: null
+    observed_value_status: operator_must_record_during_cutover
+    outside_retained_window: NO_DATA_or_PARTIAL

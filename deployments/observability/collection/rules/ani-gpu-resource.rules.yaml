@@ -1,0 +1,67 @@
+# Pending deployment: T0 and actual existing retention have not been observed.
+# Render the existing ACC admin target in ../scrapes/acc-current-bindings.scrape.yaml.
+# Business identity is attached at recording time; no historical scope database is consulted.
+groups:
+  - name: ani-gpu-resource
+    interval: 30s
+    rules:
+      - record: ani_gpu_resource_memory_used_bytes
+        expr: |
+          max by (
+            ani_cluster_id, ani_node_id, ani_node_uid, ani_gpu_source,
+            podnamespace, podname, ctrname, deviceuuid, vdeviceid
+          ) (
+            vGPU_device_memory_usage_in_bytes{ani_gpu_source="hami"}
+            and
+            (time() - timestamp(vGPU_device_memory_usage_in_bytes{ani_gpu_source="hami"}) <= 90)
+            and
+            (time() - timestamp(vGPU_device_memory_usage_in_bytes{ani_gpu_source="hami"}) >= 0)
+          )
+          * on (
+            ani_cluster_id, ani_node_id, ani_node_uid,
+            podnamespace, podname, ctrname, deviceuuid
+          )
+          group_left (
+            pod_uid, ani_tenant_id, owner_service,
+            resource_id, create_operation_id, resource_kind
+          )
+          max by (
+            ani_cluster_id, ani_node_id, ani_node_uid,
+            podnamespace, podname, ctrname, deviceuuid,
+            pod_uid, ani_tenant_id, owner_service,
+            resource_id, create_operation_id, resource_kind
+          ) (
+            ani_acc_gpu_binding_info
+            and (time() - timestamp(ani_acc_gpu_binding_info) <= 90)
+            and (time() - timestamp(ani_acc_gpu_binding_info) >= 0)
+          )
+      - record: ani_gpu_resource_memory_limit_bytes
+        expr: |
+          max by (
+            ani_cluster_id, ani_node_id, ani_node_uid, ani_gpu_source,
+            podnamespace, podname, ctrname, deviceuuid, vdeviceid
+          ) (
+            vGPU_device_memory_limit_in_bytes{ani_gpu_source="hami"}
+            and
+            (time() - timestamp(vGPU_device_memory_limit_in_bytes{ani_gpu_source="hami"}) <= 90)
+            and
+            (time() - timestamp(vGPU_device_memory_limit_in_bytes{ani_gpu_source="hami"}) >= 0)
+          )
+          * on (
+            ani_cluster_id, ani_node_id, ani_node_uid,
+            podnamespace, podname, ctrname, deviceuuid
+          )
+          group_left (
+            pod_uid, ani_tenant_id, owner_service,
+            resource_id, create_operation_id, resource_kind
+          )
+          max by (
+            ani_cluster_id, ani_node_id, ani_node_uid,
+            podnamespace, podname, ctrname, deviceuuid,
+            pod_uid, ani_tenant_id, owner_service,
+            resource_id, create_operation_id, resource_kind
+          ) (
+            ani_acc_gpu_binding_info
+            and (time() - timestamp(ani_acc_gpu_binding_info) <= 90)
+            and (time() - timestamp(ani_acc_gpu_binding_info) >= 0)
+          )

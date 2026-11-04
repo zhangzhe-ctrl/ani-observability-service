@@ -320,7 +320,7 @@ func TestGpuExplicitPlatformAndTenantContexts(t *testing.T) {
 	address := startGovernance(t, ca)
 	connection := dialGovernance(t, address, ca.clientConfig(t, []string{"ani-governance"}))
 	client := gpuapi.NewGpuMonitoringServiceClient(connection)
-	req := &gpuapi.QueryGpuLatestRequest{Target: &gpuapi.GpuTarget{Kind: "PHYSICAL", IndexComplete: true, Scopes: []*gpuapi.GpuSourceScope{{ClusterId: "0fcdb8b1-22bf-4528-af59-82843dc88f21", NodeId: "node1", NodeUid: "node-uid", GpuUuid: "abc"}}}, MetricCodes: []string{"gpu.physical.memory_used_bytes"}}
+	req := &gpuapi.QueryGpuLatestRequest{Target: &gpuapi.GpuTarget{Kind: "PHYSICAL", Scopes: []*gpuapi.GpuSourceScope{{ClusterId: "0fcdb8b1-22bf-4528-af59-82843dc88f21", NodeId: "node1", NodeUid: "node-uid", GpuUuid: "abc"}}}, MetricCodes: []string{"gpu.physical.memory_used_bytes"}}
 	platform := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-ani-context", "platform", "x-ani-actor", "governance:user:1", "x-ani-request-id", trustedRequestID))
 	response, err := client.QueryGpuLatest(platform, req)
 	if err != nil {
@@ -340,6 +340,19 @@ func TestGpuExplicitPlatformAndTenantContexts(t *testing.T) {
 	if _, err := client.QueryGpuLatest(platformWithTenant, req); status.Code(err) != codes.PermissionDenied {
 		t.Fatal("fake platform tenant", err)
 	}
+	resource := &gpuapi.QueryGpuLatestRequest{Target: &gpuapi.GpuTarget{Kind: "RESOURCE", TenantId: trustedTenant, ResourceKind: "inference", ResourceId: "10000000-0000-0000-0000-000000000001", UsageRef: &gpuapi.UsageRef{TenantId: "70000000-0000-0000-0000-000000000002", OwnerService: "ani-inference", ResourceId: "10000000-0000-0000-0000-000000000001", CreateOperationId: "20000000-0000-0000-0000-000000000001"}}, MetricCodes: []string{"gpu.resource.memory_used_bytes"}}
+	if _, err := client.QueryGpuLatest(tenant, resource); status.Code(err) != codes.PermissionDenied {
+		t.Fatal("usage reference cannot cross the authenticated tenant", err)
+	}
+	resource.Target.UsageRef.TenantId = trustedTenant
+	resource.Target.UsageRef.CreateOperationId = ""
+	if _, err := client.QueryGpuLatest(tenant, resource); status.Code(err) != codes.InvalidArgument {
+		t.Fatal("resource request requires a complete usage reference", err)
+	}
+	resource.Target = &gpuapi.GpuTarget{Kind: "TENANT", TenantId: trustedTenant, Scopes: req.Target.Scopes}
+	if _, err := client.QueryGpuLatest(tenant, resource); status.Code(err) != codes.InvalidArgument {
+		t.Fatal("legacy business scopes must not be accepted", err)
+	}
 }
 
 func TestResourceUsageRequiresPlatformTLSContextAndNoTenantHeader(t *testing.T) {
@@ -348,7 +361,7 @@ func TestResourceUsageRequiresPlatformTLSContextAndNoTenantHeader(t *testing.T) 
 	connection := dialGovernance(t, address, ca.clientConfig(t, []string{"ani-governance"}))
 	client := usageapi.NewResourceUsageServiceClient(connection)
 	end := time.Now().UTC().Truncate(time.Second).Add(-time.Minute)
-	request := &usageapi.QueryUsageRequest{Start: timestamppb.New(end.Add(-time.Minute)), End: timestamppb.New(end), ClusterIds: []string{"0fcdb8b1-22bf-4528-af59-82843dc88f21"}, Metrics: []string{"gpu"}, Tenants: []*usageapi.TenantScope{{TenantId: 1, ResourceTenantId: trustedTenant, GpuUnavailableReason: "HISTORY_UNAVAILABLE"}}}
+	request := &usageapi.QueryUsageRequest{Start: timestamppb.New(end.Add(-time.Minute)), End: timestamppb.New(end), ClusterIds: []string{"0fcdb8b1-22bf-4528-af59-82843dc88f21"}, Metrics: []string{"gpu"}, Tenants: []*usageapi.TenantScope{{TenantId: 1, ResourceTenantId: trustedTenant, GpuUnavailableReason: "GPU_SOURCE_UNAVAILABLE"}}}
 	platform := metadata.NewOutgoingContext(context.Background(), metadata.Pairs("x-ani-context", "platform", "x-ani-actor", "governance:user:1", "x-ani-request-id", trustedRequestID))
 	result, err := client.QueryUsage(platform, request)
 	if err != nil {
