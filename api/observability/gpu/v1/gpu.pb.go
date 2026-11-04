@@ -90,30 +90,18 @@ func (x *UsageRef) GetCreateOperationId() string {
 	return ""
 }
 
+// Trusted physical selectors only. Business queries use GpuTarget.usage_ref.
 type GpuSourceScope struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	ClusterId string                 `protobuf:"bytes,1,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
 	// Controlled scrape node name, resolved from ACC node identity by Gov.
-	NodeId        string                 `protobuf:"bytes,2,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
-	GpuUuid       string                 `protobuf:"bytes,3,opt,name=gpu_uuid,json=gpuUuid,proto3" json:"gpu_uuid,omitempty"`
-	Namespace     string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	PodName       string                 `protobuf:"bytes,5,opt,name=pod_name,json=podName,proto3" json:"pod_name,omitempty"`
-	ContainerName string                 `protobuf:"bytes,6,opt,name=container_name,json=containerName,proto3" json:"container_name,omitempty"`
-	VdeviceId     string                 `protobuf:"bytes,7,opt,name=vdevice_id,json=vdeviceId,proto3" json:"vdevice_id,omitempty"`
-	UsageRef      *UsageRef              `protobuf:"bytes,8,opt,name=usage_ref,json=usageRef,proto3" json:"usage_ref,omitempty"`
-	ValidFrom     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=valid_from,json=validFrom,proto3" json:"valid_from,omitempty"`
-	ValidTo       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=valid_to,json=validTo,proto3" json:"valid_to,omitempty"`
-	EvidenceAt    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=evidence_at,json=evidenceAt,proto3" json:"evidence_at,omitempty"`
-	// VERIFIED, OWNERSHIP_UNKNOWN, OWNERSHIP_AMBIGUOUS, or HISTORY_UNAVAILABLE.
-	OwnershipState string `protobuf:"bytes,12,opt,name=ownership_state,json=ownershipState,proto3" json:"ownership_state,omitempty"`
-	ResourceKind   string `protobuf:"bytes,13,opt,name=resource_kind,json=resourceKind,proto3" json:"resource_kind,omitempty"`
-	DeviceId       string `protobuf:"bytes,14,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	NodeId   string `protobuf:"bytes,2,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	GpuUuid  string `protobuf:"bytes,3,opt,name=gpu_uuid,json=gpuUuid,proto3" json:"gpu_uuid,omitempty"`
+	DeviceId string `protobuf:"bytes,14,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	// Immutable node identity from ACC; controlled scrape profile must match.
-	NodeUid           string   `protobuf:"bytes,15,opt,name=node_uid,json=nodeUid,proto3" json:"node_uid,omitempty"`
-	CandidateComplete bool     `protobuf:"varint,16,opt,name=candidate_complete,json=candidateComplete,proto3" json:"candidate_complete,omitempty"`
-	Reasons           []string `protobuf:"bytes,17,rep,name=reasons,proto3" json:"reasons,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	NodeUid       string `protobuf:"bytes,15,opt,name=node_uid,json=nodeUid,proto3" json:"node_uid,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GpuSourceScope) Reset() {
@@ -167,76 +155,6 @@ func (x *GpuSourceScope) GetGpuUuid() string {
 	return ""
 }
 
-func (x *GpuSourceScope) GetNamespace() string {
-	if x != nil {
-		return x.Namespace
-	}
-	return ""
-}
-
-func (x *GpuSourceScope) GetPodName() string {
-	if x != nil {
-		return x.PodName
-	}
-	return ""
-}
-
-func (x *GpuSourceScope) GetContainerName() string {
-	if x != nil {
-		return x.ContainerName
-	}
-	return ""
-}
-
-func (x *GpuSourceScope) GetVdeviceId() string {
-	if x != nil {
-		return x.VdeviceId
-	}
-	return ""
-}
-
-func (x *GpuSourceScope) GetUsageRef() *UsageRef {
-	if x != nil {
-		return x.UsageRef
-	}
-	return nil
-}
-
-func (x *GpuSourceScope) GetValidFrom() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ValidFrom
-	}
-	return nil
-}
-
-func (x *GpuSourceScope) GetValidTo() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ValidTo
-	}
-	return nil
-}
-
-func (x *GpuSourceScope) GetEvidenceAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.EvidenceAt
-	}
-	return nil
-}
-
-func (x *GpuSourceScope) GetOwnershipState() string {
-	if x != nil {
-		return x.OwnershipState
-	}
-	return ""
-}
-
-func (x *GpuSourceScope) GetResourceKind() string {
-	if x != nil {
-		return x.ResourceKind
-	}
-	return ""
-}
-
 func (x *GpuSourceScope) GetDeviceId() string {
 	if x != nil {
 		return x.DeviceId
@@ -251,35 +169,19 @@ func (x *GpuSourceScope) GetNodeUid() string {
 	return ""
 }
 
-func (x *GpuSourceScope) GetCandidateComplete() bool {
-	if x != nil {
-		return x.CandidateComplete
-	}
-	return false
-}
-
-func (x *GpuSourceScope) GetReasons() []string {
-	if x != nil {
-		return x.Reasons
-	}
-	return nil
-}
-
 type GpuTarget struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// PHYSICAL, RESOURCE, TENANT. Platform is a trusted transport context, not a tenant.
-	Kind                   string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	TenantId               string                 `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
-	ResourceKind           string                 `protobuf:"bytes,3,opt,name=resource_kind,json=resourceKind,proto3" json:"resource_kind,omitempty"`
-	ResourceId             string                 `protobuf:"bytes,4,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
-	Scopes                 []*GpuSourceScope      `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	IndexComplete          bool                   `protobuf:"varint,6,opt,name=index_complete,json=indexComplete,proto3" json:"index_complete,omitempty"`
-	HistoryAvailableFrom   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=history_available_from,json=historyAvailableFrom,proto3" json:"history_available_from,omitempty"`
-	IncludedResourceKinds  []string               `protobuf:"bytes,8,rep,name=included_resource_kinds,json=includedResourceKinds,proto3" json:"included_resource_kinds,omitempty"`
-	UncoveredResourceKinds []string               `protobuf:"bytes,9,rep,name=uncovered_resource_kinds,json=uncoveredResourceKinds,proto3" json:"uncovered_resource_kinds,omitempty"`
-	ScopeWatermark         string                 `protobuf:"bytes,10,opt,name=scope_watermark,json=scopeWatermark,proto3" json:"scope_watermark,omitempty"`
-	unknownFields          protoimpl.UnknownFields
-	sizeCache              protoimpl.SizeCache
+	Kind         string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	TenantId     string `protobuf:"bytes,2,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	ResourceKind string `protobuf:"bytes,3,opt,name=resource_kind,json=resourceKind,proto3" json:"resource_kind,omitempty"`
+	ResourceId   string `protobuf:"bytes,4,opt,name=resource_id,json=resourceId,proto3" json:"resource_id,omitempty"`
+	// PHYSICAL only; TENANT and RESOURCE must leave this empty.
+	Scopes []*GpuSourceScope `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	// Required for RESOURCE, resolved and authorized by Governance.
+	UsageRef      *UsageRef `protobuf:"bytes,11,opt,name=usage_ref,json=usageRef,proto3" json:"usage_ref,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GpuTarget) Reset() {
@@ -347,39 +249,11 @@ func (x *GpuTarget) GetScopes() []*GpuSourceScope {
 	return nil
 }
 
-func (x *GpuTarget) GetIndexComplete() bool {
+func (x *GpuTarget) GetUsageRef() *UsageRef {
 	if x != nil {
-		return x.IndexComplete
-	}
-	return false
-}
-
-func (x *GpuTarget) GetHistoryAvailableFrom() *timestamppb.Timestamp {
-	if x != nil {
-		return x.HistoryAvailableFrom
+		return x.UsageRef
 	}
 	return nil
-}
-
-func (x *GpuTarget) GetIncludedResourceKinds() []string {
-	if x != nil {
-		return x.IncludedResourceKinds
-	}
-	return nil
-}
-
-func (x *GpuTarget) GetUncoveredResourceKinds() []string {
-	if x != nil {
-		return x.UncoveredResourceKinds
-	}
-	return nil
-}
-
-func (x *GpuTarget) GetScopeWatermark() string {
-	if x != nil {
-		return x.ScopeWatermark
-	}
-	return ""
 }
 
 type QueryGpuLatestRequest struct {
@@ -514,7 +388,8 @@ type GpuQuality struct {
 	EmptyPoints     uint32                 `protobuf:"varint,7,opt,name=empty_points,json=emptyPoints,proto3" json:"empty_points,omitempty"`
 	Coverage        *float64               `protobuf:"fixed64,8,opt,name=coverage,proto3,oneof" json:"coverage,omitempty"`
 	ObservedSources uint32                 `protobuf:"varint,9,opt,name=observed_sources,json=observedSources,proto3" json:"observed_sources,omitempty"`
-	ExpectedSources *uint32                `protobuf:"varint,10,opt,name=expected_sources,json=expectedSources,proto3,oneof" json:"expected_sources,omitempty"`
+	// Unset for business metrics: returned samples do not enumerate workloads.
+	ExpectedSources *uint32 `protobuf:"varint,10,opt,name=expected_sources,json=expectedSources,proto3,oneof" json:"expected_sources,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -620,14 +495,15 @@ func (x *GpuQuality) GetExpectedSources() uint32 {
 }
 
 type GpuPoint struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	End           *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
-	Value         *float64               `protobuf:"fixed64,3,opt,name=value,proto3,oneof" json:"value,omitempty"`
-	Peak          *float64               `protobuf:"fixed64,4,opt,name=peak,proto3,oneof" json:"peak,omitempty"`
-	KnownValue    *float64               `protobuf:"fixed64,5,opt,name=known_value,json=knownValue,proto3,oneof" json:"known_value,omitempty"`
-	KnownPeak     *float64               `protobuf:"fixed64,6,opt,name=known_peak,json=knownPeak,proto3,oneof" json:"known_peak,omitempty"`
-	Quality       *GpuQuality            `protobuf:"bytes,7,opt,name=quality,proto3" json:"quality,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Timestamp  *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	End        *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	Value      *float64               `protobuf:"fixed64,3,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	Peak       *float64               `protobuf:"fixed64,4,opt,name=peak,proto3,oneof" json:"peak,omitempty"`
+	KnownValue *float64               `protobuf:"fixed64,5,opt,name=known_value,json=knownValue,proto3,oneof" json:"known_value,omitempty"`
+	KnownPeak  *float64               `protobuf:"fixed64,6,opt,name=known_peak,json=knownPeak,proto3,oneof" json:"known_peak,omitempty"`
+	Quality    *GpuQuality            `protobuf:"bytes,7,opt,name=quality,proto3" json:"quality,omitempty"`
+	// Business metrics use recording-rule sample times, not evaluation times.
 	SampleTimeMin *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=sample_time_min,json=sampleTimeMin,proto3" json:"sample_time_min,omitempty"`
 	SampleTimeMax *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=sample_time_max,json=sampleTimeMax,proto3" json:"sample_time_max,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -728,16 +604,19 @@ func (x *GpuPoint) GetSampleTimeMax() *timestamppb.Timestamp {
 }
 
 type GpuSeries struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	MetricCode             string                 `protobuf:"bytes,1,opt,name=metric_code,json=metricCode,proto3" json:"metric_code,omitempty"`
-	Unit                   string                 `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
-	Aggregation            string                 `protobuf:"bytes,3,opt,name=aggregation,proto3" json:"aggregation,omitempty"`
-	BaseResolutionSeconds  uint32                 `protobuf:"varint,4,opt,name=base_resolution_seconds,json=baseResolutionSeconds,proto3" json:"base_resolution_seconds,omitempty"`
-	Points                 []*GpuPoint            `protobuf:"bytes,5,rep,name=points,proto3" json:"points,omitempty"`
-	Mean                   *float64               `protobuf:"fixed64,6,opt,name=mean,proto3,oneof" json:"mean,omitempty"`
-	Peak                   *float64               `protobuf:"fixed64,7,opt,name=peak,proto3,oneof" json:"peak,omitempty"`
-	Quality                *GpuQuality            `protobuf:"bytes,8,opt,name=quality,proto3" json:"quality,omitempty"`
-	MetricAvailableFrom    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=metric_available_from,json=metricAvailableFrom,proto3" json:"metric_available_from,omitempty"`
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	MetricCode            string                 `protobuf:"bytes,1,opt,name=metric_code,json=metricCode,proto3" json:"metric_code,omitempty"`
+	Unit                  string                 `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
+	Aggregation           string                 `protobuf:"bytes,3,opt,name=aggregation,proto3" json:"aggregation,omitempty"`
+	BaseResolutionSeconds uint32                 `protobuf:"varint,4,opt,name=base_resolution_seconds,json=baseResolutionSeconds,proto3" json:"base_resolution_seconds,omitempty"`
+	Points                []*GpuPoint            `protobuf:"bytes,5,rep,name=points,proto3" json:"points,omitempty"`
+	Mean                  *float64               `protobuf:"fixed64,6,opt,name=mean,proto3,oneof" json:"mean,omitempty"`
+	Peak                  *float64               `protobuf:"fixed64,7,opt,name=peak,proto3,oneof" json:"peak,omitempty"`
+	Quality               *GpuQuality            `protobuf:"bytes,8,opt,name=quality,proto3" json:"quality,omitempty"`
+	MetricAvailableFrom   *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=metric_available_from,json=metricAvailableFrom,proto3" json:"metric_available_from,omitempty"`
+	// Retained on the wire only; historical ownership indexing has been removed.
+	//
+	// Deprecated: Marked as deprecated in observability/gpu/v1/gpu.proto.
 	OwnershipAvailableFrom *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=ownership_available_from,json=ownershipAvailableFrom,proto3" json:"ownership_available_from,omitempty"`
 	DataCutoff             *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=data_cutoff,json=dataCutoff,proto3" json:"data_cutoff,omitempty"`
 	// UNKNOWN unless explicit device capability evidence proves support/unsupported.
@@ -843,6 +722,7 @@ func (x *GpuSeries) GetMetricAvailableFrom() *timestamppb.Timestamp {
 	return nil
 }
 
+// Deprecated: Marked as deprecated in observability/gpu/v1/gpu.proto.
 func (x *GpuSeries) GetOwnershipAvailableFrom() *timestamppb.Timestamp {
 	if x != nil {
 		return x.OwnershipAvailableFrom
@@ -886,16 +766,19 @@ func (x *GpuSeries) GetExporterProcessStarts() []*timestamppb.Timestamp {
 }
 
 type QueryGpuResponse struct {
-	state                  protoimpl.MessageState `protogen:"open.v1"`
-	QueryTime              *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=query_time,json=queryTime,proto3" json:"query_time,omitempty"`
-	Start                  *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
-	End                    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
-	EffectiveStepSeconds   uint32                 `protobuf:"varint,4,opt,name=effective_step_seconds,json=effectiveStepSeconds,proto3" json:"effective_step_seconds,omitempty"`
-	Series                 []*GpuSeries           `protobuf:"bytes,5,rep,name=series,proto3" json:"series,omitempty"`
-	IndexComplete          bool                   `protobuf:"varint,6,opt,name=index_complete,json=indexComplete,proto3" json:"index_complete,omitempty"`
-	IncludedResourceKinds  []string               `protobuf:"bytes,7,rep,name=included_resource_kinds,json=includedResourceKinds,proto3" json:"included_resource_kinds,omitempty"`
-	UncoveredResourceKinds []string               `protobuf:"bytes,8,rep,name=uncovered_resource_kinds,json=uncoveredResourceKinds,proto3" json:"uncovered_resource_kinds,omitempty"`
-	ScopeWatermark         string                 `protobuf:"bytes,9,opt,name=scope_watermark,json=scopeWatermark,proto3" json:"scope_watermark,omitempty"`
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	QueryTime            *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=query_time,json=queryTime,proto3" json:"query_time,omitempty"`
+	Start                *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	End                  *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
+	EffectiveStepSeconds uint32                 `protobuf:"varint,4,opt,name=effective_step_seconds,json=effectiveStepSeconds,proto3" json:"effective_step_seconds,omitempty"`
+	Series               []*GpuSeries           `protobuf:"bytes,5,rep,name=series,proto3" json:"series,omitempty"`
+	// All requested curves cover their requested time buckets with fresh samples.
+	// This does not assert completeness of the tenant's workload inventory.
+	IndexComplete bool `protobuf:"varint,6,opt,name=index_complete,json=indexComplete,proto3" json:"index_complete,omitempty"`
+	// Resource kinds present in returned business records.
+	IncludedResourceKinds []string `protobuf:"bytes,7,rep,name=included_resource_kinds,json=includedResourceKinds,proto3" json:"included_resource_kinds,omitempty"`
+	// Always empty; no historical workload-inventory completeness is inferred.
+	UncoveredResourceKinds []string `protobuf:"bytes,8,rep,name=uncovered_resource_kinds,json=uncoveredResourceKinds,proto3" json:"uncovered_resource_kinds,omitempty"`
 	unknownFields          protoimpl.UnknownFields
 	sizeCache              protoimpl.SizeCache
 }
@@ -984,13 +867,6 @@ func (x *QueryGpuResponse) GetUncoveredResourceKinds() []string {
 		return x.UncoveredResourceKinds
 	}
 	return nil
-}
-
-func (x *QueryGpuResponse) GetScopeWatermark() string {
-	if x != nil {
-		return x.ScopeWatermark
-	}
-	return ""
 }
 
 type QueryGpuLatestResponse struct {
@@ -1091,43 +967,24 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\rowner_service\x18\x02 \x01(\tR\fownerService\x12\x1f\n" +
 	"\vresource_id\x18\x03 \x01(\tR\n" +
 	"resourceId\x12.\n" +
-	"\x13create_operation_id\x18\x04 \x01(\tR\x11createOperationId\"\x9d\x05\n" +
+	"\x13create_operation_id\x18\x04 \x01(\tR\x11createOperationId\"\xc9\x02\n" +
 	"\x0eGpuSourceScope\x12\x1d\n" +
 	"\n" +
 	"cluster_id\x18\x01 \x01(\tR\tclusterId\x12\x17\n" +
 	"\anode_id\x18\x02 \x01(\tR\x06nodeId\x12\x19\n" +
-	"\bgpu_uuid\x18\x03 \x01(\tR\agpuUuid\x12\x1c\n" +
-	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12\x19\n" +
-	"\bpod_name\x18\x05 \x01(\tR\apodName\x12%\n" +
-	"\x0econtainer_name\x18\x06 \x01(\tR\rcontainerName\x12\x1d\n" +
-	"\n" +
-	"vdevice_id\x18\a \x01(\tR\tvdeviceId\x12;\n" +
-	"\tusage_ref\x18\b \x01(\v2\x1e.observability.gpu.v1.UsageRefR\busageRef\x129\n" +
-	"\n" +
-	"valid_from\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tvalidFrom\x125\n" +
-	"\bvalid_to\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\avalidTo\x12;\n" +
-	"\vevidence_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"evidenceAt\x12'\n" +
-	"\x0fownership_state\x18\f \x01(\tR\x0eownershipState\x12#\n" +
-	"\rresource_kind\x18\r \x01(\tR\fresourceKind\x12\x1b\n" +
+	"\bgpu_uuid\x18\x03 \x01(\tR\agpuUuid\x12\x1b\n" +
 	"\tdevice_id\x18\x0e \x01(\tR\bdeviceId\x12\x19\n" +
-	"\bnode_uid\x18\x0f \x01(\tR\anodeUid\x12-\n" +
-	"\x12candidate_complete\x18\x10 \x01(\bR\x11candidateComplete\x12\x18\n" +
-	"\areasons\x18\x11 \x03(\tR\areasons\"\xd4\x03\n" +
+	"\bnode_uid\x18\x0f \x01(\tR\anodeUidJ\x04\b\x04\x10\x0eJ\x04\b\x10\x10\x11J\x04\b\x11\x10\x12R\tnamespaceR\bpod_nameR\x0econtainer_nameR\n" +
+	"vdevice_idR\tusage_refR\n" +
+	"valid_fromR\bvalid_toR\vevidence_atR\x0fownership_stateR\rresource_kindR\x12candidate_completeR\areasons\"\xef\x02\n" +
 	"\tGpuTarget\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12#\n" +
 	"\rresource_kind\x18\x03 \x01(\tR\fresourceKind\x12\x1f\n" +
 	"\vresource_id\x18\x04 \x01(\tR\n" +
 	"resourceId\x12<\n" +
-	"\x06scopes\x18\x05 \x03(\v2$.observability.gpu.v1.GpuSourceScopeR\x06scopes\x12%\n" +
-	"\x0eindex_complete\x18\x06 \x01(\bR\rindexComplete\x12P\n" +
-	"\x16history_available_from\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x14historyAvailableFrom\x126\n" +
-	"\x17included_resource_kinds\x18\b \x03(\tR\x15includedResourceKinds\x128\n" +
-	"\x18uncovered_resource_kinds\x18\t \x03(\tR\x16uncoveredResourceKinds\x12'\n" +
-	"\x0fscope_watermark\x18\n" +
-	" \x01(\tR\x0escopeWatermark\"s\n" +
+	"\x06scopes\x18\x05 \x03(\v2$.observability.gpu.v1.GpuSourceScopeR\x06scopes\x12;\n" +
+	"\tusage_ref\x18\v \x01(\v2\x1e.observability.gpu.v1.UsageRefR\busageRefJ\x04\b\x06\x10\vR\x0eindex_completeR\x16history_available_fromR\x17included_resource_kindsR\x18uncovered_resource_kindsR\x0fscope_watermark\"s\n" +
 	"\x15QueryGpuLatestRequest\x127\n" +
 	"\x06target\x18\x01 \x01(\v2\x1f.observability.gpu.v1.GpuTargetR\x06target\x12!\n" +
 	"\fmetric_codes\x18\x02 \x03(\tR\vmetricCodes\"\xd2\x01\n" +
@@ -1166,7 +1023,7 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\x06_valueB\a\n" +
 	"\x05_peakB\x0e\n" +
 	"\f_known_valueB\r\n" +
-	"\v_known_peak\"\xe6\x05\n" +
+	"\v_known_peak\"\xea\x05\n" +
 	"\tGpuSeries\x12\x1f\n" +
 	"\vmetric_code\x18\x01 \x01(\tR\n" +
 	"metricCode\x12\x12\n" +
@@ -1177,9 +1034,9 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\x04mean\x18\x06 \x01(\x01H\x00R\x04mean\x88\x01\x01\x12\x17\n" +
 	"\x04peak\x18\a \x01(\x01H\x01R\x04peak\x88\x01\x01\x12:\n" +
 	"\aquality\x18\b \x01(\v2 .observability.gpu.v1.GpuQualityR\aquality\x12N\n" +
-	"\x15metric_available_from\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x13metricAvailableFrom\x12T\n" +
+	"\x15metric_available_from\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x13metricAvailableFrom\x12X\n" +
 	"\x18ownership_available_from\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\x16ownershipAvailableFrom\x12;\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampB\x02\x18\x01R\x16ownershipAvailableFrom\x12;\n" +
 	"\vdata_cutoff\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"dataCutoff\x12\x1e\n" +
 	"\n" +
@@ -1190,7 +1047,7 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\tsemantics\x18\x0e \x01(\tR\tsemantics\x12R\n" +
 	"\x17exporter_process_starts\x18\x0f \x03(\v2\x1a.google.protobuf.TimestampR\x15exporterProcessStartsB\a\n" +
 	"\x05_meanB\a\n" +
-	"\x05_peak\"\xde\x03\n" +
+	"\x05_peak\"\xcc\x03\n" +
 	"\x10QueryGpuResponse\x129\n" +
 	"\n" +
 	"query_time\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\tqueryTime\x120\n" +
@@ -1200,8 +1057,8 @@ const file_observability_gpu_v1_gpu_proto_rawDesc = "" +
 	"\x06series\x18\x05 \x03(\v2\x1f.observability.gpu.v1.GpuSeriesR\x06series\x12%\n" +
 	"\x0eindex_complete\x18\x06 \x01(\bR\rindexComplete\x126\n" +
 	"\x17included_resource_kinds\x18\a \x03(\tR\x15includedResourceKinds\x128\n" +
-	"\x18uncovered_resource_kinds\x18\b \x03(\tR\x16uncoveredResourceKinds\x12'\n" +
-	"\x0fscope_watermark\x18\t \x01(\tR\x0escopeWatermark\"X\n" +
+	"\x18uncovered_resource_kinds\x18\b \x03(\tR\x16uncoveredResourceKindsJ\x04\b\t\x10\n" +
+	"R\x0fscope_watermark\"X\n" +
 	"\x16QueryGpuLatestResponse\x12>\n" +
 	"\x06result\x18\x01 \x01(\v2&.observability.gpu.v1.QueryGpuResponseR\x06result\"W\n" +
 	"\x15QueryGpuRangeResponse\x12>\n" +
@@ -1238,42 +1095,38 @@ var file_observability_gpu_v1_gpu_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),  // 11: google.protobuf.Timestamp
 }
 var file_observability_gpu_v1_gpu_proto_depIdxs = []int32{
-	0,  // 0: observability.gpu.v1.GpuSourceScope.usage_ref:type_name -> observability.gpu.v1.UsageRef
-	11, // 1: observability.gpu.v1.GpuSourceScope.valid_from:type_name -> google.protobuf.Timestamp
-	11, // 2: observability.gpu.v1.GpuSourceScope.valid_to:type_name -> google.protobuf.Timestamp
-	11, // 3: observability.gpu.v1.GpuSourceScope.evidence_at:type_name -> google.protobuf.Timestamp
-	1,  // 4: observability.gpu.v1.GpuTarget.scopes:type_name -> observability.gpu.v1.GpuSourceScope
-	11, // 5: observability.gpu.v1.GpuTarget.history_available_from:type_name -> google.protobuf.Timestamp
-	2,  // 6: observability.gpu.v1.QueryGpuLatestRequest.target:type_name -> observability.gpu.v1.GpuTarget
-	2,  // 7: observability.gpu.v1.QueryGpuRangeRequest.target:type_name -> observability.gpu.v1.GpuTarget
-	11, // 8: observability.gpu.v1.QueryGpuRangeRequest.start:type_name -> google.protobuf.Timestamp
-	11, // 9: observability.gpu.v1.QueryGpuRangeRequest.end:type_name -> google.protobuf.Timestamp
-	11, // 10: observability.gpu.v1.GpuPoint.timestamp:type_name -> google.protobuf.Timestamp
-	11, // 11: observability.gpu.v1.GpuPoint.end:type_name -> google.protobuf.Timestamp
-	5,  // 12: observability.gpu.v1.GpuPoint.quality:type_name -> observability.gpu.v1.GpuQuality
-	11, // 13: observability.gpu.v1.GpuPoint.sample_time_min:type_name -> google.protobuf.Timestamp
-	11, // 14: observability.gpu.v1.GpuPoint.sample_time_max:type_name -> google.protobuf.Timestamp
-	6,  // 15: observability.gpu.v1.GpuSeries.points:type_name -> observability.gpu.v1.GpuPoint
-	5,  // 16: observability.gpu.v1.GpuSeries.quality:type_name -> observability.gpu.v1.GpuQuality
-	11, // 17: observability.gpu.v1.GpuSeries.metric_available_from:type_name -> google.protobuf.Timestamp
-	11, // 18: observability.gpu.v1.GpuSeries.ownership_available_from:type_name -> google.protobuf.Timestamp
-	11, // 19: observability.gpu.v1.GpuSeries.data_cutoff:type_name -> google.protobuf.Timestamp
-	11, // 20: observability.gpu.v1.GpuSeries.exporter_process_starts:type_name -> google.protobuf.Timestamp
-	11, // 21: observability.gpu.v1.QueryGpuResponse.query_time:type_name -> google.protobuf.Timestamp
-	11, // 22: observability.gpu.v1.QueryGpuResponse.start:type_name -> google.protobuf.Timestamp
-	11, // 23: observability.gpu.v1.QueryGpuResponse.end:type_name -> google.protobuf.Timestamp
-	7,  // 24: observability.gpu.v1.QueryGpuResponse.series:type_name -> observability.gpu.v1.GpuSeries
-	8,  // 25: observability.gpu.v1.QueryGpuLatestResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
-	8,  // 26: observability.gpu.v1.QueryGpuRangeResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
-	3,  // 27: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:input_type -> observability.gpu.v1.QueryGpuLatestRequest
-	4,  // 28: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:input_type -> observability.gpu.v1.QueryGpuRangeRequest
-	9,  // 29: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:output_type -> observability.gpu.v1.QueryGpuLatestResponse
-	10, // 30: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:output_type -> observability.gpu.v1.QueryGpuRangeResponse
-	29, // [29:31] is the sub-list for method output_type
-	27, // [27:29] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	1,  // 0: observability.gpu.v1.GpuTarget.scopes:type_name -> observability.gpu.v1.GpuSourceScope
+	0,  // 1: observability.gpu.v1.GpuTarget.usage_ref:type_name -> observability.gpu.v1.UsageRef
+	2,  // 2: observability.gpu.v1.QueryGpuLatestRequest.target:type_name -> observability.gpu.v1.GpuTarget
+	2,  // 3: observability.gpu.v1.QueryGpuRangeRequest.target:type_name -> observability.gpu.v1.GpuTarget
+	11, // 4: observability.gpu.v1.QueryGpuRangeRequest.start:type_name -> google.protobuf.Timestamp
+	11, // 5: observability.gpu.v1.QueryGpuRangeRequest.end:type_name -> google.protobuf.Timestamp
+	11, // 6: observability.gpu.v1.GpuPoint.timestamp:type_name -> google.protobuf.Timestamp
+	11, // 7: observability.gpu.v1.GpuPoint.end:type_name -> google.protobuf.Timestamp
+	5,  // 8: observability.gpu.v1.GpuPoint.quality:type_name -> observability.gpu.v1.GpuQuality
+	11, // 9: observability.gpu.v1.GpuPoint.sample_time_min:type_name -> google.protobuf.Timestamp
+	11, // 10: observability.gpu.v1.GpuPoint.sample_time_max:type_name -> google.protobuf.Timestamp
+	6,  // 11: observability.gpu.v1.GpuSeries.points:type_name -> observability.gpu.v1.GpuPoint
+	5,  // 12: observability.gpu.v1.GpuSeries.quality:type_name -> observability.gpu.v1.GpuQuality
+	11, // 13: observability.gpu.v1.GpuSeries.metric_available_from:type_name -> google.protobuf.Timestamp
+	11, // 14: observability.gpu.v1.GpuSeries.ownership_available_from:type_name -> google.protobuf.Timestamp
+	11, // 15: observability.gpu.v1.GpuSeries.data_cutoff:type_name -> google.protobuf.Timestamp
+	11, // 16: observability.gpu.v1.GpuSeries.exporter_process_starts:type_name -> google.protobuf.Timestamp
+	11, // 17: observability.gpu.v1.QueryGpuResponse.query_time:type_name -> google.protobuf.Timestamp
+	11, // 18: observability.gpu.v1.QueryGpuResponse.start:type_name -> google.protobuf.Timestamp
+	11, // 19: observability.gpu.v1.QueryGpuResponse.end:type_name -> google.protobuf.Timestamp
+	7,  // 20: observability.gpu.v1.QueryGpuResponse.series:type_name -> observability.gpu.v1.GpuSeries
+	8,  // 21: observability.gpu.v1.QueryGpuLatestResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
+	8,  // 22: observability.gpu.v1.QueryGpuRangeResponse.result:type_name -> observability.gpu.v1.QueryGpuResponse
+	3,  // 23: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:input_type -> observability.gpu.v1.QueryGpuLatestRequest
+	4,  // 24: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:input_type -> observability.gpu.v1.QueryGpuRangeRequest
+	9,  // 25: observability.gpu.v1.GpuMonitoringService.QueryGpuLatest:output_type -> observability.gpu.v1.QueryGpuLatestResponse
+	10, // 26: observability.gpu.v1.GpuMonitoringService.QueryGpuRange:output_type -> observability.gpu.v1.QueryGpuRangeResponse
+	25, // [25:27] is the sub-list for method output_type
+	23, // [23:25] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_observability_gpu_v1_gpu_proto_init() }

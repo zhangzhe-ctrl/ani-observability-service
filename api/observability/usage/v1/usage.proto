@@ -7,7 +7,7 @@ import "observability/gpu/v1/gpu.proto";
 
 option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/observability/usage/v1;usagev1";
 
-// Trusted platform-only statistics. Gov resolves tenants and historical GPU ownership.
+// Trusted platform-only statistics. Gov authorizes tenant business identities.
 service ResourceUsageService {
   rpc QueryUsage(QueryUsageRequest) returns (QueryUsageResponse);
 }

@@ -333,8 +333,10 @@ type MetricUsage struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Metric string                 `protobuf:"bytes,1,opt,name=metric,proto3" json:"metric,omitempty"`
 	// GiB for gpu/memory; cores for cpu.
-	Unit              string                 `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
-	Mean              *float64               `protobuf:"fixed64,3,opt,name=mean,proto3,oneof" json:"mean,omitempty"`
+	Unit string   `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
+	Mean *float64 `protobuf:"fixed64,3,opt,name=mean,proto3,oneof" json:"mean,omitempty"`
+	// Maximum simultaneous display-grid value at response.step_seconds, not a
+	// sum of independent tenant peaks or a promise to capture every short spike.
 	Peak              *float64               `protobuf:"fixed64,4,opt,name=peak,proto3,oneof" json:"peak,omitempty"`
 	KnownMean         *float64               `protobuf:"fixed64,5,opt,name=known_mean,json=knownMean,proto3,oneof" json:"known_mean,omitempty"`
 	KnownPeak         *float64               `protobuf:"fixed64,6,opt,name=known_peak,json=knownPeak,proto3,oneof" json:"known_peak,omitempty"`
