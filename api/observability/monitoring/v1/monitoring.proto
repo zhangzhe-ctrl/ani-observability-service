@@ -11,6 +11,55 @@ option go_package = "github.com/zhangzhe-ctrl/ani-observability-service/api/obse
 service MonitoringService {
   rpc QueryRange(QueryRangeRequest) returns (QueryRangeResponse);
   rpc QueryLatest(QueryLatestRequest) returns (QueryLatestResponse);
+  rpc QuerySandboxRange(QuerySandboxRangeRequest) returns (QuerySandboxRangeResponse);
+  rpc QuerySandboxLatest(QuerySandboxLatestRequest) returns (QuerySandboxLatestResponse);
+}
+
+// Trusted owner-resolved scope. sandbox_id is the business UUID, not the CRI
+// runtime sandbox ID. Pod UIDs come from Resource's persisted identity history.
+message SandboxTarget {
+  string tenant_id = 1;
+  string sandbox_id = 2;
+  string cluster_id = 3;
+  repeated string pod_uids = 4;
+}
+
+message QuerySandboxRangeRequest {
+  SandboxTarget target = 1;
+  google.protobuf.Timestamp start = 2;
+  google.protobuf.Timestamp end = 3;
+  uint32 step_seconds = 4;
+}
+
+message QuerySandboxLatestRequest {
+  SandboxTarget target = 1;
+}
+
+message QuerySandboxRangeResponse {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+  uint32 step_seconds = 3;
+  repeated SandboxMetricSeries series = 4;
+}
+
+message QuerySandboxLatestResponse {
+  repeated SandboxMetricSeries series = 1;
+}
+
+message SandboxMetricSeries {
+  string name = 1;
+  string unit = 2;
+  // ok, partial or unavailable; a missing value is never a measured zero.
+  string status = 3;
+  string reason = 4;
+  repeated SandboxMetricPoint points = 5;
+}
+
+message SandboxMetricPoint {
+  google.protobuf.Timestamp timestamp = 1;
+  optional double value = 2;
+  // ok, unavailable or ambiguous.
+  string status = 3;
 }
 
 message QueryRangeRequest {

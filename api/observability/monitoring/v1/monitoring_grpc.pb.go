@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MonitoringService_QueryRange_FullMethodName  = "/observability.monitoring.v1.MonitoringService/QueryRange"
-	MonitoringService_QueryLatest_FullMethodName = "/observability.monitoring.v1.MonitoringService/QueryLatest"
+	MonitoringService_QueryRange_FullMethodName         = "/observability.monitoring.v1.MonitoringService/QueryRange"
+	MonitoringService_QueryLatest_FullMethodName        = "/observability.monitoring.v1.MonitoringService/QueryLatest"
+	MonitoringService_QuerySandboxRange_FullMethodName  = "/observability.monitoring.v1.MonitoringService/QuerySandboxRange"
+	MonitoringService_QuerySandboxLatest_FullMethodName = "/observability.monitoring.v1.MonitoringService/QuerySandboxLatest"
 )
 
 // MonitoringServiceClient is the client API for MonitoringService service.
@@ -31,6 +33,8 @@ const (
 type MonitoringServiceClient interface {
 	QueryRange(ctx context.Context, in *QueryRangeRequest, opts ...grpc.CallOption) (*QueryRangeResponse, error)
 	QueryLatest(ctx context.Context, in *QueryLatestRequest, opts ...grpc.CallOption) (*QueryLatestResponse, error)
+	QuerySandboxRange(ctx context.Context, in *QuerySandboxRangeRequest, opts ...grpc.CallOption) (*QuerySandboxRangeResponse, error)
+	QuerySandboxLatest(ctx context.Context, in *QuerySandboxLatestRequest, opts ...grpc.CallOption) (*QuerySandboxLatestResponse, error)
 }
 
 type monitoringServiceClient struct {
@@ -61,6 +65,26 @@ func (c *monitoringServiceClient) QueryLatest(ctx context.Context, in *QueryLate
 	return out, nil
 }
 
+func (c *monitoringServiceClient) QuerySandboxRange(ctx context.Context, in *QuerySandboxRangeRequest, opts ...grpc.CallOption) (*QuerySandboxRangeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QuerySandboxRangeResponse)
+	err := c.cc.Invoke(ctx, MonitoringService_QuerySandboxRange_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *monitoringServiceClient) QuerySandboxLatest(ctx context.Context, in *QuerySandboxLatestRequest, opts ...grpc.CallOption) (*QuerySandboxLatestResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(QuerySandboxLatestResponse)
+	err := c.cc.Invoke(ctx, MonitoringService_QuerySandboxLatest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MonitoringServiceServer is the server API for MonitoringService service.
 // All implementations must embed UnimplementedMonitoringServiceServer
 // for forward compatibility.
@@ -69,6 +93,8 @@ func (c *monitoringServiceClient) QueryLatest(ctx context.Context, in *QueryLate
 type MonitoringServiceServer interface {
 	QueryRange(context.Context, *QueryRangeRequest) (*QueryRangeResponse, error)
 	QueryLatest(context.Context, *QueryLatestRequest) (*QueryLatestResponse, error)
+	QuerySandboxRange(context.Context, *QuerySandboxRangeRequest) (*QuerySandboxRangeResponse, error)
+	QuerySandboxLatest(context.Context, *QuerySandboxLatestRequest) (*QuerySandboxLatestResponse, error)
 	mustEmbedUnimplementedMonitoringServiceServer()
 }
 
@@ -84,6 +110,12 @@ func (UnimplementedMonitoringServiceServer) QueryRange(context.Context, *QueryRa
 }
 func (UnimplementedMonitoringServiceServer) QueryLatest(context.Context, *QueryLatestRequest) (*QueryLatestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryLatest not implemented")
+}
+func (UnimplementedMonitoringServiceServer) QuerySandboxRange(context.Context, *QuerySandboxRangeRequest) (*QuerySandboxRangeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuerySandboxRange not implemented")
+}
+func (UnimplementedMonitoringServiceServer) QuerySandboxLatest(context.Context, *QuerySandboxLatestRequest) (*QuerySandboxLatestResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuerySandboxLatest not implemented")
 }
 func (UnimplementedMonitoringServiceServer) mustEmbedUnimplementedMonitoringServiceServer() {}
 func (UnimplementedMonitoringServiceServer) testEmbeddedByValue()                           {}
@@ -142,6 +174,42 @@ func _MonitoringService_QueryLatest_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MonitoringService_QuerySandboxRange_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySandboxRangeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MonitoringServiceServer).QuerySandboxRange(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MonitoringService_QuerySandboxRange_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MonitoringServiceServer).QuerySandboxRange(ctx, req.(*QuerySandboxRangeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MonitoringService_QuerySandboxLatest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySandboxLatestRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MonitoringServiceServer).QuerySandboxLatest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MonitoringService_QuerySandboxLatest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MonitoringServiceServer).QuerySandboxLatest(ctx, req.(*QuerySandboxLatestRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MonitoringService_ServiceDesc is the grpc.ServiceDesc for MonitoringService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -156,6 +224,14 @@ var MonitoringService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryLatest",
 			Handler:    _MonitoringService_QueryLatest_Handler,
+		},
+		{
+			MethodName: "QuerySandboxRange",
+			Handler:    _MonitoringService_QuerySandboxRange_Handler,
+		},
+		{
+			MethodName: "QuerySandboxLatest",
+			Handler:    _MonitoringService_QuerySandboxLatest_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

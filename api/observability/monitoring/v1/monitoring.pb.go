@@ -127,6 +127,438 @@ func (GapReason) EnumDescriptor() ([]byte, []int) {
 	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{1}
 }
 
+// Trusted owner-resolved scope. sandbox_id is the business UUID, not the CRI
+// runtime sandbox ID. Pod UIDs come from Resource's persisted identity history.
+type SandboxTarget struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	SandboxId     string                 `protobuf:"bytes,2,opt,name=sandbox_id,json=sandboxId,proto3" json:"sandbox_id,omitempty"`
+	ClusterId     string                 `protobuf:"bytes,3,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	PodUids       []string               `protobuf:"bytes,4,rep,name=pod_uids,json=podUids,proto3" json:"pod_uids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SandboxTarget) Reset() {
+	*x = SandboxTarget{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SandboxTarget) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SandboxTarget) ProtoMessage() {}
+
+func (x *SandboxTarget) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SandboxTarget.ProtoReflect.Descriptor instead.
+func (*SandboxTarget) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SandboxTarget) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *SandboxTarget) GetSandboxId() string {
+	if x != nil {
+		return x.SandboxId
+	}
+	return ""
+}
+
+func (x *SandboxTarget) GetClusterId() string {
+	if x != nil {
+		return x.ClusterId
+	}
+	return ""
+}
+
+func (x *SandboxTarget) GetPodUids() []string {
+	if x != nil {
+		return x.PodUids
+	}
+	return nil
+}
+
+type QuerySandboxRangeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Target        *SandboxTarget         `protobuf:"bytes,1,opt,name=target,proto3" json:"target,omitempty"`
+	Start         *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
+	End           *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=end,proto3" json:"end,omitempty"`
+	StepSeconds   uint32                 `protobuf:"varint,4,opt,name=step_seconds,json=stepSeconds,proto3" json:"step_seconds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuerySandboxRangeRequest) Reset() {
+	*x = QuerySandboxRangeRequest{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuerySandboxRangeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySandboxRangeRequest) ProtoMessage() {}
+
+func (x *QuerySandboxRangeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuerySandboxRangeRequest.ProtoReflect.Descriptor instead.
+func (*QuerySandboxRangeRequest) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *QuerySandboxRangeRequest) GetTarget() *SandboxTarget {
+	if x != nil {
+		return x.Target
+	}
+	return nil
+}
+
+func (x *QuerySandboxRangeRequest) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *QuerySandboxRangeRequest) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+func (x *QuerySandboxRangeRequest) GetStepSeconds() uint32 {
+	if x != nil {
+		return x.StepSeconds
+	}
+	return 0
+}
+
+type QuerySandboxLatestRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Target        *SandboxTarget         `protobuf:"bytes,1,opt,name=target,proto3" json:"target,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuerySandboxLatestRequest) Reset() {
+	*x = QuerySandboxLatestRequest{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuerySandboxLatestRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySandboxLatestRequest) ProtoMessage() {}
+
+func (x *QuerySandboxLatestRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuerySandboxLatestRequest.ProtoReflect.Descriptor instead.
+func (*QuerySandboxLatestRequest) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *QuerySandboxLatestRequest) GetTarget() *SandboxTarget {
+	if x != nil {
+		return x.Target
+	}
+	return nil
+}
+
+type QuerySandboxRangeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Start         *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=start,proto3" json:"start,omitempty"`
+	End           *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=end,proto3" json:"end,omitempty"`
+	StepSeconds   uint32                 `protobuf:"varint,3,opt,name=step_seconds,json=stepSeconds,proto3" json:"step_seconds,omitempty"`
+	Series        []*SandboxMetricSeries `protobuf:"bytes,4,rep,name=series,proto3" json:"series,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuerySandboxRangeResponse) Reset() {
+	*x = QuerySandboxRangeResponse{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuerySandboxRangeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySandboxRangeResponse) ProtoMessage() {}
+
+func (x *QuerySandboxRangeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuerySandboxRangeResponse.ProtoReflect.Descriptor instead.
+func (*QuerySandboxRangeResponse) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *QuerySandboxRangeResponse) GetStart() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Start
+	}
+	return nil
+}
+
+func (x *QuerySandboxRangeResponse) GetEnd() *timestamppb.Timestamp {
+	if x != nil {
+		return x.End
+	}
+	return nil
+}
+
+func (x *QuerySandboxRangeResponse) GetStepSeconds() uint32 {
+	if x != nil {
+		return x.StepSeconds
+	}
+	return 0
+}
+
+func (x *QuerySandboxRangeResponse) GetSeries() []*SandboxMetricSeries {
+	if x != nil {
+		return x.Series
+	}
+	return nil
+}
+
+type QuerySandboxLatestResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Series        []*SandboxMetricSeries `protobuf:"bytes,1,rep,name=series,proto3" json:"series,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuerySandboxLatestResponse) Reset() {
+	*x = QuerySandboxLatestResponse{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuerySandboxLatestResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuerySandboxLatestResponse) ProtoMessage() {}
+
+func (x *QuerySandboxLatestResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuerySandboxLatestResponse.ProtoReflect.Descriptor instead.
+func (*QuerySandboxLatestResponse) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *QuerySandboxLatestResponse) GetSeries() []*SandboxMetricSeries {
+	if x != nil {
+		return x.Series
+	}
+	return nil
+}
+
+type SandboxMetricSeries struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Unit  string                 `protobuf:"bytes,2,opt,name=unit,proto3" json:"unit,omitempty"`
+	// ok, partial or unavailable; a missing value is never a measured zero.
+	Status        string                `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	Reason        string                `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	Points        []*SandboxMetricPoint `protobuf:"bytes,5,rep,name=points,proto3" json:"points,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SandboxMetricSeries) Reset() {
+	*x = SandboxMetricSeries{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SandboxMetricSeries) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SandboxMetricSeries) ProtoMessage() {}
+
+func (x *SandboxMetricSeries) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SandboxMetricSeries.ProtoReflect.Descriptor instead.
+func (*SandboxMetricSeries) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SandboxMetricSeries) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SandboxMetricSeries) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *SandboxMetricSeries) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *SandboxMetricSeries) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *SandboxMetricSeries) GetPoints() []*SandboxMetricPoint {
+	if x != nil {
+		return x.Points
+	}
+	return nil
+}
+
+type SandboxMetricPoint struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Timestamp *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Value     *float64               `protobuf:"fixed64,2,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	// ok, unavailable or ambiguous.
+	Status        string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SandboxMetricPoint) Reset() {
+	*x = SandboxMetricPoint{}
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SandboxMetricPoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SandboxMetricPoint) ProtoMessage() {}
+
+func (x *SandboxMetricPoint) ProtoReflect() protoreflect.Message {
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SandboxMetricPoint.ProtoReflect.Descriptor instead.
+func (*SandboxMetricPoint) Descriptor() ([]byte, []int) {
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SandboxMetricPoint) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
+func (x *SandboxMetricPoint) GetValue() float64 {
+	if x != nil && x.Value != nil {
+		return *x.Value
+	}
+	return 0
+}
+
+func (x *SandboxMetricPoint) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
 type QueryRangeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Target        *v1.TargetScope        `protobuf:"bytes,1,opt,name=target,proto3" json:"target,omitempty"`
@@ -140,7 +572,7 @@ type QueryRangeRequest struct {
 
 func (x *QueryRangeRequest) Reset() {
 	*x = QueryRangeRequest{}
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[0]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -152,7 +584,7 @@ func (x *QueryRangeRequest) String() string {
 func (*QueryRangeRequest) ProtoMessage() {}
 
 func (x *QueryRangeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[0]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -165,7 +597,7 @@ func (x *QueryRangeRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRangeRequest.ProtoReflect.Descriptor instead.
 func (*QueryRangeRequest) Descriptor() ([]byte, []int) {
-	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{0}
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *QueryRangeRequest) GetTarget() *v1.TargetScope {
@@ -213,7 +645,7 @@ type QueryLatestRequest struct {
 
 func (x *QueryLatestRequest) Reset() {
 	*x = QueryLatestRequest{}
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[1]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -225,7 +657,7 @@ func (x *QueryLatestRequest) String() string {
 func (*QueryLatestRequest) ProtoMessage() {}
 
 func (x *QueryLatestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[1]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -238,7 +670,7 @@ func (x *QueryLatestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryLatestRequest.ProtoReflect.Descriptor instead.
 func (*QueryLatestRequest) Descriptor() ([]byte, []int) {
-	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{1}
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *QueryLatestRequest) GetTarget() *v1.TargetScope {
@@ -267,7 +699,7 @@ type QueryRangeResponse struct {
 
 func (x *QueryRangeResponse) Reset() {
 	*x = QueryRangeResponse{}
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[2]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -279,7 +711,7 @@ func (x *QueryRangeResponse) String() string {
 func (*QueryRangeResponse) ProtoMessage() {}
 
 func (x *QueryRangeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[2]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,7 +724,7 @@ func (x *QueryRangeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryRangeResponse.ProtoReflect.Descriptor instead.
 func (*QueryRangeResponse) Descriptor() ([]byte, []int) {
-	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{2}
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *QueryRangeResponse) GetStart() *timestamppb.Timestamp {
@@ -333,7 +765,7 @@ type QueryLatestResponse struct {
 
 func (x *QueryLatestResponse) Reset() {
 	*x = QueryLatestResponse{}
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[3]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -345,7 +777,7 @@ func (x *QueryLatestResponse) String() string {
 func (*QueryLatestResponse) ProtoMessage() {}
 
 func (x *QueryLatestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[3]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -358,7 +790,7 @@ func (x *QueryLatestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryLatestResponse.ProtoReflect.Descriptor instead.
 func (*QueryLatestResponse) Descriptor() ([]byte, []int) {
-	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{3}
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *QueryLatestResponse) GetEvaluatedAt() *timestamppb.Timestamp {
@@ -387,7 +819,7 @@ type MetricSeries struct {
 
 func (x *MetricSeries) Reset() {
 	*x = MetricSeries{}
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[4]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -399,7 +831,7 @@ func (x *MetricSeries) String() string {
 func (*MetricSeries) ProtoMessage() {}
 
 func (x *MetricSeries) ProtoReflect() protoreflect.Message {
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[4]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -412,7 +844,7 @@ func (x *MetricSeries) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricSeries.ProtoReflect.Descriptor instead.
 func (*MetricSeries) Descriptor() ([]byte, []int) {
-	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{4}
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *MetricSeries) GetMetricCode() string {
@@ -456,7 +888,7 @@ type MetricPoint struct {
 
 func (x *MetricPoint) Reset() {
 	*x = MetricPoint{}
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[5]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -468,7 +900,7 @@ func (x *MetricPoint) String() string {
 func (*MetricPoint) ProtoMessage() {}
 
 func (x *MetricPoint) ProtoReflect() protoreflect.Message {
-	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[5]
+	mi := &file_observability_monitoring_v1_monitoring_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -481,7 +913,7 @@ func (x *MetricPoint) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricPoint.ProtoReflect.Descriptor instead.
 func (*MetricPoint) Descriptor() ([]byte, []int) {
-	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{5}
+	return file_observability_monitoring_v1_monitoring_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *MetricPoint) GetTimestamp() *timestamppb.Timestamp {
@@ -509,7 +941,39 @@ var File_observability_monitoring_v1_monitoring_proto protoreflect.FileDescripto
 
 const file_observability_monitoring_v1_monitoring_proto_rawDesc = "" +
 	"\n" +
-	",observability/monitoring/v1/monitoring.proto\x12\x1bobservability.monitoring.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$observability/target/v1/target.proto\"\xf7\x01\n" +
+	",observability/monitoring/v1/monitoring.proto\x12\x1bobservability.monitoring.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a$observability/target/v1/target.proto\"\x85\x01\n" +
+	"\rSandboxTarget\x12\x1b\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x1d\n" +
+	"\n" +
+	"sandbox_id\x18\x02 \x01(\tR\tsandboxId\x12\x1d\n" +
+	"\n" +
+	"cluster_id\x18\x03 \x01(\tR\tclusterId\x12\x19\n" +
+	"\bpod_uids\x18\x04 \x03(\tR\apodUids\"\xe1\x01\n" +
+	"\x18QuerySandboxRangeRequest\x12B\n" +
+	"\x06target\x18\x01 \x01(\v2*.observability.monitoring.v1.SandboxTargetR\x06target\x120\n" +
+	"\x05start\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12!\n" +
+	"\fstep_seconds\x18\x04 \x01(\rR\vstepSeconds\"_\n" +
+	"\x19QuerySandboxLatestRequest\x12B\n" +
+	"\x06target\x18\x01 \x01(\v2*.observability.monitoring.v1.SandboxTargetR\x06target\"\xe8\x01\n" +
+	"\x19QuerySandboxRangeResponse\x120\n" +
+	"\x05start\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
+	"\x03end\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x12!\n" +
+	"\fstep_seconds\x18\x03 \x01(\rR\vstepSeconds\x12H\n" +
+	"\x06series\x18\x04 \x03(\v20.observability.monitoring.v1.SandboxMetricSeriesR\x06series\"f\n" +
+	"\x1aQuerySandboxLatestResponse\x12H\n" +
+	"\x06series\x18\x01 \x03(\v20.observability.monitoring.v1.SandboxMetricSeriesR\x06series\"\xb6\x01\n" +
+	"\x13SandboxMetricSeries\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04unit\x18\x02 \x01(\tR\x04unit\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\x12G\n" +
+	"\x06points\x18\x05 \x03(\v2/.observability.monitoring.v1.SandboxMetricPointR\x06points\"\x8b\x01\n" +
+	"\x12SandboxMetricPoint\x128\n" +
+	"\ttimestamp\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\ttimestamp\x12\x19\n" +
+	"\x05value\x18\x02 \x01(\x01H\x00R\x05value\x88\x01\x01\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06statusB\b\n" +
+	"\x06_value\"\xf7\x01\n" +
 	"\x11QueryRangeRequest\x12<\n" +
 	"\x06target\x18\x01 \x01(\v2$.observability.target.v1.TargetScopeR\x06target\x12!\n" +
 	"\fmetric_codes\x18\x02 \x03(\tR\vmetricCodes\x120\n" +
@@ -548,11 +1012,13 @@ const file_observability_monitoring_v1_monitoring_proto_rawDesc = "" +
 	"\x16GAP_REASON_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12GAP_REASON_NO_DATA\x10\x01\x12\x1f\n" +
 	"\x1bGAP_REASON_AMBIGUOUS_SOURCE\x10\x02\x12\x1c\n" +
-	"\x18GAP_REASON_INVALID_VALUE\x10\x032\xf4\x01\n" +
+	"\x18GAP_REASON_INVALID_VALUE\x10\x032\x81\x04\n" +
 	"\x11MonitoringService\x12m\n" +
 	"\n" +
 	"QueryRange\x12..observability.monitoring.v1.QueryRangeRequest\x1a/.observability.monitoring.v1.QueryRangeResponse\x12p\n" +
-	"\vQueryLatest\x12/.observability.monitoring.v1.QueryLatestRequest\x1a0.observability.monitoring.v1.QueryLatestResponseBaZ_github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1;monitoringv1b\x06proto3"
+	"\vQueryLatest\x12/.observability.monitoring.v1.QueryLatestRequest\x1a0.observability.monitoring.v1.QueryLatestResponse\x12\x82\x01\n" +
+	"\x11QuerySandboxRange\x125.observability.monitoring.v1.QuerySandboxRangeRequest\x1a6.observability.monitoring.v1.QuerySandboxRangeResponse\x12\x85\x01\n" +
+	"\x12QuerySandboxLatest\x126.observability.monitoring.v1.QuerySandboxLatestRequest\x1a7.observability.monitoring.v1.QuerySandboxLatestResponseBaZ_github.com/zhangzhe-ctrl/ani-observability-service/api/observability/monitoring/v1;monitoringv1b\x06proto3"
 
 var (
 	file_observability_monitoring_v1_monitoring_proto_rawDescOnce sync.Once
@@ -567,42 +1033,63 @@ func file_observability_monitoring_v1_monitoring_proto_rawDescGZIP() []byte {
 }
 
 var file_observability_monitoring_v1_monitoring_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_observability_monitoring_v1_monitoring_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_observability_monitoring_v1_monitoring_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_observability_monitoring_v1_monitoring_proto_goTypes = []any{
-	(SeriesStatus)(0),             // 0: observability.monitoring.v1.SeriesStatus
-	(GapReason)(0),                // 1: observability.monitoring.v1.GapReason
-	(*QueryRangeRequest)(nil),     // 2: observability.monitoring.v1.QueryRangeRequest
-	(*QueryLatestRequest)(nil),    // 3: observability.monitoring.v1.QueryLatestRequest
-	(*QueryRangeResponse)(nil),    // 4: observability.monitoring.v1.QueryRangeResponse
-	(*QueryLatestResponse)(nil),   // 5: observability.monitoring.v1.QueryLatestResponse
-	(*MetricSeries)(nil),          // 6: observability.monitoring.v1.MetricSeries
-	(*MetricPoint)(nil),           // 7: observability.monitoring.v1.MetricPoint
-	(*v1.TargetScope)(nil),        // 8: observability.target.v1.TargetScope
-	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
+	(SeriesStatus)(0),                  // 0: observability.monitoring.v1.SeriesStatus
+	(GapReason)(0),                     // 1: observability.monitoring.v1.GapReason
+	(*SandboxTarget)(nil),              // 2: observability.monitoring.v1.SandboxTarget
+	(*QuerySandboxRangeRequest)(nil),   // 3: observability.monitoring.v1.QuerySandboxRangeRequest
+	(*QuerySandboxLatestRequest)(nil),  // 4: observability.monitoring.v1.QuerySandboxLatestRequest
+	(*QuerySandboxRangeResponse)(nil),  // 5: observability.monitoring.v1.QuerySandboxRangeResponse
+	(*QuerySandboxLatestResponse)(nil), // 6: observability.monitoring.v1.QuerySandboxLatestResponse
+	(*SandboxMetricSeries)(nil),        // 7: observability.monitoring.v1.SandboxMetricSeries
+	(*SandboxMetricPoint)(nil),         // 8: observability.monitoring.v1.SandboxMetricPoint
+	(*QueryRangeRequest)(nil),          // 9: observability.monitoring.v1.QueryRangeRequest
+	(*QueryLatestRequest)(nil),         // 10: observability.monitoring.v1.QueryLatestRequest
+	(*QueryRangeResponse)(nil),         // 11: observability.monitoring.v1.QueryRangeResponse
+	(*QueryLatestResponse)(nil),        // 12: observability.monitoring.v1.QueryLatestResponse
+	(*MetricSeries)(nil),               // 13: observability.monitoring.v1.MetricSeries
+	(*MetricPoint)(nil),                // 14: observability.monitoring.v1.MetricPoint
+	(*timestamppb.Timestamp)(nil),      // 15: google.protobuf.Timestamp
+	(*v1.TargetScope)(nil),             // 16: observability.target.v1.TargetScope
 }
 var file_observability_monitoring_v1_monitoring_proto_depIdxs = []int32{
-	8,  // 0: observability.monitoring.v1.QueryRangeRequest.target:type_name -> observability.target.v1.TargetScope
-	9,  // 1: observability.monitoring.v1.QueryRangeRequest.start:type_name -> google.protobuf.Timestamp
-	9,  // 2: observability.monitoring.v1.QueryRangeRequest.end:type_name -> google.protobuf.Timestamp
-	8,  // 3: observability.monitoring.v1.QueryLatestRequest.target:type_name -> observability.target.v1.TargetScope
-	9,  // 4: observability.monitoring.v1.QueryRangeResponse.start:type_name -> google.protobuf.Timestamp
-	9,  // 5: observability.monitoring.v1.QueryRangeResponse.end:type_name -> google.protobuf.Timestamp
-	6,  // 6: observability.monitoring.v1.QueryRangeResponse.series:type_name -> observability.monitoring.v1.MetricSeries
-	9,  // 7: observability.monitoring.v1.QueryLatestResponse.evaluated_at:type_name -> google.protobuf.Timestamp
-	6,  // 8: observability.monitoring.v1.QueryLatestResponse.series:type_name -> observability.monitoring.v1.MetricSeries
-	0,  // 9: observability.monitoring.v1.MetricSeries.status:type_name -> observability.monitoring.v1.SeriesStatus
-	7,  // 10: observability.monitoring.v1.MetricSeries.points:type_name -> observability.monitoring.v1.MetricPoint
-	9,  // 11: observability.monitoring.v1.MetricPoint.timestamp:type_name -> google.protobuf.Timestamp
-	1,  // 12: observability.monitoring.v1.MetricPoint.gap_reason:type_name -> observability.monitoring.v1.GapReason
-	2,  // 13: observability.monitoring.v1.MonitoringService.QueryRange:input_type -> observability.monitoring.v1.QueryRangeRequest
-	3,  // 14: observability.monitoring.v1.MonitoringService.QueryLatest:input_type -> observability.monitoring.v1.QueryLatestRequest
-	4,  // 15: observability.monitoring.v1.MonitoringService.QueryRange:output_type -> observability.monitoring.v1.QueryRangeResponse
-	5,  // 16: observability.monitoring.v1.MonitoringService.QueryLatest:output_type -> observability.monitoring.v1.QueryLatestResponse
-	15, // [15:17] is the sub-list for method output_type
-	13, // [13:15] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	2,  // 0: observability.monitoring.v1.QuerySandboxRangeRequest.target:type_name -> observability.monitoring.v1.SandboxTarget
+	15, // 1: observability.monitoring.v1.QuerySandboxRangeRequest.start:type_name -> google.protobuf.Timestamp
+	15, // 2: observability.monitoring.v1.QuerySandboxRangeRequest.end:type_name -> google.protobuf.Timestamp
+	2,  // 3: observability.monitoring.v1.QuerySandboxLatestRequest.target:type_name -> observability.monitoring.v1.SandboxTarget
+	15, // 4: observability.monitoring.v1.QuerySandboxRangeResponse.start:type_name -> google.protobuf.Timestamp
+	15, // 5: observability.monitoring.v1.QuerySandboxRangeResponse.end:type_name -> google.protobuf.Timestamp
+	7,  // 6: observability.monitoring.v1.QuerySandboxRangeResponse.series:type_name -> observability.monitoring.v1.SandboxMetricSeries
+	7,  // 7: observability.monitoring.v1.QuerySandboxLatestResponse.series:type_name -> observability.monitoring.v1.SandboxMetricSeries
+	8,  // 8: observability.monitoring.v1.SandboxMetricSeries.points:type_name -> observability.monitoring.v1.SandboxMetricPoint
+	15, // 9: observability.monitoring.v1.SandboxMetricPoint.timestamp:type_name -> google.protobuf.Timestamp
+	16, // 10: observability.monitoring.v1.QueryRangeRequest.target:type_name -> observability.target.v1.TargetScope
+	15, // 11: observability.monitoring.v1.QueryRangeRequest.start:type_name -> google.protobuf.Timestamp
+	15, // 12: observability.monitoring.v1.QueryRangeRequest.end:type_name -> google.protobuf.Timestamp
+	16, // 13: observability.monitoring.v1.QueryLatestRequest.target:type_name -> observability.target.v1.TargetScope
+	15, // 14: observability.monitoring.v1.QueryRangeResponse.start:type_name -> google.protobuf.Timestamp
+	15, // 15: observability.monitoring.v1.QueryRangeResponse.end:type_name -> google.protobuf.Timestamp
+	13, // 16: observability.monitoring.v1.QueryRangeResponse.series:type_name -> observability.monitoring.v1.MetricSeries
+	15, // 17: observability.monitoring.v1.QueryLatestResponse.evaluated_at:type_name -> google.protobuf.Timestamp
+	13, // 18: observability.monitoring.v1.QueryLatestResponse.series:type_name -> observability.monitoring.v1.MetricSeries
+	0,  // 19: observability.monitoring.v1.MetricSeries.status:type_name -> observability.monitoring.v1.SeriesStatus
+	14, // 20: observability.monitoring.v1.MetricSeries.points:type_name -> observability.monitoring.v1.MetricPoint
+	15, // 21: observability.monitoring.v1.MetricPoint.timestamp:type_name -> google.protobuf.Timestamp
+	1,  // 22: observability.monitoring.v1.MetricPoint.gap_reason:type_name -> observability.monitoring.v1.GapReason
+	9,  // 23: observability.monitoring.v1.MonitoringService.QueryRange:input_type -> observability.monitoring.v1.QueryRangeRequest
+	10, // 24: observability.monitoring.v1.MonitoringService.QueryLatest:input_type -> observability.monitoring.v1.QueryLatestRequest
+	3,  // 25: observability.monitoring.v1.MonitoringService.QuerySandboxRange:input_type -> observability.monitoring.v1.QuerySandboxRangeRequest
+	4,  // 26: observability.monitoring.v1.MonitoringService.QuerySandboxLatest:input_type -> observability.monitoring.v1.QuerySandboxLatestRequest
+	11, // 27: observability.monitoring.v1.MonitoringService.QueryRange:output_type -> observability.monitoring.v1.QueryRangeResponse
+	12, // 28: observability.monitoring.v1.MonitoringService.QueryLatest:output_type -> observability.monitoring.v1.QueryLatestResponse
+	5,  // 29: observability.monitoring.v1.MonitoringService.QuerySandboxRange:output_type -> observability.monitoring.v1.QuerySandboxRangeResponse
+	6,  // 30: observability.monitoring.v1.MonitoringService.QuerySandboxLatest:output_type -> observability.monitoring.v1.QuerySandboxLatestResponse
+	27, // [27:31] is the sub-list for method output_type
+	23, // [23:27] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_observability_monitoring_v1_monitoring_proto_init() }
@@ -610,14 +1097,15 @@ func file_observability_monitoring_v1_monitoring_proto_init() {
 	if File_observability_monitoring_v1_monitoring_proto != nil {
 		return
 	}
-	file_observability_monitoring_v1_monitoring_proto_msgTypes[5].OneofWrappers = []any{}
+	file_observability_monitoring_v1_monitoring_proto_msgTypes[6].OneofWrappers = []any{}
+	file_observability_monitoring_v1_monitoring_proto_msgTypes[12].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_observability_monitoring_v1_monitoring_proto_rawDesc), len(file_observability_monitoring_v1_monitoring_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   6,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
